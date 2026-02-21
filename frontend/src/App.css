@@ -1,0 +1,282 @@
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: 20px;
+}
+
+/* 自定义Ant Design样式 */
+.ant-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* 主要按钮样式 - 蓝色 */
+.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+.ant-btn-primary:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* 危险按钮样式 - 红色 */
+.ant-btn-danger {
+  background-color: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.ant-btn-danger:hover {
+  background-color: #ff7875;
+  border-color: #ff7875;
+}
+
+/* 链接按钮样式 - 蓝色 */
+.ant-btn-link {
+  color: #1890ff;
+}
+
+.ant-btn-link:hover {
+  color: #40a9ff;
+}
+
+/* 标题样式 - 深灰色 */
+h1, h2, h3, h4, h5, h6 {
+  color: #333333;
+  font-weight: normal;
+}
+
+/* 卡片标题样式 - 深灰色 */
+.ant-card-head-title {
+  color: #333333;
+  font-weight: normal;
+  font-size: 16px;
+}
+
+/* 表格表头样式 - 浅灰色背景 */
+.ant-table-thead > tr > th {
+  background-color: #fafafa;
+  color: #333333;
+  font-weight: normal;
+}
+
+/* 标签样式 */
+.ant-tag-blue {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border-color: #91d5ff;
+}
+
+.ant-tag-success {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border-color: #b7eb8f;
+}
+
+.ant-tag-warning {
+  background-color: #fff7e6;
+  color: #faad14;
+  border-color: #ffd591;
+}
+
+/* 菜单样式 */
+.ant-menu-item-selected {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+}
+
+.ant-menu-item:hover {
+  color: #1890ff !important;
+}
+
+/* 输入框聚焦样式 - 蓝色边框 */
+.ant-input:focus,
+.ant-select-selector:focus,
+.ant-input-affix-wrapper:focus {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* 表单标签样式 - 深灰色 */
+.ant-form-item-label > label {
+  color: #333333;
+  font-weight: normal;
+}
+
+/* 表单样式 */
+.ant-form {
+  max-width: 100%;
+}
+
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+/* 输入框样式 */
+.ant-input,
+.ant-select-selector,
+.ant-input-number {
+  border-radius: 4px;
+  height: 32px;
+}
+
+/* 按钮样式 */
+.ant-btn {
+  border-radius: 4px;
+  height: 32px;
+  font-size: 14px;
+}
+
+/* 页面容器样式 */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 页面标题样式 */
+.page-title {
+  font-size: 20px;
+  color: #333333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 页面副标题样式 */
+.page-subtitle {
+  font-size: 16px;
+  color: #333333;
+  margin-bottom: 16px;
+}
+
+/* 表单卡片样式 */
+.form-card {
+  margin-bottom: 24px;
+}
+
+/* 表单卡片标题样式 */
+.form-card-title {
+  font-size: 14px;
+  color: #666666;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 2px solid #1890ff;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .App {
+    padding: 10px;
+  }
+  
+  .ant-card {
+    margin-bottom: 16px;
+  }
+  
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .ant-table {
+    font-size: 12px;
+  }
+  
+  .ant-table-thead > tr > th {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .ant-card-head-title {
+    font-size: 14px;
+  }
+  
+  .ant-modal {
+    max-width: 95vw;
+  }
+  
+  .ant-modal-body {
+    padding: 16px;
+  }
+  
+  .ant-form-item-label > label {
+    font-size: 12px;
+  }
+  
+  .ant-input,
+  .ant-select-selector {
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .App {
+    padding: 5px;
+  }
+  
+  .ant-table {
+    font-size: 11px;
+  }
+  
+  .ant-table-thead > tr > th {
+    font-size: 11px;
+    padding: 6px 2px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    font-size: 11px;
+    padding: 6px 2px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .App {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* 表格滚动优化 */
+.ant-table-container {
+  overflow-x: auto;
+}
+
+.ant-table-body {
+  overflow-x: auto;
+}
+
+/* 确保表格不会超出容器 */
+.ant-table-wrapper {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* 优化移动端表格显示 */
+@media screen and (max-width: 768px) {
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ant-table {
+    min-width: 600px;
+  }
+}

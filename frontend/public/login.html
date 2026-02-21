@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招商永隆人事系统 - 登录</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f0f2f5;
+    }
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .login-form {
+      width: 400px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 40px;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-header h1 {
+      font-size: 24px;
+      font-weight: bold;
+      color: #001529;
+      margin: 0 0 10px 0;
+    }
+    .login-header p {
+      color: #666;
+      font-size: 14px;
+      margin: 0;
+    }
+    .form-item {
+      margin-bottom: 20px;
+    }
+    .form-item label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    .form-item input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .form-item input:focus {
+      outline: none;
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+    .form-submit {
+      margin-top: 30px;
+    }
+    .form-submit button {
+      width: 100%;
+      padding: 12px;
+      background-color: #d32f2f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .form-submit button:hover {
+      background-color: #b71c1c;
+    }
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e8e8e8;
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-form">
+      <div class="login-header">
+        <h1>招商永隆人事系统</h1>
+        <p>欢迎登录人事管理系统</p>
+      </div>
+      <form>
+        <div class="form-item">
+          <label for="username">用户名</label>
+          <input type="text" id="username" name="username" placeholder="请输入用户名">
+        </div>
+        <div class="form-item">
+          <label for="password">密码</label>
+          <input type="password" id="password" name="password" placeholder="请输入密码">
+        </div>
+        <div class="form-submit">
+          <button type="submit">登录</button>
+        </div>
+      </form>
+      <div class="login-footer">
+        <p>© 2024 招商永隆银行 版权所有</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

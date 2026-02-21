@@ -1,0 +1,1 @@
+UPDATE sys_user SET password = '123321' WHERE user_id = '1001';

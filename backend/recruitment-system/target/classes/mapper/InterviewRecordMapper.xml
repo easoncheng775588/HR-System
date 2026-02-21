@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.InterviewRecordMapper">
+    <resultMap id="BaseResultMap" type="com.hr.entity.InterviewRecord">
+        <id column="interview_record_id" property="interviewRecordId" />
+        <result column="resume_id" property="resumeId" />
+        <result column="recruitment_request_id" property="recruitmentRequestId" />
+        <result column="interview_round" property="interviewRound" />
+        <result column="interviewer_id" property="interviewerId" />
+        <result column="interviewer_name" property="interviewerName" />
+        <result column="interviewer_role" property="interviewerRole" />
+        <result column="interview_time" property="interviewTime" />
+        <result column="interview_result" property="interviewResult" />
+        <result column="interview_comment" property="interviewComment" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.InterviewRecord">
+        INSERT INTO interview_record (
+            resume_id,
+            recruitment_request_id,
+            interview_round,
+            interviewer_id,
+            interviewer_name,
+            interviewer_role,
+            interview_time,
+            interview_result,
+            interview_comment,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{resumeId},
+            #{recruitmentRequestId},
+            #{interviewRound},
+            #{interviewerId},
+            #{interviewerName},
+            #{interviewerRole},
+            #{interviewTime},
+            #{interviewResult},
+            #{interviewComment},
+            NOW(),
+            #{createUserId},
+            #{createUserName},
+            NOW(),
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.InterviewRecord">
+        UPDATE interview_record SET
+            resume_id = #{resumeId},
+            recruitment_request_id = #{recruitmentRequestId},
+            interview_round = #{interviewRound},
+            interviewer_id = #{interviewerId},
+            interviewer_name = #{interviewerName},
+            interviewer_role = #{interviewerRole},
+            interview_time = #{interviewTime},
+            interview_result = #{interviewResult},
+            interview_comment = #{interviewComment},
+            update_time = NOW(),
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE interview_record_id = #{interviewRecordId}
+    </update>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM interview_record WHERE interview_record_id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM interview_record ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByResumeId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM interview_record WHERE resume_id = #{resumeId} ORDER BY interview_time DESC
+    </select>
+
+    <select id="selectByRecruitmentRequestId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM interview_record WHERE recruitment_request_id = #{recruitmentRequestId} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByInterviewRound" parameterType="string" resultMap="BaseResultMap">
+        SELECT * FROM interview_record WHERE interview_round = #{interviewRound} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByInterviewResult" parameterType="string" resultMap="BaseResultMap">
+        SELECT * FROM interview_record WHERE interview_result = #{interviewResult} ORDER BY create_time DESC
+    </select>
+</mapper>

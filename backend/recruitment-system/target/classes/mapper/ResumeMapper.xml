@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.ResumeMapper">
+    <resultMap id="BaseResultMap" type="com.hr.entity.Resume">
+        <id column="resume_id" property="resumeId" />
+        <result column="recruitment_request_id" property="recruitmentRequestId" />
+        <result column="job_title" property="jobTitle" />
+        <result column="applicant_name" property="applicantName" />
+        <result column="contact_phone" property="contactPhone" />
+        <result column="email" property="email" />
+        <result column="education" property="education" />
+        <result column="work_experience" property="workExperience" />
+        <result column="resume_file_name" property="resumeFileName" />
+        <result column="resume_file_url" property="resumeFileUrl" />
+        <result column="status" property="status" />
+        <result column="interview_status" property="interviewStatus" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.Resume">
+        INSERT INTO resume (
+            recruitment_request_id,
+            job_title,
+            applicant_name,
+            contact_phone,
+            email,
+            education,
+            work_experience,
+            resume_file_name,
+            resume_file_url,
+            status,
+            interview_status,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{recruitmentRequestId},
+            #{jobTitle},
+            #{applicantName},
+            #{contactPhone},
+            #{email},
+            #{education},
+            #{workExperience},
+            #{resumeFileName},
+            #{resumeFileUrl},
+            #{status},
+            #{interviewStatus},
+            NOW(),
+            #{createUserId},
+            #{createUserName},
+            NOW(),
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.Resume">
+        UPDATE resume SET
+            recruitment_request_id = #{recruitmentRequestId},
+            job_title = #{jobTitle},
+            applicant_name = #{applicantName},
+            contact_phone = #{contactPhone},
+            email = #{email},
+            education = #{education},
+            work_experience = #{workExperience},
+            resume_file_name = #{resumeFileName},
+            resume_file_url = #{resumeFileUrl},
+            status = #{status},
+            interview_status = #{interviewStatus},
+            update_time = NOW(),
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE resume_id = #{resumeId}
+    </update>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM resume WHERE resume_id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM resume ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByRecruitmentRequestId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM resume WHERE recruitment_request_id = #{recruitmentRequestId} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="string" resultMap="BaseResultMap">
+        SELECT * FROM resume WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+</mapper>

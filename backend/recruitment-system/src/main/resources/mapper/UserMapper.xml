@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.UserMapper">
+    
+    <resultMap id="UserResultMap" type="com.hr.entity.User">
+        <id property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="department" column="department"/>
+        <result property="position" column="position"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+    
+    <select id="getAllUsers" resultMap="UserResultMap">
+        SELECT * FROM sys_user ORDER BY create_time DESC
+    </select>
+    
+    <select id="getUserById" parameterType="String" resultMap="UserResultMap">
+        SELECT * FROM sys_user WHERE user_id = #{userId}
+    </select>
+    
+    <select id="getUserByUsername" parameterType="String" resultMap="UserResultMap">
+        SELECT * FROM sys_user WHERE username = #{username}
+    </select>
+    
+    <insert id="insertUser" parameterType="com.hr.entity.User">
+        INSERT INTO sys_user (
+            user_id, username, password, real_name, email, phone, department, position, status,
+            create_time, create_user_id, create_user_name, update_time, update_user_id, update_user_name
+        ) VALUES (
+            #{userId}, #{username}, #{password}, #{realName}, #{email}, #{phone}, #{department}, #{position}, #{status},
+            #{createTime}, #{createUserId}, #{createUserName}, #{updateTime}, #{updateUserId}, #{updateUserName}
+        )
+    </insert>
+    
+    <update id="updateUser" parameterType="com.hr.entity.User">
+        UPDATE sys_user SET
+            username = #{username},
+            password = #{password},
+            real_name = #{realName},
+            email = #{email},
+            phone = #{phone},
+            department = #{department},
+            position = #{position},
+            status = #{status},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE user_id = #{userId}
+    </update>
+    
+    <delete id="deleteUser" parameterType="String">
+        DELETE FROM sys_user WHERE user_id = #{userId}
+    </delete>
+    
+    <select id="getRoleIdsByUserId" parameterType="String" resultType="String">
+        SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+    </select>
+    
+</mapper>

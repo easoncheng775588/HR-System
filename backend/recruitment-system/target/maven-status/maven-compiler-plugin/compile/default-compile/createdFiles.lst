@@ -1,0 +1,6 @@
+com/hr/service/ResumeService.class
+com/hr/controller/FileUploadController.class
+com/hr/service/impl/ResumeServiceImpl.class
+com/hr/mapper/ResumeMapper.class
+com/hr/entity/Resume.class
+com/hr/controller/ResumeController.class

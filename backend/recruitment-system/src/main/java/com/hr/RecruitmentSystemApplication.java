@@ -1,0 +1,15 @@
+package com.hr;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@MapperScan("com.hr.mapper")
+@EnableScheduling
+public class RecruitmentSystemApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(RecruitmentSystemApplication.class, args);
+    }
+}
