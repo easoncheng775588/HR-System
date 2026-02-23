@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Tag, Space, message, Drawer, Descriptions } from 'antd';
-import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, CloseOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -60,19 +60,10 @@ const RecruitmentRequestList = () => {
     setSelectedRecord(null);
   };
 
-  const getStatusTag = (status) => {
-    if (status === 'DRAFT') {
-      return <Tag color="default">草稿</Tag>;
-    } else if (status === 'SUBMITTED') {
-      return <Tag color="processing">已提交</Tag>;
-    }
-    return <Tag>{status}</Tag>;
-  };
-
   const getApprovalStatusTag = (approvalStatus) => {
-    if (approvalStatus === 'PENDING') {
+    if (approvalStatus === 'PENDING' || approvalStatus === '1STAPPROVED' || approvalStatus === '2NDAPPROVED') {
       return <Tag color="processing">待审批</Tag>;
-    } else if (approvalStatus === 'APPROVED') {
+    } else if (approvalStatus === 'APPROVED' || approvalStatus === '3RDAPPROVED') {
       return <Tag color="success">已通过</Tag>;
     } else if (approvalStatus === 'REJECTED') {
       return <Tag color="error">已拒绝</Tag>;
@@ -121,17 +112,17 @@ const RecruitmentRequestList = () => {
 
   const columns = [
     {
-      title: '申请标题',
+      title: '岗位标题',
       dataIndex: 'requestTitle',
       key: 'requestTitle',
-      width: isMobile ? 120 : 200,
+      width: isMobile ? 100 : 180,
       ellipsis: true
     },
     {
       title: '岗位/班组',
       dataIndex: 'positionOrTeam',
       key: 'positionOrTeam',
-      width: isMobile ? 100 : 150,
+      width: isMobile ? 90 : 120,
       ellipsis: true,
       responsive: ['md', 'lg', 'xl', 'xxl']
     },
@@ -139,7 +130,7 @@ const RecruitmentRequestList = () => {
       title: '所属分类',
       dataIndex: 'category',
       key: 'category',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       render: getCategoryText,
       responsive: ['md', 'lg', 'xl', 'xxl']
     },
@@ -147,7 +138,7 @@ const RecruitmentRequestList = () => {
       title: '技术平台',
       dataIndex: 'technicalPlatform',
       key: 'technicalPlatform',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       render: getPlatformText,
       responsive: ['lg', 'xl', 'xxl']
     },
@@ -155,7 +146,7 @@ const RecruitmentRequestList = () => {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       render: getTypeText,
       responsive: ['lg', 'xl', 'xxl']
     },
@@ -163,7 +154,7 @@ const RecruitmentRequestList = () => {
       title: '补充人数',
       dataIndex: 'supplementCount',
       key: 'supplementCount',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       align: 'center',
       responsive: ['md', 'lg', 'xl', 'xxl']
     },
@@ -171,48 +162,45 @@ const RecruitmentRequestList = () => {
       title: '建议级别',
       dataIndex: 'proposedLevel',
       key: 'proposedLevel',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       render: getLevelText,
       responsive: ['lg', 'xl', 'xxl']
     },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: isMobile ? 80 : 100,
-      render: getStatusTag
-    },
+
     {
       title: '审批状态',
       dataIndex: 'approvalStatus',
       key: 'approvalStatus',
-      width: isMobile ? 80 : 100,
+      width: isMobile ? 70 : 90,
       render: getApprovalStatusTag
     },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      width: isMobile ? 120 : 180,
+      width: isMobile ? 100 : 150,
       render: (text) => text ? new Date(text).toLocaleString('zh-CN') : '-',
       responsive: ['md', 'lg', 'xl', 'xxl']
     },
     {
       title: '操作',
       key: 'action',
-      width: isMobile ? 60 : 150,
+      width: isMobile ? 100 : 140,
+      fixed: 'right',
       render: (text, record) => (
-        <Space size="middle">
+        <Space size="small">
           <Button 
             type="link" 
+            icon={<EyeOutlined />} 
             onClick={() => handleView(record)}
             size={isMobile ? 'small' : 'middle'}
           >
             查看
           </Button>
-          {record.approvalStatus === 'PENDING' && record.status === 'SUBMITTED' && (
+          {record.approvalStatus === 'PENDING' && (
             <Button 
               type="link" 
+              icon={<EditOutlined />} 
               onClick={() => handleEdit(record)}
               size={isMobile ? 'small' : 'middle'}
             >
@@ -225,12 +213,8 @@ const RecruitmentRequestList = () => {
   ];
 
   return (
-    <div className="page-container">
-      <div className="page-title">
-        用人申请查询
-      </div>
-      
-      <div style={{ marginBottom: isMobile ? '16px' : '20px', textAlign: 'right' }}>
+    <div className="interview-scheduling">
+      <div style={{ marginBottom: '8px', textAlign: 'right' }}>
         <Button 
           type="primary" 
           icon={<PlusOutlined />} 
@@ -244,19 +228,19 @@ const RecruitmentRequestList = () => {
       <div className="form-card">
         <div style={{ overflow: 'auto' }}>
           <Table
-            dataSource={data}
-            loading={loading}
-            rowKey="recruitmentRequestId"
-            columns={columns}
-            scroll={{ x: isMobile ? 800 : 1200 }}
-            pagination={{
-              pageSize: isMobile ? 5 : 10,
-              showSizeChanger: !isMobile,
-              showTotal: (total) => `共 ${total} 条记录`,
-              simple: isMobile
-            }}
-            size={isMobile ? 'small' : 'middle'}
-          />
+          dataSource={data}
+          loading={loading}
+          rowKey="recruitmentRequestId"
+          columns={columns}
+          scroll={{ x: isMobile ? 800 : 1200 }}
+          pagination={{
+            pageSize: isMobile ? 5 : 10,
+            showSizeChanger: !isMobile,
+            showTotal: (total) => `共 ${total} 条记录`,
+            simple: isMobile
+          }}
+          size={isMobile ? 'small' : 'middle'}
+        />
         </div>
       </div>
       
@@ -270,14 +254,14 @@ const RecruitmentRequestList = () => {
       >
         {selectedRecord && (
           <Descriptions column={1} bordered={false} size={isMobile ? 'small' : 'default'}>
-            <Descriptions.Item label="申请标题">{selectedRecord.requestTitle}</Descriptions.Item>
+            <Descriptions.Item label="岗位标题">{selectedRecord.requestTitle}</Descriptions.Item>
             <Descriptions.Item label="岗位/班组">{selectedRecord.positionOrTeam}</Descriptions.Item>
             <Descriptions.Item label="所属分类">{getCategoryText(selectedRecord.category)}</Descriptions.Item>
             <Descriptions.Item label="技术平台">{getPlatformText(selectedRecord.technicalPlatform)}</Descriptions.Item>
             <Descriptions.Item label="类型">{getTypeText(selectedRecord.type)}</Descriptions.Item>
             <Descriptions.Item label="补充人数">{selectedRecord.supplementCount}</Descriptions.Item>
             <Descriptions.Item label="建议级别">{getLevelText(selectedRecord.proposedLevel)}</Descriptions.Item>
-            <Descriptions.Item label="状态">{getStatusTag(selectedRecord.status)}</Descriptions.Item>
+
             <Descriptions.Item label="创建时间">
               {selectedRecord.createTime ? new Date(selectedRecord.createTime).toLocaleString('zh-CN') : '-'}
             </Descriptions.Item>
@@ -288,7 +272,7 @@ const RecruitmentRequestList = () => {
         )}
       </Drawer>
       
-      <div style={{ textAlign: 'center', marginTop: isMobile ? '15px' : '30px', color: '#999', fontSize: isMobile ? '10px' : '12px' }}>
+      <div style={{ textAlign: 'center', marginTop: '8px', color: '#999', fontSize: '10px' }}>
         © 2024人力资源管理系统 - 用人申请查询模块
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message, Space, Popconfirm } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, message, Space, Popconfirm, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 
@@ -12,9 +12,12 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [form] = Form.useForm();
+  const [positions, setPositions] = useState([]);
+  const [positionsLoading, setPositionsLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchPositions();
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -37,6 +40,24 @@ const UserManagement = () => {
       message.error('获取用户列表失败：' + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPositions = async () => {
+    setPositionsLoading(true);
+    try {
+      const response = await api.get('/api/sys/params/active/type/POSITION');
+      if (response.data.returnCode === 'SUC0000') {
+        setPositions(response.data.body || []);
+      } else {
+        message.error(response.data.errorMsg || '获取岗位列表失败');
+        setPositions([]);
+      }
+    } catch (error) {
+      message.error('获取岗位列表失败：' + error.message);
+      setPositions([]);
+    } finally {
+      setPositionsLoading(false);
     }
   };
 
@@ -133,14 +154,7 @@ const UserManagement = () => {
       responsive: ['md', 'lg', 'xl', 'xxl']
     },
     {
-      title: '部门',
-      dataIndex: 'department',
-      key: 'department',
-      width: isMobile ? 100 : 120,
-      responsive: ['lg', 'xl', 'xxl']
-    },
-    {
-      title: '职位',
+      title: '岗位',
       dataIndex: 'position',
       key: 'position',
       width: isMobile ? 100 : 120,
@@ -314,56 +328,23 @@ const UserManagement = () => {
           </Form.Item>
           
           <Form.Item
-            label="部门"
-            name="department"
-            rules={[
-              { max: 100, message: '部门最多100个字符' },
-            ]}
-          >
-            <Select placeholder="请选择部门" size={isMobile ? 'small' : 'middle'} allowClear>
-              <Option value="人事部">人事部</Option>
-              <Option value="技术部">技术部</Option>
-              <Option value="产品部">产品部</Option>
-              <Option value="运营部">运营部</Option>
-              <Option value="市场部">市场部</Option>
-              <Option value="销售部">销售部</Option>
-              <Option value="财务部">财务部</Option>
-              <Option value="行政部">行政部</Option>
-              <Option value="客服部">客服部</Option>
-              <Option value="研发部">研发部</Option>
-              <Option value="设计部">设计部</Option>
-            </Select>
-          </Form.Item>
-          
-          <Form.Item
-            label="职位"
+            label="岗位"
             name="position"
             rules={[
-              { max: 100, message: '职位最多100个字符' },
+              { max: 100, message: '岗位最多100个字符' },
             ]}
           >
-            <Select placeholder="请选择职位" size={isMobile ? 'small' : 'middle'} allowClear>
-              <Option value="系统管理员">系统管理员</Option>
-              <Option value="人事经理">人事经理</Option>
-              <Option value="人事专员">人事专员</Option>
-              <Option value="技术总监">技术总监</Option>
-              <Option value="技术经理">技术经理</Option>
-              <Option value="高级工程师">高级工程师</Option>
-              <Option value="工程师">工程师</Option>
-              <Option value="初级工程师">初级工程师</Option>
-              <Option value="产品经理">产品经理</Option>
-              <Option value="运营经理">运营经理</Option>
-              <Option value="运营专员">运营专员</Option>
-              <Option value="市场经理">市场经理</Option>
-              <Option value="销售经理">销售经理</Option>
-              <Option value="销售专员">销售专员</Option>
-              <Option value="财务经理">财务经理</Option>
-              <Option value="财务专员">财务专员</Option>
-              <Option value="行政主管">行政主管</Option>
-              <Option value="行政专员">行政专员</Option>
-              <Option value="室经理">室经理</Option>
-              <Option value="团队经理">团队经理</Option>
-              <Option value="分管总">分管总</Option>
+            <Select 
+              placeholder="请选择岗位" 
+              size={isMobile ? 'small' : 'middle'} 
+              allowClear
+              loading={positionsLoading}
+            >
+              {positions.map((position) => (
+                <Option key={position.paramValue} value={position.paramValue}>
+                  {position.paramName}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
           

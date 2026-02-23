@@ -10,12 +10,19 @@ import {
   SettingOutlined,
   CloseOutlined,
   FileTextOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  HomeOutlined,
+  SolutionOutlined,
+  FormOutlined,
+  TableOutlined,
+  StarOutlined,
+  MessageOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useMessage } from '../contexts/MessageContext';
 import api from '../utils/api';
+import './MainLayout.css';
 
 const { Header, Sider, Content } = Layout;
 
@@ -42,11 +49,21 @@ const MainLayout = ({ children }) => {
     // 获取待办任务数量
     const fetchPendingTasks = async () => {
       try {
-        // 获取待审核用人申请数量
-        const approvalResponse = await api.get('/api/recruitment-request/approval/pending');
-        const pendingApprovalCount = approvalResponse.data.returnCode === 'SUC0000' 
-          ? (approvalResponse.data.body ? approvalResponse.data.body.length : 0) 
-          : 0;
+        // 只有具有审批权限的角色才能获取待审核用人申请数量
+        const hasApprovalPermission = user && [
+          '编制管理岗',
+          '外包招聘岗',
+          '团队经理'
+        ].includes(user.position);
+
+        let pendingApprovalCount = 0;
+        if (hasApprovalPermission) {
+          // 获取待审核用人申请数量
+          const approvalResponse = await api.get('/api/recruitment-request/approval/pending');
+          pendingApprovalCount = approvalResponse.data.returnCode === 'SUC0000' 
+            ? (approvalResponse.data.body ? approvalResponse.data.body.length : 0) 
+            : 0;
+        }
 
         // 获取待面试数量
         const interviewResponse = await api.get('/api/interview/pending/count');
@@ -54,10 +71,30 @@ const MainLayout = ({ children }) => {
           ? interviewResponse.data.body 
           : 0;
 
-        setTodoItems([
-          { id: 1, title: '审核用人申请', time: '10分钟前', status: 'pending', count: pendingApprovalCount },
-          { id: 2, title: '待面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount },
-        ]);
+        // 构建待办事项列表
+        const newTodoItems = [];
+        
+        // 只有具有审批权限的角色才能看到审核用人申请待办事项
+        if (hasApprovalPermission) {
+          newTodoItems.push({
+            id: 1, 
+            title: '审核用人申请', 
+            time: '10分钟前', 
+            status: 'pending', 
+            count: pendingApprovalCount 
+          });
+        }
+        
+        // 所有角色都能看到待面试待办事项
+        newTodoItems.push({
+          id: 2, 
+          title: '待面试', 
+          time: '10分钟前', 
+          status: 'pending', 
+          count: pendingInterviewCount 
+        });
+
+        setTodoItems(newTodoItems);
       } catch (error) {
         console.error('Failed to fetch pending tasks:', error);
       }
@@ -101,22 +138,22 @@ const MainLayout = ({ children }) => {
   const allMenuItems = [
     {
       key: 'dashboard',
-      icon: <CheckCircleOutlined />,
+      icon: <HomeOutlined />,
       label: '欢迎页面',
     },
     {
       key: 'recruitment-request',
-      icon: <CheckCircleOutlined />,
+      icon: <FormOutlined />,
       label: '用人申请',
     },
     {
       key: 'approval-management',
-      icon: <BellOutlined />,
-      label: '审批管理',
+      icon: <CheckCircleOutlined />,
+      label: '用人审批',
     },
     {
       key: 'position-publishing',
-      icon: <CheckCircleOutlined />,
+      icon: <TableOutlined />,
       label: '岗位发布',
     },
     {
@@ -126,14 +163,19 @@ const MainLayout = ({ children }) => {
     },
     {
       key: 'resume-screening',
-      icon: <CheckCircleOutlined />,
+      icon: <StarOutlined />,
       label: '简历筛选',
     },
     {
-      key: 'interview-scheduling',
-      icon: <CalendarOutlined />,
-      label: '面试安排',
-    },
+          key: 'interview-scheduling',
+          icon: <CalendarOutlined />,
+          label: '面试安排',
+        },
+        {
+          key: 'offer-management',
+          icon: <CheckCircleOutlined />,
+          label: '录用管理',
+        },
     {
       key: 'user-management',
       icon: <UserOutlined />,
@@ -141,7 +183,7 @@ const MainLayout = ({ children }) => {
     },
     {
       key: 'message-management',
-      icon: <BellOutlined />,
+      icon: <MessageOutlined />,
       label: '消息管理',
     },
   ];
@@ -197,17 +239,8 @@ const MainLayout = ({ children }) => {
 
   const menuContent = (
     <div>
-      <div style={{ 
-        height: 64, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        color: '#fff',
-        fontSize: collapsed ? 16 : 20,
-        fontWeight: 'bold',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        {collapsed ? 'HR' : '人事系统'}
+      <div className={`sidebar-header ${collapsed ? 'collapsed' : ''}`}>
+        {collapsed ? 'HR' : '外包招聘管理系统'}
       </div>
       <Menu
         theme="dark"
@@ -223,22 +256,14 @@ const MainLayout = ({ children }) => {
     <Layout style={{ minHeight: '100vh' }}>
       {isMobile ? (
         <>
-          <Header style={{ 
-            padding: '0 16px', 
-            background: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            height: 64
-          }}>
+          <Header className="mobile-header">
             <Button 
               type="text" 
               icon={<MenuUnfoldOutlined />}
               onClick={toggleDrawer}
               style={{ fontSize: 20 }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="header-actions">
                 <Badge count={unreadCount} size="small">
                   <BellOutlined 
                     style={{ fontSize: 18, cursor: 'pointer' }}
@@ -249,9 +274,9 @@ const MainLayout = ({ children }) => {
                 menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
                 placement="bottomRight"
               >
-                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <Avatar icon={<UserOutlined />} style={{ marginRight: 6 }} />
-                  <span style={{ fontSize: 14 }}>{user ? user.realName : '未登录'}</span>
+                <div className="user-info">
+                  <Avatar icon={<UserOutlined />} className="avatar" />
+                  <span className="user-name">{user ? user.realName : '未登录'}</span>
                 </div>
               </Dropdown>
             </div>
@@ -281,21 +306,14 @@ const MainLayout = ({ children }) => {
             {menuContent}
           </Sider>
           <Layout>
-            <Header style={{ 
-              padding: '0 24px', 
-              background: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
+            <Header className="desktop-header">
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined, {
                   style: { fontSize: 18, cursor: 'pointer' },
                   onClick: () => setCollapsed(!collapsed),
                 })}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="header-actions">
                 <Badge count={unreadCount} size="small">
                   <BellOutlined 
                     style={{ fontSize: 18, cursor: 'pointer' }}
@@ -306,50 +324,27 @@ const MainLayout = ({ children }) => {
                   menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
                   placement="bottomRight"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <Avatar icon={<UserOutlined />} style={{ marginRight: 8 }} />
+                  <div className="user-info">
+                    <Avatar icon={<UserOutlined />} className="avatar" />
                     <span>{user ? user.realName : '未登录'}</span>
                   </div>
                 </Dropdown>
               </div>
             </Header>
-            <Content style={{ 
-              margin: isMobile ? 12 : 24, 
-              padding: isMobile ? 12 : 24, 
-              minHeight: 280,
-              background: '#ffffff',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                gap: isMobile ? 0 : 24,
-                flexDirection: isMobile ? 'column' : 'row',
-                height: '100%'
-              }}>
-                <div style={{ 
-                  flex: 1,
-                  overflow: 'auto',
-                  maxHeight: isMobile ? 'calc(100vh - 100px)' : 'auto'
-                }}>
+            <Content className={isMobile ? 'mobile-content-area' : 'content-area'}>
+              <div className={isMobile ? 'mobile-main-content-container' : 'main-content-container'}>
+                <div className={isMobile ? 'mobile-main-content' : 'main-content'}>
                   {children}
                 </div>
                 {!isMobile && (
-                  <div style={{ 
-                    width: 280, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: 16,
-                    flexShrink: 0,
-                    overflow: 'auto',
-                    maxHeight: 'calc(100vh - 100px)'
-                  }}>
+                  <div className="sidebar">
                     <Card title="待办事项" size="small" style={{ marginBottom: 0 }}>
                       <List
                         size="small"
                         dataSource={todoItems}
                         renderItem={(item) => (
                           <List.Item 
-                            style={{ padding: '8px 0', cursor: 'pointer' }}
+                            style={{ padding: '2px 0', cursor: 'pointer' }}
                             onClick={() => {
                               if (item.id === 1) {
                                 navigate('/approval-management');
@@ -386,13 +381,13 @@ const MainLayout = ({ children }) => {
                     
                     <Card title="用户信息" size="small" style={{ marginBottom: 0 }}>
                       <div style={{ textAlign: 'center' }}>
-                        <Avatar size={48} icon={<UserOutlined />} style={{ marginBottom: 12 }} />
-                        <h3 style={{ fontSize: 14, margin: '0 0 8px 0' }}>{user ? user.realName : '未登录'}</h3>
-                        <p style={{ color: '#666', margin: 0, fontSize: 12 }}>{user ? user.position : '-'}</p>
-                        <div style={{ marginTop: 12, textAlign: 'left', fontSize: 12 }}>
-                          <p style={{ margin: '4px 0' }}><strong>用户ID：</strong>{user ? user.userId : '-'}</p>
-                          <p style={{ margin: '4px 0' }}><strong>部门：</strong>{user ? user.department : '-'}</p>
-                          <p style={{ margin: '4px 0' }}><strong>职位：</strong>{user ? user.position : '-'}</p>
+                        <Avatar size={24} icon={<UserOutlined />} style={{ marginBottom: 2 }} />
+                        <h3 style={{ fontSize: 11, margin: '0 0 1px 0' }}>{user ? user.realName : '未登录'}</h3>
+                        <p style={{ color: '#666', margin: 0, fontSize: 10 }}>{user ? user.position : '-'}</p>
+                        <div style={{ marginTop: 2, textAlign: 'left', fontSize: 10 }}>
+                          <p style={{ margin: '2px 0', fontSize: '10px' }}><strong>用户ID：</strong>{user ? user.userId : '-'}</p>
+                          <p style={{ margin: '2px 0', fontSize: '10px' }}><strong>部门：</strong>{user ? user.department : '-'}</p>
+                          <p style={{ margin: '2px 0', fontSize: '10px' }}><strong>职位：</strong>{user ? user.position : '-'}</p>
                         </div>
                       </div>
                     </Card>

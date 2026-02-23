@@ -29,8 +29,8 @@ const PositionPublishing = () => {
       // 调用后端API获取已批准的用人申请
       console.log('开始获取已批准的用人申请...');
       console.log('API基础URL:', api.defaults.baseURL);
-      console.log('API请求路径:', '/api/recruitment-request/approval/status/APPROVED');
-      const response = await api.get('/api/recruitment-request/approval/status/APPROVED');
+      console.log('API请求路径:', '/api/recruitment-request/approval/status/3RDAPPROVED');
+      const response = await api.get('/api/recruitment-request/approval/status/3RDAPPROVED');
       console.log('API响应:', response);
       console.log('API响应数据:', response.data);
       if (response.data && response.data.returnCode === 'SUC0000') {
@@ -71,12 +71,11 @@ const PositionPublishing = () => {
     // 初始化表单数据，整合用人申请中的岗位相关描述信息
     positionForm.setFieldsValue({
       positionTitle: record.requestTitle,
-      positionName: record.positionOrTeam,
       recruitCount: record.supplementCount,
       positionLevel: getLevelText(record.proposedLevel),
       experienceYears: record.experienceYears,
       jobDescription: record.positionResponsibility,
-      technicalRequirements: getTechnicalRequirements(record.technicalPlatform)
+      technicalRequirements: record.skillRequirement || getTechnicalRequirements(record.technicalPlatform)
     });
     setPublishModalVisible(true);
   };
@@ -189,7 +188,7 @@ const PositionPublishing = () => {
 
   const columns = [
     {
-      title: '申请标题',
+      title: '岗位标题',
       dataIndex: 'requestTitle',
       key: 'requestTitle',
       width: isMobile ? 120 : 200,
@@ -238,6 +237,7 @@ const PositionPublishing = () => {
       title: '操作',
       key: 'action',
       width: isMobile ? 180 : 240,
+      fixed: 'right',
       render: (text, record) => (
         <Space size="small">
           <Button 
@@ -276,21 +276,10 @@ const PositionPublishing = () => {
   ];
 
   return (
-    <div className="page-container">
-      <div className="page-title">
-        岗位发布管理
-      </div>
+    <div className="interview-scheduling">
       
-      <div style={{ marginBottom: isMobile ? '16px' : '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Button 
-            type="primary" 
-            size={isMobile ? 'small' : 'middle'}
-            onClick={fetchApprovedRequests}
-            loading={loading}
-          >
-            刷新数据
-          </Button>
           <Tag color="blue">共 {data.length} 条已批准申请</Tag>
         </div>
       </div>
@@ -302,7 +291,7 @@ const PositionPublishing = () => {
             loading={loading}
             rowKey="recruitmentRequestId"
             columns={columns}
-            scroll={{ x: isMobile ? 800 : 1200 }}
+            scroll={{ x: isMobile ? 900 : 1300 }}
             pagination={{
               pageSize: isMobile ? 5 : 10,
               showSizeChanger: !isMobile,
@@ -337,7 +326,7 @@ const PositionPublishing = () => {
       >
         {selectedRecord && (
           <Descriptions column={1} bordered={false} size={isMobile ? 'small' : 'default'}>
-            <Descriptions.Item label="申请标题">{selectedRecord.requestTitle}</Descriptions.Item>
+            <Descriptions.Item label="岗位标题">{selectedRecord.requestTitle}</Descriptions.Item>
             <Descriptions.Item label="岗位/班组">{selectedRecord.positionOrTeam}</Descriptions.Item>
             <Descriptions.Item label="所属分类">{getCategoryText(selectedRecord.category)}</Descriptions.Item>
             <Descriptions.Item label="技术平台">{getPlatformText(selectedRecord.technicalPlatform)}</Descriptions.Item>
@@ -375,23 +364,17 @@ const PositionPublishing = () => {
             label="岗位标题"
             rules={[{ required: true, message: '请输入岗位标题' }]}
           >
-            <Input placeholder="请输入岗位标题" size={isMobile ? 'small' : 'middle'} />
+            <Input placeholder="请输入岗位标题" size={isMobile ? 'small' : 'middle'} readOnly />
           </Form.Item>
 
-          <Form.Item
-            name="positionName"
-            label="岗位名称"
-            rules={[{ required: true, message: '请输入岗位名称' }]}
-          >
-            <Input placeholder="请输入岗位名称" size={isMobile ? 'small' : 'middle'} />
-          </Form.Item>
+
 
           <Form.Item
             name="recruitCount"
             label="招聘人数"
             rules={[{ required: true, message: '请输入招聘人数' }]}
           >
-            <Input type="number" placeholder="请输入招聘人数" size={isMobile ? 'small' : 'middle'} />
+            <Input type="number" placeholder="请输入招聘人数" size={isMobile ? 'small' : 'middle'} readOnly />
           </Form.Item>
 
           <Form.Item
@@ -399,7 +382,7 @@ const PositionPublishing = () => {
             label="岗位级别"
             rules={[{ required: true, message: '请输入岗位级别' }]}
           >
-            <Input placeholder="请输入岗位级别" size={isMobile ? 'small' : 'middle'} />
+            <Input placeholder="请输入岗位级别" size={isMobile ? 'small' : 'middle'} readOnly />
           </Form.Item>
 
           <Form.Item
@@ -407,7 +390,7 @@ const PositionPublishing = () => {
             label="工作经验"
             rules={[{ required: true, message: '请输入工作经验要求' }]}
           >
-            <Input placeholder="请输入工作经验要求" size={isMobile ? 'small' : 'middle'} />
+            <Input placeholder="请输入工作经验要求" size={isMobile ? 'small' : 'middle'} readOnly />
           </Form.Item>
 
           <Form.Item
@@ -419,6 +402,7 @@ const PositionPublishing = () => {
               rows={4} 
               placeholder="请输入岗位职责" 
               size={isMobile ? 'small' : 'middle'}
+              readOnly
             />
           </Form.Item>
 
@@ -431,6 +415,7 @@ const PositionPublishing = () => {
               rows={4} 
               placeholder="请输入技术要求" 
               size={isMobile ? 'small' : 'middle'}
+              readOnly
             />
           </Form.Item>
         </Form>

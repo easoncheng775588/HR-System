@@ -1,6 +1,7 @@
 package com.hr.service;
 
 import com.hr.entity.RecruitmentRequest;
+import com.hr.entity.ApprovalHistory;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,27 @@ public interface RecruitmentRequestService {
     void rejectRequest(Long id, Map<String, Object> params);
 
     /**
+     * 三级审批通过
+     * @param id 申请ID
+     * @param params 包含审批信息的参数
+     */
+    void threeLevelApproveRequest(Long id, Map<String, Object> params);
+
+    /**
+     * 三级审批拒绝
+     * @param id 申请ID
+     * @param params 包含审批信息的参数
+     */
+    void threeLevelRejectRequest(Long id, Map<String, Object> params);
+
+    /**
+     * 获取待当前用户审批的申请
+     * @param userRole 用户角色
+     * @return 待审批的申请列表
+     */
+    List<RecruitmentRequest> getPendingApprovalByRole(String userRole);
+
+    /**
      * 查询待审批的申请
      * @return 待审批的申请列表
      */
@@ -73,4 +95,11 @@ public interface RecruitmentRequestService {
      * @return 更新后的用人申请
      */
     RecruitmentRequest updatePublishStatus(Long id, String publishStatus);
+
+    /**
+     * 获取申请的审批历史
+     * @param recruitmentRequestId 申请ID
+     * @return 审批历史列表
+     */
+    List<ApprovalHistory> getApprovalHistoryByRequestId(Long recruitmentRequestId);
 }

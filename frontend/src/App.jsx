@@ -1,4 +1,3 @@
-import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { MessageProvider } from './contexts/MessageContext'
@@ -13,8 +12,10 @@ import PositionPublishing from './components/PositionPublishing'
 import ResumeSubmission from './components/ResumeSubmission'
 import ResumeScreening from './components/ResumeScreening'
 import InterviewScheduling from './components/InterviewScheduling'
+import OfferManagement from './components/OfferManagement'
 import UserManagement from './components/UserManagement'
 import MessageManagement from './components/MessageManagement'
+import './App.css'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/resume-submission" element={<ProtectedRoute><MainLayout><ResumeSubmission /></MainLayout></ProtectedRoute>} />
             <Route path="/resume-screening" element={<ProtectedRoute><MainLayout><ResumeScreening /></MainLayout></ProtectedRoute>} />
             <Route path="/interview-scheduling" element={<ProtectedRoute><MainLayout><InterviewScheduling /></MainLayout></ProtectedRoute>} />
+            <Route path="/offer-management" element={<ProtectedRoute><MainLayout><OfferManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute><MainLayout><UserManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/message-management" element={<ProtectedRoute><MainLayout><MessageManagement /></MainLayout></ProtectedRoute>} />
           </Routes>

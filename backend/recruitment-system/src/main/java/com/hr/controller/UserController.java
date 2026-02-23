@@ -115,4 +115,27 @@ public class UserController {
         }
         return result;
     }
+    
+    @GetMapping("/by-position/{position}")
+    public Map<String, Object> getUsersByPosition(@PathVariable String position) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            System.out.println("接收到的position参数：" + position);
+            List<User> users = userService.getUsersByPosition(position);
+            System.out.println("查询到的用户数量：" + users.size());
+            for (User user : users) {
+                System.out.println("用户：" + user.getUserId() + "，姓名：" + user.getRealName() + "，岗位：" + user.getPosition());
+            }
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", users);
+        } catch (Exception e) {
+            System.out.println("获取用户列表失败：" + e.getMessage());
+            e.printStackTrace();
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "获取用户列表失败：" + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
 }

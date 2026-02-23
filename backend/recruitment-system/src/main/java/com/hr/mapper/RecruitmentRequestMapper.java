@@ -40,6 +40,13 @@ public interface RecruitmentRequestMapper {
     int updateApprovalStatus(Map<String, Object> params);
 
     /**
+     * 更新三级审批状态
+     * @param params 包含三级审批信息的Map
+     * @return 影响的行数
+     */
+    int updateThreeLevelApprovalStatus(Map<String, Object> params);
+
+    /**
      * 查询待审批的用人申请
      * @return 待审批的用人申请列表
      */

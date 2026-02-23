@@ -22,4 +22,6 @@ public interface UserMapper {
     int deleteUser(@Param("userId") String userId);
     
     List<String> getRoleIdsByUserId(@Param("userId") String userId);
+    
+    List<User> getUsersByPosition(@Param("position") String position);
 }

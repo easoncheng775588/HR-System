@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hr.mapper.OfferRecordMapper">
+    <!-- 字段映射关系 -->
+    <resultMap id="OfferRecordResultMap" type="com.hr.entity.OfferRecord">
+        <id column="offer_record_id" property="offerRecordId" />
+        <result column="resume_id" property="resumeId" />
+        <result column="recruitment_request_id" property="recruitmentRequestId" />
+        <result column="candidate_name" property="candidateName" />
+        <result column="contact_phone" property="contactPhone" />
+        <result column="email" property="email" />
+        <result column="position" property="position" />
+        <result column="status" property="status" />
+        <result column="offer_time" property="offerTime" />
+        <result column="entry_time" property="entryTime" />
+        <result column="email_status" property="emailStatus" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+    </resultMap>
+    <!-- 保存录用记录 -->
+    <insert id="insert" parameterType="com.hr.entity.OfferRecord" useGeneratedKeys="true" keyProperty="offerRecordId">
+        INSERT INTO offer_record (
+            resume_id,
+            recruitment_request_id,
+            candidate_name,
+            contact_phone,
+            email,
+            position,
+            status,
+            offer_time,
+            entry_time,
+            email_status,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{resumeId},
+            #{recruitmentRequestId},
+            #{candidateName},
+            #{contactPhone},
+            #{email},
+            #{position},
+            #{status},
+            #{offerTime},
+            #{entryTime},
+            #{emailStatus},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <!-- 更新录用记录 -->
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.OfferRecord">
+        UPDATE offer_record SET
+            resume_id = #{resumeId},
+            recruitment_request_id = #{recruitmentRequestId},
+            candidate_name = #{candidateName},
+            contact_phone = #{contactPhone},
+            email = #{email},
+            position = #{position},
+            status = #{status},
+            offer_time = #{offerTime},
+            entry_time = #{entryTime},
+            email_status = #{emailStatus},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE offer_record_id = #{offerRecordId}
+    </update>
+
+    <!-- 根据ID查询录用记录 -->
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="OfferRecordResultMap">
+        SELECT * FROM offer_record WHERE offer_record_id = #{id}
+    </select>
+
+    <!-- 查询所有录用记录 -->
+    <select id="selectAll" resultMap="OfferRecordResultMap">
+        SELECT * FROM offer_record ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据简历ID查询录用记录 -->
+    <select id="selectByResumeId" parameterType="java.lang.Long" resultMap="OfferRecordResultMap">
+        SELECT * FROM offer_record WHERE resume_id = #{resumeId}
+    </select>
+
+    <!-- 根据招聘申请ID查询录用记录 -->
+    <select id="selectByRecruitmentRequestId" parameterType="java.lang.Long" resultMap="OfferRecordResultMap">
+        SELECT * FROM offer_record WHERE recruitment_request_id = #{recruitmentRequestId} ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询录用记录 -->
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="OfferRecordResultMap">
+        SELECT * FROM offer_record WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+</mapper>

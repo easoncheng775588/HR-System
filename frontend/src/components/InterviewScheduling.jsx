@@ -43,6 +43,8 @@ const InterviewScheduling = () => {
   const [recordModalVisible, setRecordModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [resultForm] = Form.useForm();
+  const [interviewers, setInterviewers] = useState([]);
+  const [loadingInterviewers, setLoadingInterviewers] = useState(false);
 
   // 面试环节选项
   const interviewRoundOptions = [
@@ -56,6 +58,7 @@ const InterviewScheduling = () => {
     { value: 'ROOM_MANAGER', label: '室经理' },
     { value: 'TEAM_MANAGER', label: '团队经理' },
     { value: 'DEPARTMENT_HEAD', label: '分管总' },
+    { value: 'ADMIN', label: '管理员' },
   ];
 
   // 面试结果选项
@@ -86,6 +89,7 @@ const InterviewScheduling = () => {
     ROOM_MANAGER: '室经理',
     TEAM_MANAGER: '团队经理',
     DEPARTMENT_HEAD: '分管总',
+    ADMIN: '管理员',
   };
 
   // 面试结果映射
@@ -101,6 +105,11 @@ const InterviewScheduling = () => {
     }
     
     const position = user.position;
+    // 管理员可以录入所有面试环节的结果
+    if (position === '管理员') {
+      return true;
+    }
+    
     switch (interviewRound) {
       case 'FIRST_ROUND':
         return position === '室经理';
@@ -117,6 +126,80 @@ const InterviewScheduling = () => {
   useEffect(() => {
     loadResumes();
     loadInterviewRecords();
+  }, []);
+
+  // 获取面试官列表
+  const fetchInterviewers = async (position) => {
+    setLoadingInterviewers(true);
+    try {
+      console.log('开始获取面试官列表，position:', position);
+      const encodedPosition = encodeURIComponent(position);
+      console.log('编码后的position:', encodedPosition);
+      console.log('API请求路径:', `http://localhost:8080/api/users/by-position/${encodedPosition}`);
+      const response = await axios.get(`http://localhost:8080/api/users/by-position/${encodedPosition}`);
+      console.log('API响应:', response);
+      if (response.data && response.data.returnCode === 'SUC0000') {
+        console.log('获取面试官列表成功，数据:', response.data.body);
+        // 检查response.data.body是否是数组
+        if (Array.isArray(response.data.body)) {
+          setInterviewers(response.data.body || []);
+          // 如果有面试官，默认选择第一个
+          if (response.data.body.length > 0) {
+            form.setFieldsValue({
+              interviewerId: response.data.body[0].userId,
+              interviewerName: response.data.body[0].realName
+            });
+          }
+        } else {
+          console.error('获取面试官列表失败，数据格式错误:', response.data.body);
+          setInterviewers([]);
+        }
+      } else {
+        message.error('获取面试官列表失败：' + (response.data ? response.data.errorMsg : '未知错误'));
+        console.error('获取面试官列表失败，错误信息:', response.data ? response.data.errorMsg : '未知错误');
+        setInterviewers([]);
+      }
+    } catch (error) {
+      message.error('获取面试官列表失败，请稍后重试');
+      console.error('获取面试官列表失败:', error);
+      setInterviewers([]);
+    } finally {
+      setLoadingInterviewers(false);
+    }
+  };
+
+  // 监听面试环节变化，更新面试官角色和面试官列表
+  const handleInterviewRoundChange = (round) => {
+    const defaultRole = getDefaultInterviewerRole(round);
+    form.setFieldsValue({ interviewerRole: defaultRole });
+    
+    // 根据面试环节获取对应的岗位
+    let position = '';
+    switch (round) {
+      case 'FIRST_ROUND':
+        position = '室经理';
+        break;
+      case 'SECOND_ROUND':
+        position = '团队经理';
+        break;
+      case 'THIRD_ROUND':
+        position = '分管总';
+        break;
+      default:
+        position = '';
+    }
+    
+    if (position) {
+      fetchInterviewers(position);
+    }
+  };
+
+  // 当表单加载时，初始化面试官列表
+  useEffect(() => {
+    const values = form.getFieldsValue();
+    if (values.interviewRound) {
+      handleInterviewRoundChange(values.interviewRound);
+    }
   }, []);
 
   const loadResumes = async () => {
@@ -151,6 +234,13 @@ const InterviewScheduling = () => {
   };
 
   const handleScheduling = (resume) => {
+    // 检查权限：只有外包招聘岗的用户才能安排面试
+    const isOutsourcingRecruiter = user && user.position === '外包招聘岗';
+    if (!isOutsourcingRecruiter) {
+      message.error('只有外包招聘岗的用户才能安排面试');
+      return;
+    }
+    
     setCurrentResume(resume);
     // 检查是否已经有面试记录
     const existingRecords = interviewRecords.filter(record => 
@@ -195,6 +285,11 @@ const InterviewScheduling = () => {
       interviewRound: nextRound,
       interviewerRole: getDefaultInterviewerRole(nextRound),
     });
+    
+    // 初始化面试官列表
+    setTimeout(() => {
+      handleInterviewRoundChange(nextRound);
+    }, 100);
     
     setSchedulingModalVisible(true);
   };
@@ -292,6 +387,18 @@ const InterviewScheduling = () => {
     return interviewRecords.filter(record => record.resumeId === resumeId);
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // 简历列表列定义
   const resumeColumns = [
     {
@@ -322,17 +429,25 @@ const InterviewScheduling = () => {
     {
       title: '操作',
       key: 'action',
+      width: isMobile ? 180 : 240,
+      fixed: 'right',
       render: (_, record) => {
+        const isOutsourcingRecruiter = user && user.position === '外包招聘岗';
         return (
-          <Space size="middle">
+          <Space size={isMobile ? 'small' : 'middle'}>
+            {isOutsourcingRecruiter && (
+              <Button
+                type="link"
+                icon={<CalendarOutlined />}
+                onClick={() => handleScheduling(record)}
+                style={{ color: '#52c41a' }}
+                size={isMobile ? 'small' : 'middle'}
+              >
+                安排面试
+              </Button>
+            )}
             <Button
-              type="primary"
-              icon={<CalendarOutlined />}
-              onClick={() => handleScheduling(record)}
-            >
-              安排面试
-            </Button>
-            <Button
+              type="link"
               icon={<FileTextOutlined />}
               onClick={() => {
                 const records = getInterviewRecordsByResumeId(record.resumeId);
@@ -344,6 +459,7 @@ const InterviewScheduling = () => {
                   message.info('该简历暂无面试记录');
                 }
               }}
+              size={isMobile ? 'small' : 'middle'}
             >
               面试记录
             </Button>
@@ -355,7 +471,6 @@ const InterviewScheduling = () => {
 
   return (
     <div className="interview-scheduling">
-      <h2>面试安排</h2>
       
       <Card>
         <h3>已通过筛选的简历</h3>
@@ -410,10 +525,26 @@ const InterviewScheduling = () => {
           
           <Form.Item
             name="interviewerId"
-            label="面试官ID"
-            rules={[{ required: true, message: '请输入面试官ID' }]}
+            label="面试官"
+            rules={[{ required: true, message: '请选择面试官' }]}
           >
-            <Input placeholder="请输入面试官ID" />
+            <Select
+              loading={loadingInterviewers}
+              placeholder="请选择面试官"
+              onChange={(value) => {
+                // 根据选择的面试官ID，更新面试官姓名
+                const selectedInterviewer = interviewers.find(item => item.userId === value);
+                if (selectedInterviewer) {
+                  form.setFieldsValue({ interviewerName: selectedInterviewer.realName });
+                }
+              }}
+            >
+              {interviewers.map(interviewer => (
+                <Option key={interviewer.userId} value={interviewer.userId}>
+                  {interviewer.realName}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
           
           <Form.Item
@@ -421,7 +552,7 @@ const InterviewScheduling = () => {
             label="面试官姓名"
             rules={[{ required: true, message: '请输入面试官姓名' }]}
           >
-            <Input placeholder="请输入面试官姓名" />
+            <Input placeholder="请输入面试官姓名" disabled />
           </Form.Item>
           
           <Form.Item
@@ -437,7 +568,7 @@ const InterviewScheduling = () => {
             label="面试时间"
             rules={[{ required: true, message: '请选择面试时间' }]}
           >
-            <TimePicker style={{ width: '100%' }} />
+            <TimePicker style={{ width: '100%' }} format="HH:mm" />
           </Form.Item>
         </Form>
       </Modal>

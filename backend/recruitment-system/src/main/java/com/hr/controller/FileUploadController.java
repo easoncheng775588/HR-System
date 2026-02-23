@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -51,6 +52,12 @@ public class FileUploadController {
 
             // 生成唯一的文件名
             String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || !originalFilename.contains(".")) {
+                response.put("returnCode", "ERR0000");
+                response.put("errorMsg", "文件名格式无效");
+                response.put("body", null);
+                return response;
+            }
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName = UUID.randomUUID().toString() + fileExtension;
             String filePath = UPLOAD_DIR + fileName;
@@ -90,7 +97,7 @@ public class FileUploadController {
     public Resource serveFile(@PathVariable String filename) {
         try {
             Path file = uploadPath.resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
+            Resource resource = new UrlResource(Objects.requireNonNull(file.toUri()));
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {

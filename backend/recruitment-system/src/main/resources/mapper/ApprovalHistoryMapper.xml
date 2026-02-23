@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.ApprovalHistoryMapper">
+    <resultMap id="BaseResultMap" type="com.hr.entity.ApprovalHistory">
+        <id column="approval_history_id" property="approvalHistoryId" />
+        <result column="recruitment_request_id" property="recruitmentRequestId" />
+        <result column="approval_level" property="approvalLevel" />
+        <result column="approver_id" property="approverId" />
+        <result column="approver_name" property="approverName" />
+        <result column="approval_status" property="approvalStatus" />
+        <result column="approval_comment" property="approvalComment" />
+        <result column="approval_time" property="approvalTime" />
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.ApprovalHistory">
+        INSERT INTO approval_history (
+            recruitment_request_id,
+            approval_level,
+            approver_id,
+            approver_name,
+            approval_status,
+            approval_comment,
+            approval_time
+        ) VALUES (
+            #{recruitmentRequestId},
+            #{approvalLevel},
+            #{approverId},
+            #{approverName},
+            #{approvalStatus},
+            #{approvalComment},
+            #{approvalTime}
+        )
+    </insert>
+
+    <select id="selectByRecruitmentRequestId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT * FROM approval_history
+        WHERE recruitment_request_id = #{recruitmentRequestId}
+        ORDER BY approval_level ASC, approval_time ASC
+    </select>
+</mapper>

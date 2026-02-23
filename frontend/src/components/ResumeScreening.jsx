@@ -207,7 +207,8 @@ const ResumeScreening = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 280,
+      fixed: 'right',
       render: (_, record) => (
         <Space size={isMobile ? 'small' : 'middle'}>
           <Button
@@ -229,14 +230,16 @@ const ResumeScreening = () => {
           {record.status === 'PENDING_SCREENING' && (
             <>
               <Button
-                type="primary"
+                type="link"
                 icon={<CheckCircleOutlined />}
                 onClick={() => handleUpdateStatus(record, 'SCREENED')}
+                style={{ color: '#52c41a' }}
                 size={isMobile ? 'small' : 'middle'}
               >
                 通过
               </Button>
               <Button
+                type="link"
                 danger
                 icon={<CloseCircleOutlined />}
                 onClick={() => handleUpdateStatus(record, 'REJECTED')}
@@ -252,7 +255,7 @@ const ResumeScreening = () => {
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '10px' : '20px', overflow: 'hidden' }}>
+    <div className="interview-scheduling">
       <Card
         title="简历筛选管理"
         extra={
@@ -275,7 +278,7 @@ const ResumeScreening = () => {
             loading={loading}
             rowKey="resumeId"
             columns={columns}
-            scroll={{ x: isMobile ? 800 : 1200 }}
+            scroll={{ x: isMobile ? 1000 : 1400 }}
             pagination={{
               pageSize: isMobile ? 5 : 10,
               showSizeChanger: !isMobile,

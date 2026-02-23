@@ -19,4 +19,6 @@ public interface UserService {
     int deleteUser(String userId);
     
     List<String> getRoleIdsByUserId(String userId);
+    
+    List<User> getUsersByPosition(String position);
 }

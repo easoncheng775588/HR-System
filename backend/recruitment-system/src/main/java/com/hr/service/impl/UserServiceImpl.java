@@ -79,4 +79,9 @@ public class UserServiceImpl implements UserService {
     public List<String> getRoleIdsByUserId(String userId) {
         return userMapper.getRoleIdsByUserId(userId);
     }
+
+    @Override
+    public List<User> getUsersByPosition(String position) {
+        return userMapper.getUsersByPosition(position);
+    }
 }

@@ -33,3 +33,47 @@ CREATE TABLE IF NOT EXISTS recruitment_request (
 -- 创建索引
 CREATE INDEX idx_status ON recruitment_request(status);
 CREATE INDEX idx_create_time ON recruitment_request(create_time);
+
+-- 创建录用记录表
+CREATE TABLE IF NOT EXISTS offer_record (
+    offer_record_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '录用记录ID',
+    resume_id BIGINT NOT NULL COMMENT '简历ID',
+    recruitment_request_id BIGINT NOT NULL COMMENT '招聘申请ID',
+    candidate_name VARCHAR(100) NOT NULL COMMENT '候选人姓名',
+    contact_phone VARCHAR(20) NOT NULL COMMENT '联系电话',
+    email VARCHAR(100) NOT NULL COMMENT '邮箱',
+    position VARCHAR(255) NOT NULL COMMENT '录用岗位',
+    status VARCHAR(20) NOT NULL COMMENT '录用状态',
+    offer_time DATETIME COMMENT '录用时间',
+    entry_time DATETIME COMMENT '入职时间',
+    email_status VARCHAR(20) COMMENT '邮件发送状态',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID',
+    create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID',
+    update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='录用记录表';
+
+-- 创建邮件模板表
+CREATE TABLE IF NOT EXISTS email_template (
+    template_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '模板ID',
+    template_name VARCHAR(100) NOT NULL COMMENT '模板名称',
+    template_type VARCHAR(50) NOT NULL COMMENT '模板类型',
+    subject VARCHAR(255) NOT NULL COMMENT '邮件主题',
+    content TEXT NOT NULL COMMENT '邮件内容',
+    status VARCHAR(20) NOT NULL COMMENT '状态',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID',
+    create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID',
+    update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邮件模板表';
+
+-- 创建索引
+CREATE INDEX idx_resume_id ON offer_record(resume_id);
+CREATE INDEX idx_status ON offer_record(status);
+CREATE INDEX idx_email_status ON offer_record(email_status);
+CREATE INDEX idx_template_type ON email_template(template_type);
+CREATE INDEX idx_status ON email_template(status);

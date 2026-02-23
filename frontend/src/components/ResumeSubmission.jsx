@@ -29,7 +29,7 @@ const ResumeSubmission = () => {
     try {
       // 调用后端API获取已发布的岗位
       console.log('开始获取已发布的岗位...');
-      const response = await api.get('/api/recruitment-request/approval/status/APPROVED');
+      const response = await api.get('/api/recruitment-request/approval/status/3RDAPPROVED');
       console.log('API响应:', response);
       if (response.data && response.data.returnCode === 'SUC0000') {
         // 筛选已发布的岗位
@@ -196,6 +196,7 @@ const ResumeSubmission = () => {
       title: '操作',
       key: 'action',
       width: isMobile ? 180 : 240,
+      fixed: 'right',
       render: (text, record) => (
         <Space size="small">
           <Button 
@@ -207,9 +208,10 @@ const ResumeSubmission = () => {
             查看
           </Button>
           <Button 
-            type="primary" 
+            type="link" 
             icon={<CheckCircleOutlined />}
             onClick={() => handleApply(record)}
+            style={{ color: '#52c41a' }}
             size={isMobile ? 'small' : 'middle'}
           >
             申请
@@ -241,7 +243,7 @@ const ResumeSubmission = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '10px' : '20px', overflow: 'hidden' }}>
+    <div className="interview-scheduling">
       <Card 
         title="简历提交管理" 
         extra={

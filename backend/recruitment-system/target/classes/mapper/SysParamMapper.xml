@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hr.mapper.SysParamMapper">
+    <!-- 字段映射关系 -->
+    <resultMap id="SysParamResultMap" type="com.hr.entity.SysParam">
+        <id column="param_id" property="paramId" />
+        <result column="param_code" property="paramCode" />
+        <result column="param_name" property="paramName" />
+        <result column="param_value" property="paramValue" />
+        <result column="param_type" property="paramType" />
+        <result column="status" property="status" />
+        <result column="sort_order" property="sortOrder" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+    </resultMap>
+    
+    <!-- 根据ID查询参数 -->
+    <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param WHERE param_id = #{paramId}
+    </select>
+    
+    <!-- 根据参数类型查询参数列表 -->
+    <select id="selectByParamType" parameterType="java.lang.String" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param WHERE param_type = #{paramType} ORDER BY sort_order ASC
+    </select>
+    
+    <!-- 根据参数编码查询参数列表 -->
+    <select id="selectByParamCode" parameterType="java.lang.String" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param WHERE param_code = #{paramCode} ORDER BY sort_order ASC
+    </select>
+    
+    <!-- 查询所有参数 -->
+    <select id="selectAll" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param ORDER BY param_type, sort_order ASC
+    </select>
+    
+    <!-- 查询启用的参数 -->
+    <select id="selectActive" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param WHERE status = 'ACTIVE' ORDER BY param_type, sort_order ASC
+    </select>
+    
+    <!-- 根据参数类型查询启用的参数 -->
+    <select id="selectActiveByParamType" parameterType="java.lang.String" resultMap="SysParamResultMap">
+        SELECT * FROM sys_param WHERE param_type = #{paramType} AND status = 'ACTIVE' ORDER BY sort_order ASC
+    </select>
+    
+    <!-- 插入参数 -->
+    <insert id="insert" parameterType="com.hr.entity.SysParam">
+        INSERT INTO sys_param (
+            param_id,
+            param_code,
+            param_name,
+            param_value,
+            param_type,
+            status,
+            sort_order,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{paramId},
+            #{paramCode},
+            #{paramName},
+            #{paramValue},
+            #{paramType},
+            #{status},
+            #{sortOrder},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+    
+    <!-- 更新参数 -->
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.SysParam">
+        UPDATE sys_param SET
+            param_code = #{paramCode},
+            param_name = #{paramName},
+            param_value = #{paramValue},
+            param_type = #{paramType},
+            status = #{status},
+            sort_order = #{sortOrder},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE param_id = #{paramId}
+    </update>
+    
+    <!-- 删除参数 -->
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+        DELETE FROM sys_param WHERE param_id = #{paramId}
+    </delete>
+</mapper>

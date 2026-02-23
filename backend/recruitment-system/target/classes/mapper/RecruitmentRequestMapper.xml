@@ -6,24 +6,36 @@
         <result column="request_title" property="requestTitle" />
         <result column="total_recruitment_count" property="totalRecruitmentCount" />
         <result column="vacancy_count" property="vacancyCount" />
-        <result column="interviewer" property="interviewer" />
-        <result column="position_or_team" property="positionOrTeam" />
-        <result column="team_manager" property="teamManager" />
-        <result column="category" property="category" />
+        <result column="team" property="team" />
         <result column="technical_platform" property="technicalPlatform" />
-        <result column="type" property="type" />
         <result column="supplement_count" property="supplementCount" />
         <result column="urgent_requirement" property="urgentRequirement" />
         <result column="proposed_level" property="proposedLevel" />
         <result column="experience_years" property="experienceYears" />
+        <result column="skill_requirement" property="skillRequirement" />
         <result column="position_responsibility" property="positionResponsibility" />
-        <result column="status" property="status" />
         <result column="approval_status" property="approvalStatus" />
         <result column="position_publish_status" property="positionPublishStatus" />
         <result column="approval_user_id" property="approvalUserId" />
         <result column="approval_user_name" property="approvalUserName" />
         <result column="approval_time" property="approvalTime" />
         <result column="approval_comment" property="approvalComment" />
+        <result column="current_approval_level" property="currentApprovalLevel" />
+        <result column="approval_level1_status" property="approvalLevel1Status" />
+        <result column="approval_level1_user_id" property="approvalLevel1UserId" />
+        <result column="approval_level1_user_name" property="approvalLevel1UserName" />
+        <result column="approval_level1_time" property="approvalLevel1Time" />
+        <result column="approval_level1_comment" property="approvalLevel1Comment" />
+        <result column="approval_level2_status" property="approvalLevel2Status" />
+        <result column="approval_level2_user_id" property="approvalLevel2UserId" />
+        <result column="approval_level2_user_name" property="approvalLevel2UserName" />
+        <result column="approval_level2_time" property="approvalLevel2Time" />
+        <result column="approval_level2_comment" property="approvalLevel2Comment" />
+        <result column="approval_level3_status" property="approvalLevel3Status" />
+        <result column="approval_level3_user_id" property="approvalLevel3UserId" />
+        <result column="approval_level3_user_name" property="approvalLevel3UserName" />
+        <result column="approval_level3_time" property="approvalLevel3Time" />
+        <result column="approval_level3_comment" property="approvalLevel3Comment" />
         <result column="create_time" property="createTime" />
         <result column="create_user_id" property="createUserId" />
         <result column="create_user_name" property="createUserName" />
@@ -32,24 +44,25 @@
         <result column="update_user_name" property="updateUserName" />
     </resultMap>
 
-    <insert id="insert" parameterType="com.hr.entity.RecruitmentRequest">
+    <insert id="insert" parameterType="com.hr.entity.RecruitmentRequest" useGeneratedKeys="true" keyProperty="recruitmentRequestId">
         INSERT INTO recruitment_request (
             request_title,
             total_recruitment_count,
             vacancy_count,
-            interviewer,
-            position_or_team,
-            team_manager,
-            category,
+            team,
             technical_platform,
-            type,
             supplement_count,
             urgent_requirement,
             proposed_level,
             experience_years,
+            skill_requirement,
             position_responsibility,
-            status,
+            approval_status,
             position_publish_status,
+            current_approval_level,
+            approval_level1_status,
+            approval_level2_status,
+            approval_level3_status,
             create_user_id,
             create_user_name,
             update_user_id,
@@ -58,19 +71,20 @@
             #{requestTitle},
             #{totalRecruitmentCount},
             #{vacancyCount},
-            #{interviewer},
-            #{positionOrTeam},
-            #{teamManager},
-            #{category},
+            #{team},
             #{technicalPlatform},
-            #{type},
             #{supplementCount},
             #{urgentRequirement},
             #{proposedLevel},
             #{experienceYears},
+            #{skillRequirement},
             #{positionResponsibility},
-            #{status},
+            #{approvalStatus},
             #{positionPublishStatus},
+            #{currentApprovalLevel},
+            #{approvalLevel1Status},
+            #{approvalLevel2Status},
+            #{approvalLevel3Status},
             #{createUserId},
             #{createUserName},
             #{updateUserId},
@@ -83,21 +97,32 @@
             request_title = #{requestTitle},
             total_recruitment_count = #{totalRecruitmentCount},
             vacancy_count = #{vacancyCount},
-            interviewer = #{interviewer},
-            position_or_team = #{positionOrTeam},
-            team_manager = #{teamManager},
-            category = #{category},
+            team = #{team},
             technical_platform = #{technicalPlatform},
-            type = #{type},
             supplement_count = #{supplementCount},
             urgent_requirement = #{urgentRequirement},
             proposed_level = #{proposedLevel},
             experience_years = #{experienceYears},
+            skill_requirement = #{skillRequirement},
             position_responsibility = #{positionResponsibility},
-            status = #{status},
+            approval_status = #{approvalStatus},
             position_publish_status = #{positionPublishStatus},
+            current_approval_level = #{currentApprovalLevel},
+            approval_level1_status = #{approvalLevel1Status},
+            approval_level1_user_id = #{approvalLevel1UserId},
+            approval_level1_user_name = #{approvalLevel1UserName},
+            approval_level1_comment = #{approvalLevel1Comment},
+            approval_level2_status = #{approvalLevel2Status},
+            approval_level2_user_id = #{approvalLevel2UserId},
+            approval_level2_user_name = #{approvalLevel2UserName},
+            approval_level2_comment = #{approvalLevel2Comment},
+            approval_level3_status = #{approvalLevel3Status},
+            approval_level3_user_id = #{approvalLevel3UserId},
+            approval_level3_user_name = #{approvalLevel3UserName},
+            approval_level3_comment = #{approvalLevel3Comment},
             update_user_id = #{updateUserId},
-            update_user_name = #{updateUserName}
+            update_user_name = #{updateUserName},
+            update_time = #{updateTime}
         WHERE recruitment_request_id = #{recruitmentRequestId}
     </update>
 
@@ -119,9 +144,31 @@
         WHERE recruitment_request_id = #{recruitmentRequestId}
     </update>
 
+    <update id="updateThreeLevelApprovalStatus" parameterType="map">
+        UPDATE recruitment_request SET
+            approval_status = #{approvalStatus},
+            current_approval_level = #{currentApprovalLevel},
+            approval_level1_status = #{approvalLevel1Status},
+            approval_level1_user_id = #{approvalLevel1UserId},
+            approval_level1_user_name = #{approvalLevel1UserName},
+            approval_level1_time = #{approvalLevel1Time},
+            approval_level1_comment = #{approvalLevel1Comment},
+            approval_level2_status = #{approvalLevel2Status},
+            approval_level2_user_id = #{approvalLevel2UserId},
+            approval_level2_user_name = #{approvalLevel2UserName},
+            approval_level2_time = #{approvalLevel2Time},
+            approval_level2_comment = #{approvalLevel2Comment},
+            approval_level3_status = #{approvalLevel3Status},
+            approval_level3_user_id = #{approvalLevel3UserId},
+            approval_level3_user_name = #{approvalLevel3UserName},
+            approval_level3_time = #{approvalLevel3Time},
+            approval_level3_comment = #{approvalLevel3Comment}
+        WHERE recruitment_request_id = #{recruitmentRequestId}
+    </update>
+
     <select id="selectPendingApproval" resultMap="BaseResultMap">
         SELECT * FROM recruitment_request 
-        WHERE approval_status = 'PENDING' AND status = 'SUBMITTED'
+        WHERE approval_status IN ('PENDING', '1STAPPROVED', '2NDAPPROVED')
         ORDER BY create_time DESC
     </select>
 

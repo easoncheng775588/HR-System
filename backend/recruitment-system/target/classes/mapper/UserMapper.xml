@@ -66,4 +66,8 @@
         SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
     </select>
     
+    <select id="getUsersByPosition" parameterType="String" resultMap="UserResultMap">
+        SELECT * FROM sys_user WHERE position = #{position} AND status = 'ACTIVE' ORDER BY create_time DESC
+    </select>
+    
 </mapper>

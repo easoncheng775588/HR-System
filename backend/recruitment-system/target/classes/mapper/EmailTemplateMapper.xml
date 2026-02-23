@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hr.mapper.EmailTemplateMapper">
+    <!-- 保存邮件模板 -->
+    <insert id="insert" parameterType="com.hr.entity.EmailTemplate">
+        INSERT INTO email_template (
+            template_name,
+            template_type,
+            subject,
+            content,
+            status,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{templateName},
+            #{templateType},
+            #{subject},
+            #{content},
+            #{status},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <!-- 更新邮件模板 -->
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.EmailTemplate">
+        UPDATE email_template SET
+            template_name = #{templateName},
+            template_type = #{templateType},
+            subject = #{subject},
+            content = #{content},
+            status = #{status},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE template_id = #{templateId}
+    </update>
+
+    <!-- 根据ID查询邮件模板 -->
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultType="com.hr.entity.EmailTemplate">
+        SELECT * FROM email_template WHERE template_id = #{id}
+    </select>
+
+    <!-- 查询所有邮件模板 -->
+    <select id="selectAll" resultType="com.hr.entity.EmailTemplate">
+        SELECT * FROM email_template ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据类型查询邮件模板 -->
+    <select id="selectByType" parameterType="java.lang.String" resultType="com.hr.entity.EmailTemplate">
+        SELECT * FROM email_template WHERE template_type = #{templateType} AND status = 'ACTIVE'
+    </select>
+
+    <!-- 根据状态查询邮件模板 -->
+    <select id="selectByStatus" parameterType="java.lang.String" resultType="com.hr.entity.EmailTemplate">
+        SELECT * FROM email_template WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+</mapper>

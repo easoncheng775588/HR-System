@@ -44,30 +44,43 @@ const MessageManagement = () => {
     }
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 20, color: '#001529' }}>消息管理</h2>
+    <div className="interview-scheduling">
+      <h2>消息管理</h2>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         {user && (user.userId === '1001' || user.userId === 1001) && (
           <Button 
             type="primary" 
             icon={<BellOutlined />}
             onClick={() => setModalVisible(true)}
-            style={{ background: '#1890ff', borderColor: '#1890ff' }}
+            size={isMobile ? 'small' : 'middle'}
           >
             发布消息
           </Button>
         )}
       </div>
 
-      <Card size="small">
+      <Card>
         <List
           dataSource={messages}
           loading={loading}
           renderItem={(item) => (
             <List.Item
               style={{
-                padding: '12px 0',
+                padding: '8px 0',
                 borderBottom: '1px solid #f0f0f0',
                 cursor: 'pointer',
               }}
@@ -76,7 +89,7 @@ const MessageManagement = () => {
                   <Button 
                     type="link" 
                     icon={<CheckOutlined />}
-                    size="small"
+                    size={isMobile ? 'small' : 'middle'}
                     onClick={() => handleMarkAsRead(item.id)}
                   >
                     标记已读
@@ -87,7 +100,7 @@ const MessageManagement = () => {
                     type="link" 
                     danger 
                     icon={<DeleteOutlined />}
-                    size="small"
+                    size={isMobile ? 'small' : 'middle'}
                     onClick={() => handleDelete(item.id)}
                   >
                     删除
@@ -135,6 +148,7 @@ const MessageManagement = () => {
         onOk={() => form.submit()}
         okText="发布"
         cancelText="取消"
+        width={isMobile ? '90%' : 600}
       >
         <Form
           form={form}
@@ -146,7 +160,7 @@ const MessageManagement = () => {
             label="消息标题"
             rules={[{ required: true, message: '请输入消息标题' }]}
           >
-            <Input placeholder="请输入消息标题" />
+            <Input placeholder="请输入消息标题" size={isMobile ? 'small' : 'middle'} />
           </Form.Item>
           
           <Form.Item
@@ -157,12 +171,13 @@ const MessageManagement = () => {
             <Input.TextArea 
               rows={4} 
               placeholder="请输入消息内容"
+              size={isMobile ? 'small' : 'middle'}
             />
           </Form.Item>
         </Form>
       </Modal>
 
-      <div style={{ textAlign: 'center', marginTop: 30, color: '#999', fontSize: 12 }}>
+      <div style={{ textAlign: 'center', marginTop: 8, color: '#999', fontSize: 10 }}>
         © 2024人力资源管理系统 - 消息管理模块
       </div>
     </div>
