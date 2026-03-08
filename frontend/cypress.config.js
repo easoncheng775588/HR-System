@@ -12,7 +12,7 @@ if (!fs.existsSync(tempCacheDir)) {
 module.exports = defineConfig({
   e2e: {
     baseUrl: 'http://localhost:5173',
-    setupNodeEvents(on, config) {
+    setupNodeEvents(_on, _config) {
       // implement node event listeners here
     },
   },

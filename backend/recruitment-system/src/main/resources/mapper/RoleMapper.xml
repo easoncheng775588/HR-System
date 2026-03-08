@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.RoleMapper">
+
+    <resultMap id="RoleResultMap" type="com.hr.entity.Role">
+        <id property="roleId" column="role_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleCode" column="role_code"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+        <result property="memberCount" column="member_count"/>
+        <result property="memberNames" column="member_names"/>
+    </resultMap>
+
+    <select id="getAllRoles" resultMap="RoleResultMap">
+        SELECT
+            r.*,
+            COUNT(DISTINCT ur.user_id) AS member_count,
+            GROUP_CONCAT(DISTINCT u.real_name ORDER BY u.real_name SEPARATOR ', ') AS member_names
+        FROM sys_role r
+        LEFT JOIN sys_user_role ur ON ur.role_id = r.role_id
+        LEFT JOIN sys_user u ON u.user_id = ur.user_id
+        GROUP BY r.role_id
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="getRoleById" parameterType="Long" resultMap="RoleResultMap">
+        SELECT
+            r.*,
+            COUNT(DISTINCT ur.user_id) AS member_count,
+            GROUP_CONCAT(DISTINCT u.real_name ORDER BY u.real_name SEPARATOR ', ') AS member_names
+        FROM sys_role r
+        LEFT JOIN sys_user_role ur ON ur.role_id = r.role_id
+        LEFT JOIN sys_user u ON u.user_id = ur.user_id
+        WHERE r.role_id = #{roleId}
+        GROUP BY r.role_id
+    </select>
+
+    <insert id="insertRole" parameterType="com.hr.entity.Role" useGeneratedKeys="true" keyProperty="roleId">
+        INSERT INTO sys_role (
+            role_name, role_code, description, status,
+            create_time, create_user_id, create_user_name,
+            update_time, update_user_id, update_user_name
+        ) VALUES (
+            #{roleName}, #{roleCode}, #{description}, #{status},
+            #{createTime}, #{createUserId}, #{createUserName},
+            #{updateTime}, #{updateUserId}, #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateRole" parameterType="com.hr.entity.Role">
+        UPDATE sys_role
+        SET role_name = #{roleName},
+            role_code = #{roleCode},
+            description = #{description},
+            status = #{status},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE role_id = #{roleId}
+    </update>
+
+    <delete id="deleteRole" parameterType="Long">
+        DELETE FROM sys_role WHERE role_id = #{roleId}
+    </delete>
+
+    <delete id="deleteUserRolesByRoleId" parameterType="Long">
+        DELETE FROM sys_user_role WHERE role_id = #{roleId}
+    </delete>
+
+    <delete id="deleteRolePermissionsByRoleId" parameterType="Long">
+        DELETE FROM sys_role_permission WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="batchInsertUserRoles">
+        INSERT INTO sys_user_role (user_id, role_id, create_user_id, create_user_name)
+        VALUES
+        <foreach collection="userIds" item="userId" separator=",">
+            (#{userId}, #{roleId}, #{createUserId}, #{createUserName})
+        </foreach>
+    </insert>
+
+    <select id="getUserIdsByRoleId" parameterType="Long" resultType="String">
+        SELECT user_id FROM sys_user_role WHERE role_id = #{roleId}
+    </select>
+
+    <select id="countByRoleName" resultType="Integer">
+        SELECT COUNT(1)
+        FROM sys_role
+        WHERE role_name = #{roleName}
+        <if test="excludeRoleId != null">
+            AND role_id != #{excludeRoleId}
+        </if>
+    </select>
+
+</mapper>

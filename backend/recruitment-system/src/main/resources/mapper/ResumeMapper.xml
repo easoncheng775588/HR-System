@@ -4,14 +4,48 @@
     <resultMap id="BaseResultMap" type="com.hr.entity.Resume">
         <id column="resume_id" property="resumeId" />
         <result column="recruitment_request_id" property="recruitmentRequestId" />
+        <result column="related_request_ids" property="relatedRequestIds" />
+        <result column="related_request_names" property="relatedRequestNames" />
         <result column="job_title" property="jobTitle" />
         <result column="applicant_name" property="applicantName" />
+        <result column="candidate_name" property="candidateName" />
+        <result column="gender" property="gender" />
+        <result column="birth_date" property="birthDate" />
         <result column="contact_phone" property="contactPhone" />
         <result column="email" property="email" />
         <result column="education" property="education" />
+        <result column="first_degree" property="firstDegree" />
+        <result column="first_degree_graduate_year" property="firstDegreeGraduateYear" />
+        <result column="first_degree_school" property="firstDegreeSchool" />
+        <result column="first_degree_major" property="firstDegreeMajor" />
+        <result column="first_degree_full_time" property="firstDegreeFullTime" />
+        <result column="highest_degree" property="highestDegree" />
+        <result column="highest_degree_major" property="highestDegreeMajor" />
+        <result column="highest_degree_graduate_year" property="highestDegreeGraduateYear" />
+        <result column="highest_degree_school" property="highestDegreeSchool" />
+        <result column="highest_degree_full_time" property="highestDegreeFullTime" />
+        <result column="english_level" property="englishLevel" />
+        <result column="candidate_platform" property="candidatePlatform" />
+        <result column="applied_category" property="appliedCategory" />
+        <result column="applied_level" property="appliedLevel" />
+        <result column="it_work_years" property="itWorkYears" />
+        <result column="it_internship_years" property="itInternshipYears" />
+        <result column="latest_company" property="latestCompany" />
+        <result column="interview_available_start_time" property="interviewAvailableStartTime" />
+        <result column="interview_available_end_time" property="interviewAvailableEndTime" />
+        <result column="in_shenzhen" property="inShenzhen" />
+        <result column="onboard_date" property="onboardDate" />
+        <result column="supplier_initial_interview" property="supplierInitialInterview" />
+        <result column="written_test_score" property="writtenTestScore" />
+        <result column="supplier_interview_comment" property="supplierInterviewComment" />
         <result column="work_experience" property="workExperience" />
         <result column="resume_file_name" property="resumeFileName" />
         <result column="resume_file_url" property="resumeFileUrl" />
+        <result column="attachment_names" property="attachmentNames" />
+        <result column="attachment_urls" property="attachmentUrls" />
+        <result column="remark" property="remark" />
+        <result column="supplier_name" property="supplierName" />
+        <result column="supplier_recommend_date" property="supplierRecommendDate" />
         <result column="status" property="status" />
         <result column="interview_status" property="interviewStatus" />
         <result column="create_time" property="createTime" />
@@ -22,17 +56,51 @@
         <result column="update_user_name" property="updateUserName" />
     </resultMap>
 
-    <insert id="insert" parameterType="com.hr.entity.Resume">
+    <insert id="insert" parameterType="com.hr.entity.Resume" useGeneratedKeys="true" keyProperty="resumeId" keyColumn="resume_id">
         INSERT INTO resume (
             recruitment_request_id,
+            related_request_ids,
+            related_request_names,
             job_title,
             applicant_name,
+            candidate_name,
+            gender,
+            birth_date,
             contact_phone,
             email,
             education,
+            first_degree,
+            first_degree_graduate_year,
+            first_degree_school,
+            first_degree_major,
+            first_degree_full_time,
+            highest_degree,
+            highest_degree_major,
+            highest_degree_graduate_year,
+            highest_degree_school,
+            highest_degree_full_time,
+            english_level,
+            candidate_platform,
+            applied_category,
+            applied_level,
+            it_work_years,
+            it_internship_years,
+            latest_company,
+            interview_available_start_time,
+            interview_available_end_time,
+            in_shenzhen,
+            onboard_date,
+            supplier_initial_interview,
+            written_test_score,
+            supplier_interview_comment,
             work_experience,
             resume_file_name,
             resume_file_url,
+            attachment_names,
+            attachment_urls,
+            remark,
+            supplier_name,
+            supplier_recommend_date,
             status,
             interview_status,
             create_time,
@@ -43,14 +111,48 @@
             update_user_name
         ) VALUES (
             #{recruitmentRequestId},
+            #{relatedRequestIds},
+            #{relatedRequestNames},
             #{jobTitle},
             #{applicantName},
+            #{candidateName},
+            #{gender},
+            #{birthDate},
             #{contactPhone},
             #{email},
             #{education},
+            #{firstDegree},
+            #{firstDegreeGraduateYear},
+            #{firstDegreeSchool},
+            #{firstDegreeMajor},
+            #{firstDegreeFullTime},
+            #{highestDegree},
+            #{highestDegreeMajor},
+            #{highestDegreeGraduateYear},
+            #{highestDegreeSchool},
+            #{highestDegreeFullTime},
+            #{englishLevel},
+            #{candidatePlatform},
+            #{appliedCategory},
+            #{appliedLevel},
+            #{itWorkYears},
+            #{itInternshipYears},
+            #{latestCompany},
+            #{interviewAvailableStartTime},
+            #{interviewAvailableEndTime},
+            #{inShenzhen},
+            #{onboardDate},
+            #{supplierInitialInterview},
+            #{writtenTestScore},
+            #{supplierInterviewComment},
             #{workExperience},
             #{resumeFileName},
             #{resumeFileUrl},
+            #{attachmentNames},
+            #{attachmentUrls},
+            #{remark},
+            #{supplierName},
+            #{supplierRecommendDate},
             #{status},
             #{interviewStatus},
             NOW(),
@@ -65,14 +167,48 @@
     <update id="updateByPrimaryKey" parameterType="com.hr.entity.Resume">
         UPDATE resume SET
             recruitment_request_id = #{recruitmentRequestId},
+            related_request_ids = #{relatedRequestIds},
+            related_request_names = #{relatedRequestNames},
             job_title = #{jobTitle},
             applicant_name = #{applicantName},
+            candidate_name = #{candidateName},
+            gender = #{gender},
+            birth_date = #{birthDate},
             contact_phone = #{contactPhone},
             email = #{email},
             education = #{education},
+            first_degree = #{firstDegree},
+            first_degree_graduate_year = #{firstDegreeGraduateYear},
+            first_degree_school = #{firstDegreeSchool},
+            first_degree_major = #{firstDegreeMajor},
+            first_degree_full_time = #{firstDegreeFullTime},
+            highest_degree = #{highestDegree},
+            highest_degree_major = #{highestDegreeMajor},
+            highest_degree_graduate_year = #{highestDegreeGraduateYear},
+            highest_degree_school = #{highestDegreeSchool},
+            highest_degree_full_time = #{highestDegreeFullTime},
+            english_level = #{englishLevel},
+            candidate_platform = #{candidatePlatform},
+            applied_category = #{appliedCategory},
+            applied_level = #{appliedLevel},
+            it_work_years = #{itWorkYears},
+            it_internship_years = #{itInternshipYears},
+            latest_company = #{latestCompany},
+            interview_available_start_time = #{interviewAvailableStartTime},
+            interview_available_end_time = #{interviewAvailableEndTime},
+            in_shenzhen = #{inShenzhen},
+            onboard_date = #{onboardDate},
+            supplier_initial_interview = #{supplierInitialInterview},
+            written_test_score = #{writtenTestScore},
+            supplier_interview_comment = #{supplierInterviewComment},
             work_experience = #{workExperience},
             resume_file_name = #{resumeFileName},
             resume_file_url = #{resumeFileUrl},
+            attachment_names = #{attachmentNames},
+            attachment_urls = #{attachmentUrls},
+            remark = #{remark},
+            supplier_name = #{supplierName},
+            supplier_recommend_date = #{supplierRecommendDate},
             status = #{status},
             interview_status = #{interviewStatus},
             update_time = NOW(),
@@ -95,5 +231,24 @@
 
     <select id="selectByStatus" parameterType="string" resultMap="BaseResultMap">
         SELECT * FROM resume WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        DELETE FROM resume WHERE resume_id = #{id}
+    </delete>
+
+    <select id="selectRequirementOptions" resultType="map">
+        SELECT recruitment_request_id AS value, request_title AS label
+        FROM recruitment_request
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectSupplierNameByUserId" parameterType="string" resultType="string">
+        SELECT s.supplier_name
+        FROM sys_supplier s
+        INNER JOIN sys_supplier_hr sh ON sh.supplier_id = s.supplier_id
+        WHERE sh.user_id = #{userId}
+        ORDER BY s.supplier_id DESC
+        LIMIT 1
     </select>
 </mapper>

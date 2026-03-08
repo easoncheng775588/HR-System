@@ -8,6 +8,13 @@ class Config:
     # 前端UI配置
     FRONTEND_URL = "http://localhost:5173"
     
+    # 数据库配置
+    DB_HOST = "localhost"
+    DB_PORT = 3306
+    DB_USER = "root"
+    DB_PASSWORD = "p@ssw0rd"
+    DB_NAME = "hr_system"
+    
     # 测试用户配置
     TEST_USERS = {
         "admin": {
@@ -56,7 +63,8 @@ class Config:
     
     # 测试超时配置
     API_TIMEOUT = 30  # API请求超时时间（秒）
-    UI_TIMEOUT = 60   # UI操作超时时间（秒）
+    UI_TIMEOUT = 15   # UI操作超时时间（秒）
+    UI_SHORT_TIMEOUT = 5  # UI快速操作超时时间（秒）
     
     # 测试报告配置
     REPORT_DIR = "reports"

@@ -14,12 +14,15 @@ public class RecruitmentRequest {
     private Integer vacancyCount;
     private String team;
     private String technicalPlatform;
+    private String category;
     private Integer supplementCount;
     private String urgentRequirement;
     private String proposedLevel;
     private String experienceYears;
     private String skillRequirement;
     private String positionResponsibility;
+    private String interviewerId;
+    private String interviewerName;
     private String approvalStatus;
     private String positionPublishStatus;
     private String approvalUserId;
@@ -98,6 +101,14 @@ public class RecruitmentRequest {
         this.technicalPlatform = technicalPlatform;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
     public Integer getSupplementCount() {
         return supplementCount;
     }
@@ -144,6 +155,22 @@ public class RecruitmentRequest {
 
     public void setPositionResponsibility(String positionResponsibility) {
         this.positionResponsibility = positionResponsibility;
+    }
+
+    public String getInterviewerId() {
+        return interviewerId;
+    }
+
+    public void setInterviewerId(String interviewerId) {
+        this.interviewerId = interviewerId;
+    }
+
+    public String getInterviewerName() {
+        return interviewerName;
+    }
+
+    public void setInterviewerName(String interviewerName) {
+        this.interviewerName = interviewerName;
     }
 
     public String getApprovalStatus() {

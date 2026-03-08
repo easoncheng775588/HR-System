@@ -2,8 +2,11 @@ package com.hr.controller;
 
 import com.hr.entity.User;
 import com.hr.service.UserService;
+import com.hr.common.ErrorMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.Map;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class UserController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     
     @Autowired
     private UserService userService;
@@ -27,7 +32,7 @@ public class UserController {
             result.put("body", users);
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取用户列表失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("user.getListFailed", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -43,7 +48,7 @@ public class UserController {
             result.put("body", user);
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取用户信息失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("user.getInfoFailed", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -60,12 +65,12 @@ public class UserController {
                 result.put("body", "用户创建成功");
             } else {
                 result.put("returnCode", "ERR0002");
-                result.put("errorMsg", "用户创建失败");
+                result.put("errorMsg", ErrorMessage.get("user.createFailed"));
                 result.put("body", null);
             }
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "用户创建失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("user.createFailedException", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -83,12 +88,12 @@ public class UserController {
                 result.put("body", "用户更新成功");
             } else {
                 result.put("returnCode", "ERR0002");
-                result.put("errorMsg", "用户更新失败");
+                result.put("errorMsg", ErrorMessage.get("user.updateFailed"));
                 result.put("body", null);
             }
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "用户更新失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("user.updateFailedException", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -105,12 +110,12 @@ public class UserController {
                 result.put("body", "用户删除成功");
             } else {
                 result.put("returnCode", "ERR0002");
-                result.put("errorMsg", "用户删除失败");
+                result.put("errorMsg", ErrorMessage.get("user.deleteFailed"));
                 result.put("body", null);
             }
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "用户删除失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("user.deleteFailedException", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -120,20 +125,36 @@ public class UserController {
     public Map<String, Object> getUsersByPosition(@PathVariable String position) {
         Map<String, Object> result = new HashMap<>();
         try {
-            System.out.println("接收到的position参数：" + position);
+            logger.debug("接收到的position参数：{}", position);
             List<User> users = userService.getUsersByPosition(position);
-            System.out.println("查询到的用户数量：" + users.size());
+            logger.debug("查询到的用户数量：{}", users.size());
             for (User user : users) {
-                System.out.println("用户：" + user.getUserId() + "，姓名：" + user.getRealName() + "，岗位：" + user.getPosition());
+                logger.debug("用户：{}，姓名：{}，岗位：{}", user.getUserId(), user.getRealName(), user.getPosition());
             }
             result.put("returnCode", "SUC0000");
             result.put("errorMsg", "");
             result.put("body", users);
         } catch (Exception e) {
-            System.out.println("获取用户列表失败：" + e.getMessage());
-            e.printStackTrace();
+            logger.debug("获取用户列表失败：{}", e.getMessage());
+            logger.error("获取用户列表失败", e);
             result.put("returnCode", "ERR0001");
             result.put("errorMsg", "获取用户列表失败：" + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
+
+    @GetMapping("/search")
+    public Map<String, Object> searchUsers(@RequestParam(name = "keyword", required = false) String keyword) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            List<User> users = userService.searchActiveUsers(keyword);
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", users);
+        } catch (Exception e) {
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "搜索用户失败: " + e.getMessage());
             result.put("body", null);
         }
         return result;

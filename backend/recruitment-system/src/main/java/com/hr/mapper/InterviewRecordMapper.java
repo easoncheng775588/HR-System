@@ -58,4 +58,18 @@ public interface InterviewRecordMapper {
      * @return 面试记录列表
      */
     List<InterviewRecord> selectByInterviewResult(String interviewResult);
+
+    /**
+     * 统计简历的面试次数
+     * @param resumeId 简历ID
+     * @return 面试次数
+     */
+    int countByResumeId(Long resumeId);
+
+    /**
+     * 根据ID删除面试记录
+     * @param id 面试记录ID
+     * @return 影响的行数
+     */
+    int deleteByPrimaryKey(Long id);
 }

@@ -69,5 +69,27 @@
     <select id="getUsersByPosition" parameterType="String" resultMap="UserResultMap">
         SELECT * FROM sys_user WHERE position = #{position} AND status = 'ACTIVE' ORDER BY create_time DESC
     </select>
+
+    <select id="searchActiveUsers" parameterType="String" resultMap="UserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE status = 'ACTIVE'
+          AND (
+            username LIKE CONCAT('%', #{keyword}, '%')
+            OR real_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        ORDER BY create_time DESC
+        LIMIT 20
+    </select>
+
+    <select id="getActiveTeamManagerByDepartment" parameterType="String" resultMap="UserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE status = 'ACTIVE'
+          AND position = '团队经理'
+          AND department = #{department}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
     
 </mapper>

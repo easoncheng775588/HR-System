@@ -32,6 +32,9 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public int createUser(User user) {
+        if (user.getUserId() == null || user.getUserId().isEmpty()) {
+            user.setUserId(generateUserId());
+        }
         if (user.getCreateTime() == null) {
             user.setCreateTime(new Date());
         }
@@ -54,6 +57,10 @@ public class UserServiceImpl implements UserService {
             user.setStatus("ACTIVE");
         }
         return userMapper.insertUser(user);
+    }
+    
+    private String generateUserId() {
+        return String.valueOf(System.currentTimeMillis());
     }
     
     @Override
@@ -83,5 +90,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getUsersByPosition(String position) {
         return userMapper.getUsersByPosition(position);
+    }
+
+    @Override
+    public List<User> searchActiveUsers(String keyword) {
+        return userMapper.searchActiveUsers(keyword == null ? "" : keyword.trim());
+    }
+
+    @Override
+    public User getActiveTeamManagerByDepartment(String department) {
+        return userMapper.getActiveTeamManagerByDepartment(department);
     }
 }

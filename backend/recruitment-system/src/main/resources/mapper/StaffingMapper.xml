@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.StaffingMapper">
+
+    <resultMap id="StaffingResultMap" type="com.hr.entity.Staffing">
+        <id property="staffingId" column="staffing_id"/>
+        <result property="orgUnitName" column="org_unit_name"/>
+        <result property="totalHeadcount" column="total_headcount"/>
+        <result property="vacancyHeadcount" column="vacancy_headcount"/>
+        <result property="outsourcingHeadcount" column="outsourcing_headcount"/>
+        <result property="employeeHeadcount" column="employee_headcount"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <select id="getAllStaffings" resultMap="StaffingResultMap">
+        SELECT * FROM org_staffing ORDER BY create_time DESC
+    </select>
+
+    <select id="getStaffingById" parameterType="Long" resultMap="StaffingResultMap">
+        SELECT * FROM org_staffing WHERE staffing_id = #{staffingId}
+    </select>
+
+    <select id="getStaffingByOrgUnitName" parameterType="String" resultMap="StaffingResultMap">
+        SELECT * FROM org_staffing WHERE org_unit_name = #{orgUnitName}
+    </select>
+
+    <insert id="insertStaffing" parameterType="com.hr.entity.Staffing" useGeneratedKeys="true" keyProperty="staffingId">
+        INSERT INTO org_staffing (
+            org_unit_name, total_headcount, vacancy_headcount, outsourcing_headcount, employee_headcount,
+            create_time, create_user_id, create_user_name, update_time, update_user_id, update_user_name
+        ) VALUES (
+            #{orgUnitName}, #{totalHeadcount}, #{vacancyHeadcount}, #{outsourcingHeadcount}, #{employeeHeadcount},
+            #{createTime}, #{createUserId}, #{createUserName}, #{updateTime}, #{updateUserId}, #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateStaffing" parameterType="com.hr.entity.Staffing">
+        UPDATE org_staffing
+        SET org_unit_name = #{orgUnitName},
+            total_headcount = #{totalHeadcount},
+            vacancy_headcount = #{vacancyHeadcount},
+            outsourcing_headcount = #{outsourcingHeadcount},
+            employee_headcount = #{employeeHeadcount},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE staffing_id = #{staffingId}
+    </update>
+
+    <delete id="deleteStaffing" parameterType="Long">
+        DELETE FROM org_staffing WHERE staffing_id = #{staffingId}
+    </delete>
+
+    <select id="countByOrgUnitName" resultType="Integer">
+        SELECT COUNT(1)
+        FROM org_staffing
+        WHERE org_unit_name = #{orgUnitName}
+        <if test="excludeStaffingId != null">
+            AND staffing_id != #{excludeStaffingId}
+        </if>
+    </select>
+
+</mapper>
+

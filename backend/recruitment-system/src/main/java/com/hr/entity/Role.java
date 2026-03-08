@@ -1,6 +1,7 @@
 package com.hr.entity;
 
 import java.util.Date;
+import java.util.List;
 
 public class Role {
     private Long roleId;
@@ -14,6 +15,9 @@ public class Role {
     private Date updateTime;
     private String updateUserId;
     private String updateUserName;
+    private Integer memberCount;
+    private String memberNames;
+    private List<String> userIds;
 
     public Long getRoleId() {
         return roleId;
@@ -101,5 +105,29 @@ public class Role {
 
     public void setUpdateUserName(String updateUserName) {
         this.updateUserName = updateUserName;
+    }
+
+    public Integer getMemberCount() {
+        return memberCount;
+    }
+
+    public void setMemberCount(Integer memberCount) {
+        this.memberCount = memberCount;
+    }
+
+    public String getMemberNames() {
+        return memberNames;
+    }
+
+    public void setMemberNames(String memberNames) {
+        this.memberNames = memberNames;
+    }
+
+    public List<String> getUserIds() {
+        return userIds;
+    }
+
+    public void setUserIds(List<String> userIds) {
+        this.userIds = userIds;
     }
 }

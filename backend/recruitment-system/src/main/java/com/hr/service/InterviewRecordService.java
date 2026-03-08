@@ -54,4 +54,17 @@ public interface InterviewRecordService {
      * @return 面试记录对象
      */
     InterviewRecord getByResumeIdAndRound(Long resumeId, String interviewRound);
+
+    /**
+     * 统计简历的面试次数
+     * @param resumeId 简历ID
+     * @return 面试次数
+     */
+    int countByResumeId(Long resumeId);
+
+    /**
+     * 根据ID删除面试记录
+     * @param id 面试记录ID
+     */
+    void deleteById(Long id);
 }

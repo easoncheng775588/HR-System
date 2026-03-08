@@ -37,4 +37,11 @@
         WHERE recruitment_request_id = #{recruitmentRequestId}
         ORDER BY approval_level ASC, approval_time ASC
     </select>
+
+    <select id="selectByApproverId" parameterType="string" resultMap="BaseResultMap">
+        SELECT *
+        FROM approval_history
+        WHERE approver_id = #{approverId}
+        ORDER BY approval_time DESC
+    </select>
 </mapper>

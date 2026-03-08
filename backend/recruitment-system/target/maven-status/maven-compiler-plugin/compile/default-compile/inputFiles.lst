@@ -1,50 +1,95 @@
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/config/WebMvcConfig.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/Role.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/InterviewRecordMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/EmailTemplateService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/RecruitmentRequest.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/EmailTemplateMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/UserController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/FileUploadController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/InterviewRecordServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/config/DatabaseInitializer.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/InterviewRecordController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/UserMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/ConfigServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/Resume.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/ApprovalHistory.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/UserService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/ConfigService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/Permission.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/OfferRecordMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/AuthController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/utils/EmailSender.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/ResumeService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/SysParamService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/RecruitmentSystemApplication.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/InterviewRecordService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/OfferRecord.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/EmailTemplateController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/InterviewRecord.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/EmailTemplate.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/config/CacheControlInterceptor.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/RecruitmentRequestController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/SysParam.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/OfferRecordService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/ApprovalHistoryMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/OfferRecordServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/ResumeMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/EmailTemplateServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/SysParamMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/OfferRecordController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/config/Constants.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/mapper/RecruitmentRequestMapper.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/config/DynamicDataSourceConfig.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/ResumeController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/UserServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/entity/User.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/RecruitmentRequestService.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/RecruitmentRequestServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/controller/SysParamController.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/ResumeServiceImpl.java
-/Users/silver/Vibe Coding/HR System/backend/recruitment-system/src/main/java/com/hr/service/impl/SysParamServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\common\BusinessException.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\SysParamController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowProcessedItem.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\SupplierService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowDetail.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\ResumeMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\EmailTemplateServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\FileUploadController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\WorkflowCenterService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\ResumeServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\WebMvcConfig.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\SysParamMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\ConfigServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\SysParamServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\common\GlobalExceptionHandler.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\ResumeService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\common\ErrorMessage.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\OfferRecordServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\EmailTemplate.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\RecruitmentRequest.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\UserMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Staffing.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\UserService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowTodoItem.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\RoleMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\RecruitmentRequestService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowApprovalActionRequest.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\WorkflowNodeConfigMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\User.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Permission.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\utils\EmailSender.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\DynamicDataSourceConfig.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\SupplierServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\OrgUnit.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\MessageMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowInitiatedItem.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\OrgUnitService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\EmailTemplateService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Supplier.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\InterviewRecordServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\OrgUnitController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\RecruitmentRequestController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Role.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\StaffingService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\RecruitmentRequestSchemaInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\InterviewRecordController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\RoleServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\OrgStaffingDatabaseInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\SupplierController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\MessageService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\OfferRecordController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\EmailTemplateController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\EmailTemplateMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\CacheControlInterceptor.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\WorkflowEngineDatabaseInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\ApprovalHistoryMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\DatabaseInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\InterviewRecord.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\RoleController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\OrgUnitMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\SupplierDatabaseInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Message.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\InterviewRecordMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\SupplierMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\ResumeSchemaInitializer.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\InterviewRecordService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\WorkflowCenterController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\OfferRecordService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\ApprovalHistory.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\ConfigService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\RecruitmentRequestServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\Resume.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\UserServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\WorkflowProcessLogMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\RecruitmentRequestMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowProcessLog.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\AuthController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\StaffingController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\StaffingMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\RecruitmentSystemApplication.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\MessageController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\OfferRecord.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\mapper\OfferRecordMapper.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\MessageServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\UserController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\RoleService.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\OrgUnitServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\StaffingServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\controller\ResumeController.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\common\Response.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\SysParam.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\config\Constants.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\entity\WorkflowNodeConfig.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\impl\WorkflowCenterServiceImpl.java
+F:\codex\HR System\backend\recruitment-system\src\main\java\com\hr\service\SysParamService.java

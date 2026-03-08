@@ -4,6 +4,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import java.util.UUID;
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class FileUploadController {
+
+    private static final Logger logger = LoggerFactory.getLogger(FileUploadController.class);
 
     // 上传文件的保存路径
     private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
@@ -40,8 +44,8 @@ public class FileUploadController {
             File uploadDir = new File(UPLOAD_DIR);
             if (!uploadDir.exists()) {
                 boolean created = uploadDir.mkdirs();
-                System.out.println("Upload directory created: " + created);
-                System.out.println("Upload directory path: " + uploadDir.getAbsolutePath());
+                logger.debug("Upload directory created: {}", created);
+                logger.debug("Upload directory path: {}", uploadDir.getAbsolutePath());
             }
             if (!uploadDir.exists()) {
                 response.put("returnCode", "ERR0000");

@@ -36,6 +36,10 @@ public class InterviewRecordController {
             response.put("returnCode", "SUC0000");
             response.put("errorMsg", "");
             response.put("body", savedRecord);
+        } catch (RuntimeException e) {
+            response.put("returnCode", "ERR0001");
+            response.put("errorMsg", e.getMessage());
+            response.put("body", null);
         } catch (Exception e) {
             response.put("returnCode", "ERR0000");
             response.put("errorMsg", "保存面试记录失败：" + e.getMessage());
@@ -171,6 +175,27 @@ public class InterviewRecordController {
             response.put("returnCode", "ERR0000");
             response.put("errorMsg", "获取待面试数量失败：" + e.getMessage());
             response.put("body", 0);
+        }
+        return response;
+    }
+
+    /**
+     * 根据ID删除面试记录
+     * @param id 面试记录ID
+     * @return 响应结果
+     */
+    @DeleteMapping("/{id}")
+    public Map<String, Object> deleteInterviewRecord(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            interviewRecordService.deleteById(id);
+            response.put("returnCode", "SUC0000");
+            response.put("errorMsg", "");
+            response.put("body", null);
+        } catch (Exception e) {
+            response.put("returnCode", "ERR0000");
+            response.put("errorMsg", "删除面试记录失败：" + e.getMessage());
+            response.put("body", null);
         }
         return response;
     }

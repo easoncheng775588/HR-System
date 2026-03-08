@@ -21,4 +21,8 @@ public interface UserService {
     List<String> getRoleIdsByUserId(String userId);
     
     List<User> getUsersByPosition(String position);
+
+    List<User> searchActiveUsers(String keyword);
+
+    User getActiveTeamManagerByDepartment(String department);
 }

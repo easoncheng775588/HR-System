@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.MessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.hr.entity.Message">
+        <id column="message_id" property="messageId" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="priority" property="priority" jdbcType="VARCHAR"/>
+        <result column="target_user_id" property="targetUserId" jdbcType="VARCHAR"/>
+        <result column="target_user_role" property="targetUserRole" jdbcType="VARCHAR"/>
+        <result column="create_user_id" property="createUserId" jdbcType="VARCHAR"/>
+        <result column="create_user_name" property="createUserName" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="read_time" property="readTime" jdbcType="TIMESTAMP"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        title, content, type, status, priority, target_user_id, target_user_role,
+        create_user_id, create_user_name, create_time, read_time, is_deleted
+    </sql>
+
+    <insert id="insert" parameterType="com.hr.entity.Message" useGeneratedKeys="true" keyProperty="messageId">
+        INSERT INTO message
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="content != null">content,</if>
+            <if test="type != null">type,</if>
+            <if test="status != null">status,</if>
+            <if test="priority != null">priority,</if>
+            <if test="targetUserId != null">target_user_id,</if>
+            <if test="targetUserRole != null">target_user_role,</if>
+            <if test="createUserId != null">create_user_id,</if>
+            <if test="createUserName != null">create_user_name,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="readTime != null">read_time,</if>
+            <if test="isDeleted != null">is_deleted,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="type != null">#{type},</if>
+            <if test="status != null">#{status},</if>
+            <if test="priority != null">#{priority},</if>
+            <if test="targetUserId != null">#{targetUserId},</if>
+            <if test="targetUserRole != null">#{targetUserRole},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createUserName != null">#{createUserName},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="readTime != null">#{readTime},</if>
+            <if test="isDeleted != null">#{isDeleted},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.Message">
+        UPDATE message
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="targetUserId != null">target_user_id = #{targetUserId},</if>
+            <if test="targetUserRole != null">target_user_role = #{targetUserRole},</if>
+            <if test="readTime != null">read_time = #{readTime},</if>
+            <if test="isDeleted != null">is_deleted = #{isDeleted},</if>
+        </set>
+        WHERE message_id = #{messageId}
+    </update>
+
+    <update id="updateReadTime" parameterType="java.lang.Long">
+        UPDATE message
+        SET read_time = NOW()
+        WHERE message_id = #{messageId}
+    </update>
+
+    <update id="batchUpdateReadTime" parameterType="java.util.List">
+        UPDATE message
+        SET read_time = NOW()
+        WHERE message_id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="softDelete" parameterType="java.lang.Long">
+        UPDATE message
+        SET is_deleted = 1
+        WHERE message_id = #{messageId}
+    </update>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        DELETE FROM message
+        WHERE message_id = #{messageId}
+    </delete>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE message_id = #{messageId}
+        AND is_deleted = 0
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByTargetUserId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE target_user_id = #{targetUserId}
+        AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByTargetUserRole" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE target_user_role = #{targetUserRole}
+        AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE status = #{status}
+        AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByType" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM message
+        WHERE type = #{type}
+        AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="countByTargetUserIdAndStatus" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM message
+        WHERE target_user_id = #{targetUserId}
+        AND status = #{status}
+        AND is_deleted = 0
+    </select>
+
+</mapper>

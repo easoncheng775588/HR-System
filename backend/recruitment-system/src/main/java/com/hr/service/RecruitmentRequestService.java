@@ -51,8 +51,9 @@ public interface RecruitmentRequestService {
      * 三级审批通过
      * @param id 申请ID
      * @param params 包含审批信息的参数
+     * @return 更新后的申请
      */
-    void threeLevelApproveRequest(Long id, Map<String, Object> params);
+    RecruitmentRequest threeLevelApproveRequest(Long id, Map<String, Object> params);
 
     /**
      * 三级审批拒绝

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.SupplierMapper">
+
+    <resultMap id="SupplierResultMap" type="com.hr.entity.Supplier">
+        <id property="supplierId" column="supplier_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+        <result property="hrCount" column="hr_count"/>
+        <result property="hrNames" column="hr_names"/>
+    </resultMap>
+
+    <select id="getAllSuppliers" resultMap="SupplierResultMap">
+        SELECT
+            s.*,
+            COUNT(DISTINCT sh.user_id) AS hr_count,
+            GROUP_CONCAT(DISTINCT u.real_name ORDER BY u.real_name SEPARATOR ', ') AS hr_names
+        FROM sys_supplier s
+        LEFT JOIN sys_supplier_hr sh ON sh.supplier_id = s.supplier_id
+        LEFT JOIN sys_user u ON u.user_id = sh.user_id
+        GROUP BY s.supplier_id
+        ORDER BY s.create_time DESC
+    </select>
+
+    <select id="getSupplierById" parameterType="Long" resultMap="SupplierResultMap">
+        SELECT
+            s.*,
+            COUNT(DISTINCT sh.user_id) AS hr_count,
+            GROUP_CONCAT(DISTINCT u.real_name ORDER BY u.real_name SEPARATOR ', ') AS hr_names
+        FROM sys_supplier s
+        LEFT JOIN sys_supplier_hr sh ON sh.supplier_id = s.supplier_id
+        LEFT JOIN sys_user u ON u.user_id = sh.user_id
+        WHERE s.supplier_id = #{supplierId}
+        GROUP BY s.supplier_id
+    </select>
+
+    <insert id="insertSupplier" parameterType="com.hr.entity.Supplier" useGeneratedKeys="true" keyProperty="supplierId">
+        INSERT INTO sys_supplier (
+            supplier_name, status,
+            create_time, create_user_id, create_user_name,
+            update_time, update_user_id, update_user_name
+        ) VALUES (
+            #{supplierName}, #{status},
+            #{createTime}, #{createUserId}, #{createUserName},
+            #{updateTime}, #{updateUserId}, #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateSupplier" parameterType="com.hr.entity.Supplier">
+        UPDATE sys_supplier
+        SET supplier_name = #{supplierName},
+            status = #{status},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE supplier_id = #{supplierId}
+    </update>
+
+    <delete id="deleteSupplier" parameterType="Long">
+        DELETE FROM sys_supplier WHERE supplier_id = #{supplierId}
+    </delete>
+
+    <delete id="deleteSupplierUsersBySupplierId" parameterType="Long">
+        DELETE FROM sys_supplier_hr WHERE supplier_id = #{supplierId}
+    </delete>
+
+    <insert id="batchInsertSupplierUsers">
+        INSERT INTO sys_supplier_hr (supplier_id, user_id, create_user_id, create_user_name)
+        VALUES
+        <foreach collection="userIds" item="userId" separator=",">
+            (#{supplierId}, #{userId}, #{createUserId}, #{createUserName})
+        </foreach>
+    </insert>
+
+    <select id="getUserIdsBySupplierId" parameterType="Long" resultType="String">
+        SELECT user_id FROM sys_supplier_hr WHERE supplier_id = #{supplierId}
+    </select>
+
+    <select id="countBySupplierName" resultType="Integer">
+        SELECT COUNT(1)
+        FROM sys_supplier
+        WHERE supplier_name = #{supplierName}
+        <if test="excludeSupplierId != null">
+            AND supplier_id != #{excludeSupplierId}
+        </if>
+    </select>
+
+</mapper>
+

@@ -2,6 +2,7 @@ package com.hr.mapper;
 
 import com.hr.entity.Resume;
 import java.util.List;
+import java.util.Map;
 
 public interface ResumeMapper {
     /**
@@ -44,4 +45,10 @@ public interface ResumeMapper {
      * @return 简历列表
      */
     List<Resume> selectByStatus(String status);
+
+    int deleteByPrimaryKey(Long id);
+
+    List<Map<String, Object>> selectRequirementOptions();
+
+    String selectSupplierNameByUserId(String userId);
 }

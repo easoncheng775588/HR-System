@@ -24,4 +24,8 @@ public interface UserMapper {
     List<String> getRoleIdsByUserId(@Param("userId") String userId);
     
     List<User> getUsersByPosition(@Param("position") String position);
+
+    List<User> searchActiveUsers(@Param("keyword") String keyword);
+
+    User getActiveTeamManagerByDepartment(@Param("department") String department);
 }

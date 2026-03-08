@@ -8,12 +8,15 @@
         <result column="vacancy_count" property="vacancyCount" />
         <result column="team" property="team" />
         <result column="technical_platform" property="technicalPlatform" />
+        <result column="category" property="category" />
         <result column="supplement_count" property="supplementCount" />
         <result column="urgent_requirement" property="urgentRequirement" />
         <result column="proposed_level" property="proposedLevel" />
         <result column="experience_years" property="experienceYears" />
         <result column="skill_requirement" property="skillRequirement" />
         <result column="position_responsibility" property="positionResponsibility" />
+        <result column="interviewer_id" property="interviewerId" />
+        <result column="interviewer_name" property="interviewerName" />
         <result column="approval_status" property="approvalStatus" />
         <result column="position_publish_status" property="positionPublishStatus" />
         <result column="approval_user_id" property="approvalUserId" />
@@ -51,12 +54,15 @@
             vacancy_count,
             team,
             technical_platform,
+            category,
             supplement_count,
             urgent_requirement,
             proposed_level,
             experience_years,
             skill_requirement,
             position_responsibility,
+            interviewer_id,
+            interviewer_name,
             approval_status,
             position_publish_status,
             current_approval_level,
@@ -73,12 +79,15 @@
             #{vacancyCount},
             #{team},
             #{technicalPlatform},
+            #{category},
             #{supplementCount},
             #{urgentRequirement},
             #{proposedLevel},
             #{experienceYears},
             #{skillRequirement},
             #{positionResponsibility},
+            #{interviewerId},
+            #{interviewerName},
             #{approvalStatus},
             #{positionPublishStatus},
             #{currentApprovalLevel},
@@ -99,12 +108,15 @@
             vacancy_count = #{vacancyCount},
             team = #{team},
             technical_platform = #{technicalPlatform},
+            category = #{category},
             supplement_count = #{supplementCount},
             urgent_requirement = #{urgentRequirement},
             proposed_level = #{proposedLevel},
             experience_years = #{experienceYears},
             skill_requirement = #{skillRequirement},
             position_responsibility = #{positionResponsibility},
+            interviewer_id = #{interviewerId},
+            interviewer_name = #{interviewerName},
             approval_status = #{approvalStatus},
             position_publish_status = #{positionPublishStatus},
             current_approval_level = #{currentApprovalLevel},

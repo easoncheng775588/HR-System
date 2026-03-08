@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,19 @@ public class SysParamServiceImpl implements SysParamService {
     public boolean saveParam(SysParam sysParam) {
         logger.debug("保存参数: {}", sysParam.getParamId());
         try {
+            Date now = new Date();
+            if (sysParam.getCreateTime() == null) {
+                sysParam.setCreateTime(now);
+            }
+            if (sysParam.getUpdateTime() == null) {
+                sysParam.setUpdateTime(now);
+            }
+            if (sysParam.getUpdateUserId() == null && sysParam.getCreateUserId() != null) {
+                sysParam.setUpdateUserId(sysParam.getCreateUserId());
+            }
+            if (sysParam.getUpdateUserName() == null && sysParam.getCreateUserName() != null) {
+                sysParam.setUpdateUserName(sysParam.getCreateUserName());
+            }
             int result = sysParamMapper.insert(sysParam);
             return result > 0;
         } catch (Exception e) {

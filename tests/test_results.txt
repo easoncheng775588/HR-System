@@ -1,0 +1,222 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.3, pytest-8.3.2, pluggy-1.6.0 -- /Users/silver/Vibe Coding/HR System/tests/venv/bin/python3.14
+cachedir: .pytest_cache
+metadata: {'Python': '3.14.3', 'Platform': 'macOS-26.3-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.3.2', 'pluggy': '1.6.0'}, 'Plugins': {'cov': '5.0.0', 'playwright': '0.7.2', 'html': '4.1.1', 'xdist': '3.8.0', 'metadata': '3.1.1', 'base-url': '2.1.0'}, 'Base URL': ''}
+rootdir: /Users/silver/Vibe Coding/HR System/tests
+configfile: pytest.ini
+plugins: cov-5.0.0, playwright-0.7.2, html-4.1.1, xdist-3.8.0, metadata-3.1.1, base-url-2.1.0
+collecting ... collected 129 items
+
+api/test_approval_workflow.py::TestApprovalWorkflow::test_approval_notification PASSED [  0%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_approval_reject PASSED [  1%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_approval_status_display PASSED [  2%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_cross_level_approval PASSED [  3%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_department_head_approval_third_level PASSED [  3%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_duplicate_approval PASSED [  4%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_quota_approval_first_level PASSED [  5%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_submit_recruitment_request PASSED [  6%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_team_approval_second_level PASSED [  6%]
+api/test_approval_workflow.py::TestApprovalWorkflow::test_view_approval_history PASSED [  7%]
+api/test_auth.py::TestAuth::test_login_success PASSED                    [  8%]
+api/test_auth.py::TestAuth::test_login_failure_with_wrong_password PASSED [  9%]
+api/test_auth.py::TestAuth::test_login_failure_with_nonexistent_user PASSED [ 10%]
+api/test_auth.py::TestAuth::test_logout PASSED                           [ 10%]
+api/test_auth.py::TestAuth::test_password_encryption PASSED              [ 11%]
+api/test_data_consistency.py::TestDataConsistency::test_recruitment_request_api_vs_db_consistency PASSED [ 12%]
+api/test_data_consistency.py::TestDataConsistency::test_sys_param_api_vs_db_consistency PASSED [ 13%]
+api/test_data_consistency.py::TestDataConsistency::test_frontend_display_vs_api_data ERROR [ 13%]
+api/test_data_consistency.py::TestDataConsistency::test_frontend_param_display_vs_db ERROR [ 14%]
+api/test_data_consistency.py::TestDataConsistency::test_approval_status_display_consistency SKIPPEDriver权限不足
+  3. 系统资源不足
+建议：跳过UI测试或使用Chrome浏览器)                                      [ 15%]
+api/test_data_consistency.py::TestDataConsistency::test_team_field_display_consistency ERROR [ 16%]
+api/test_data_consistency.py::TestDataConsistency::test_technical_platform_display_consistency ERROR [ 17%]
+api/test_data_consistency_playwright.py::TestDataConsistencyPlaywright::test_recruitment_request_api_vs_db_consistency PASSED [ 17%]
+api/test_data_consistency_playwright.py::TestDataConsistencyPlaywright::test_sys_param_api_vs_db_consistency PASSED [ 18%]
+api/test_data_consistency_playwright.py::TestDataConsistencyPlaywright::test_frontend_display_vs_api_data[chromium] FAILED [ 19%]
+api/test_data_consistency_playwright.py::TestDataConsistencyPlaywright::test_frontend_param_display_vs_db PASSED [ 20%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_save_interview_record FAILED [ 20%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_get_interview_list PASSED [ 21%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_update_interview_result PASSED [ 22%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_get_interview_by_resume PASSED [ 23%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_get_pending_interview_count PASSED [ 24%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_interview_management_permission PASSED [ 24%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_schedule_three_rounds_interview PASSED [ 25%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_update_three_rounds_results PASSED [ 26%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_interview_count_limit PASSED [ 27%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_interview_time_conflict PASSED [ 27%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_interview_round_sequence PASSED [ 28%]
+api/test_interview_arrangement.py::TestInterviewArrangement::test_interview_result_before_interview PASSED [ 29%]
+api/test_message_management.py::TestMessageManagement::test_batch_mark_as_read PASSED [ 30%]
+api/test_message_management.py::TestMessageManagement::test_create_approval_message PASSED [ 31%]
+api/test_message_management.py::TestMessageManagement::test_create_system_message PASSED [ 31%]
+api/test_message_management.py::TestMessageManagement::test_delete_message PASSED [ 32%]
+api/test_message_management.py::TestMessageManagement::test_get_unread_count PASSED [ 33%]
+api/test_message_management.py::TestMessageManagement::test_mark_message_as_read PASSED [ 34%]
+api/test_message_management.py::TestMessageManagement::test_message_detail PASSED [ 34%]
+api/test_message_management.py::TestMessageManagement::test_message_for_role PASSED [ 35%]
+api/test_message_management.py::TestMessageManagement::test_message_priority PASSED [ 36%]
+api/test_message_management.py::TestMessageManagement::test_message_status_filter PASSED [ 37%]
+api/test_message_management.py::TestMessageManagement::test_message_time_order PASSED [ 37%]
+api/test_message_management.py::TestMessageManagement::test_message_type_filter PASSED [ 38%]
+api/test_message_management.py::TestMessageManagement::test_update_message PASSED [ 39%]
+api/test_message_management.py::TestMessageManagement::test_view_message_list PASSED [ 40%]
+api/test_message_management.py::TestMessageManagement::test_view_user_messages PASSED [ 41%]
+api/test_offer_management.py::TestOfferManagement::test_save_offer PASSED [ 41%]
+api/test_offer_management.py::TestOfferManagement::test_update_offer_status PASSED [ 42%]
+api/test_offer_management.py::TestOfferManagement::test_send_offer_email PASSED [ 43%]
+api/test_offer_management.py::TestOfferManagement::test_offer_management_permission PASSED [ 44%]
+api/test_offer_management.py::TestOfferManagement::test_offer_management_boundary PASSED [ 44%]
+api/test_offer_management.py::TestOfferManagement::test_offer_management_exception PASSED [ 45%]
+api/test_permission.py::TestPermission::test_admin_permissions PASSED    [ 46%]
+api/test_permission.py::TestPermission::test_manager_permissions PASSED  [ 47%]
+api/test_permission.py::TestPermission::test_user_permissions PASSED     [ 48%]
+api/test_permission.py::TestPermission::test_unauthorized_access PASSED  [ 48%]
+api/test_permission_control.py::TestPermissionControl::test_super_admin_permission PASSED [ 49%]
+api/test_permission_control.py::TestPermissionControl::test_normal_user_permission PASSED [ 50%]
+api/test_permission_control.py::TestPermissionControl::test_department_manager_permission PASSED [ 51%]
+api/test_permission_control.py::TestPermissionControl::test_department_manager_cross_department PASSED [ 51%]
+api/test_permission_control.py::TestPermissionControl::test_recruitment_specialist_permission PASSED [ 52%]
+api/test_permission_control.py::TestPermissionControl::test_non_recruitment_specialist_operation PASSED [ 53%]
+api/test_permission_control.py::TestPermissionControl::test_outsource_recruitment_permission PASSED [ 54%]
+api/test_permission_control.py::TestPermissionControl::test_non_outsource_recruitment_operation PASSED [ 55%]
+api/test_permission_control.py::TestPermissionControl::test_hr_permission PASSED [ 55%]
+api/test_permission_control.py::TestPermissionControl::test_non_hr_operation PASSED [ 56%]
+api/test_permission_control.py::TestPermissionControl::test_interviewer_permission PASSED [ 57%]
+api/test_permission_control.py::TestPermissionControl::test_interviewer_cross_interview PASSED [ 58%]
+api/test_permission_control.py::TestPermissionControl::test_system_admin_permission PASSED [ 58%]
+api/test_permission_control.py::TestPermissionControl::test_system_admin_business_operation PASSED [ 59%]
+api/test_permission_control.py::TestPermissionControl::test_finance_permission PASSED [ 60%]
+api/test_permission_control.py::TestPermissionControl::test_finance_business_operation PASSED [ 61%]
+api/test_permission_control.py::TestPermissionControl::test_training_permission PASSED [ 62%]
+api/test_permission_control.py::TestPermissionControl::test_training_business_operation PASSED [ 62%]
+api/test_permission_control.py::TestPermissionControl::test_employee_self_service PASSED [ 63%]
+api/test_permission_control.py::TestPermissionControl::test_employee_business_operation PASSED [ 64%]
+api/test_permission_control.py::TestPermissionControl::test_director_permission PASSED [ 65%]
+api/test_permission_control.py::TestPermissionControl::test_director_cross_scope PASSED [ 65%]
+api/test_position_publish.py::TestPositionPublish::test_publish_position PASSED [ 66%]
+api/test_position_publish.py::TestPositionPublish::test_unpublish_position PASSED [ 67%]
+api/test_position_publish.py::TestPositionPublish::test_view_position_detail PASSED [ 68%]
+api/test_position_publish.py::TestPositionPublish::test_position_title_length_boundary PASSED [ 68%]
+api/test_position_publish.py::TestPositionPublish::test_duplicate_publish PASSED [ 69%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_save_draft PASSED [ 70%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_create_recruitment_request PASSED [ 71%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_list_recruitment_requests PASSED [ 72%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_view_recruitment_request_detail PASSED [ 72%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_input_boundary_values PASSED [ 73%]
+api/test_recruitment_request.py::TestRecruitmentRequest::test_missing_required_fields PASSED [ 74%]
+api/test_resume_filter.py::TestResumeFilter::test_view_resume_list PASSED [ 75%]
+api/test_resume_filter.py::TestResumeFilter::test_download_resume PASSED [ 75%]
+api/test_resume_filter.py::TestResumeFilter::test_pass_resume PASSED     [ 76%]
+api/test_resume_filter.py::TestResumeFilter::test_reject_resume PASSED   [ 77%]
+api/test_resume_filter.py::TestResumeFilter::test_network_error_handling PASSED [ 78%]
+api/test_resume_filter.py::TestResumeFilter::test_large_resume_data_loading PASSED [ 79%]
+api/test_resume_filter.py::TestResumeFilter::test_resume_file_not_exists PASSED [ 79%]
+api/test_resume_submission.py::TestResumeSubmission::test_submit_resume PASSED [ 80%]
+api/test_resume_submission.py::TestResumeSubmission::test_upload_resume_file PASSED [ 81%]
+api/test_resume_submission.py::TestResumeSubmission::test_resume_submission_permission PASSED [ 82%]
+api/test_resume_submission.py::TestResumeSubmission::test_resume_submission_boundary FAILED [ 82%]
+api/test_resume_submission.py::TestResumeSubmission::test_resume_submission_exception PASSED [ 83%]
+api/test_resume_submission_page.py::TestResumeSubmissionPage::test_get_published_jobs_list PASSED [ 84%]
+api/test_resume_submission_page.py::TestResumeSubmissionPage::test_published_jobs_team_field_display PASSED [ 85%]
+api/test_resume_submission_page.py::TestResumeSubmissionPage::test_published_jobs_required_fields PASSED [ 86%]
+api/test_resume_submission_page.py::TestResumeSubmissionPage::test_published_jobs_filter_by_status PASSED [ 86%]
+api/test_resume_submission_page.py::TestResumeSubmissionPage::test_published_jobs_data_consistency PASSED [ 87%]
+api/test_sys_param.py::TestSysParam::test_get_sys_params PASSED          [ 88%]
+api/test_sys_param.py::TestSysParam::test_get_sys_param_by_type PASSED   [ 89%]
+api/test_sys_param.py::TestSysParam::test_proposed_level_parametrization PASSED [ 89%]
+api/test_sys_param.py::TestSysParam::test_team_parametrization PASSED    [ 90%]
+api/test_sys_param.py::TestSysParam::test_param_value_length_boundary PASSED [ 91%]
+api/test_sys_param.py::TestSysParam::test_param_load_failure PASSED      [ 92%]
+api/test_todo_items.py::TestTodoItems::test_process_todo_item PASSED     [ 93%]
+api/test_todo_items.py::TestTodoItems::test_todo_category_display PASSED [ 93%]
+api/test_todo_items.py::TestTodoItems::test_todo_count_display PASSED    [ 94%]
+api/test_todo_items.py::TestTodoItems::test_todo_detail_view PASSED      [ 95%]
+api/test_todo_items.py::TestTodoItems::test_todo_expired_handling PASSED [ 96%]
+api/test_todo_items.py::TestTodoItems::test_todo_priority_display PASSED [ 96%]
+api/test_todo_items.py::TestTodoItems::test_todo_realtime_update PASSED  [ 97%]
+api/test_todo_items.py::TestTodoItems::test_view_todo_list PASSED        [ 98%]
+api/test_user.py::TestUser::test_get_user_list PASSED                    [ 99%]
+api/test_user.py::TestUser::test_get_current_user PASSED                 [100%]
+
+==================================== ERRORS ====================================
+___ ERROR at setup of TestDataConsistency.test_frontend_display_vs_api_data ____
+E   selenium.common.exceptions.WebDriverException: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+---------------------------- Captured stdout setup -----------------------------
+注意: Safari不支持无头模式，将在后台运行
+Safari浏览器初始化失败: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+
+___ ERROR at setup of TestDataConsistency.test_frontend_param_display_vs_db ____
+E   selenium.common.exceptions.WebDriverException: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+---------------------------- Captured stdout setup -----------------------------
+注意: Safari不支持无头模式，将在后台运行
+Safari浏览器初始化失败: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+
+__ ERROR at setup of TestDataConsistency.test_team_field_display_consistency ___
+E   ConnectionRefusedError: [Errno 61] Connection refused
+
+The above exception was the direct cause of the following exception:
+E   urllib3.exceptions.NewConnectionError: HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused
+
+The above exception was the direct cause of the following exception:
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=53729): Max retries exceeded with url: /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url (Caused by NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused"))
+
+During handling of the above exception, another exception occurred:
+E   ConnectionRefusedError: [Errno 61] Connection refused
+
+The above exception was the direct cause of the following exception:
+E   urllib3.exceptions.NewConnectionError: HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused
+
+The above exception was the direct cause of the following exception:
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=53729): Max retries exceeded with url: /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url (Caused by NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused"))
+---------------------------- Captured stdout setup -----------------------------
+注意: Safari不支持无头模式，将在后台运行
+正在打开登录页面...
+登录失败: HTTPConnectionPool(host='localhost', port=53729): Max retries exceeded with url: /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url (Caused by NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused"))
+------------------------------ Captured log setup ------------------------------
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6
+WARNING  urllib3.connectionpool:connectionpool.py:868 Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused")': /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6
+_ ERROR at setup of TestDataConsistency.test_technical_platform_display_consistency _
+E   selenium.common.exceptions.SessionNotCreatedException: Message: Could not create a session: The Safari instance is already paired with another WebDriver session.
+
+During handling of the above exception, another exception occurred:
+E   RuntimeError: Safari浏览器已经与另一个WebDriver会话配对。
+    请尝试：
+      1. 重启Safari浏览器
+      2. 运行命令: killall -9 safaridriver
+      3. 然后重新运行测试
+---------------------------- Captured stdout setup -----------------------------
+注意: Safari不支持无头模式，将在后台运行
+=================================== FAILURES ===================================
+/Users/silver/Vibe Coding/HR System/tests/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: playwright._impl._errors.Error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login
+/Users/silver/Vibe Coding/HR System/tests/api/test_interview_arrangement.py:64: AssertionError: 保存面试记录失败，错误信息: 候选人已经进行了3次面试，不建议再次安排面试
+/Users/silver/Vibe Coding/HR System/tests/api/test_resume_submission.py:108: AssertionError: 缺少必填字段时应返回错误
+=========================== short test summary info ============================
+FAILED api/test_data_consistency_playwright.py::TestDataConsistencyPlaywright::test_frontend_display_vs_api_data[chromium] - playwright._impl._errors.Error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login
+Call log:
+  - navigating to "http://localhost:5173/login", waiting until "load"
+FAILED api/test_interview_arrangement.py::TestInterviewArrangement::test_save_interview_record - AssertionError: 保存面试记录失败，错误信息: 候选人已经进行了3次面试，不建议再次安排面试
+assert 'ERR0001' == 'SUC0000'
+  
+  - SUC0000
+  + ERR0001
+FAILED api/test_resume_submission.py::TestResumeSubmission::test_resume_submission_boundary - AssertionError: 缺少必填字段时应返回错误
+assert 'SUC0000' != 'SUC0000'
+ +  where 'SUC0000' = <built-in method get of dict object at 0x1110f8bc0>('returnCode')
+ +    where <built-in method get of dict object at 0x1110f8bc0> = {'body': {'applicantName': None, 'contactPhone': '13800138000', 'createTime': None, 'createUserId': '1001', ...}, 'errorMsg': '', 'returnCode': 'SUC0000'}.get
+ERROR api/test_data_consistency.py::TestDataConsistency::test_frontend_display_vs_api_data - selenium.common.exceptions.WebDriverException: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+ERROR api/test_data_consistency.py::TestDataConsistency::test_frontend_param_display_vs_db - selenium.common.exceptions.WebDriverException: Message: Service /usr/bin/safaridriver unexpectedly exited. Status code was: -9
+ERROR api/test_data_consistency.py::TestDataConsistency::test_team_field_display_consistency - urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=53729): Max retries exceeded with url: /session/1DC7FE1C-7C00-44FE-A525-3B2937DAC7B6/url (Caused by NewConnectionError("HTTPConnection(host='localhost', port=53729): Failed to establish a new connection: [Errno 61] Connection refused"))
+ERROR api/test_data_consistency.py::TestDataConsistency::test_technical_platform_display_consistency - RuntimeError: Safari浏览器已经与另一个WebDriver会话配对。
+请尝试：
+  1. 重启Safari浏览器
+  2. 运行命令: killall -9 safaridriver
+  3. 然后重新运行测试
+============= 3 failed, 121 passed, 1 skipped, 4 errors in 32.35s ==============

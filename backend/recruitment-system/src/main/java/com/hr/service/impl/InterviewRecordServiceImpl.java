@@ -32,7 +32,15 @@ public class InterviewRecordServiceImpl implements InterviewRecordService {
         }
 
         if (interviewRecord.getInterviewRecordId() == null) {
-            // 新增
+            // 新增：检查面试次数限制
+            Long resumeId = interviewRecord.getResumeId();
+            if (resumeId != null) {
+                int interviewCount = interviewRecordMapper.countByResumeId(resumeId);
+                if (interviewCount >= 3) {
+                    throw new RuntimeException("候选人已经进行了3次面试，不建议再次安排面试");
+                }
+            }
+            
             interviewRecordMapper.insert(interviewRecord);
             // 更新简历的面试状态
             updateResumeInterviewStatus(interviewRecord.getResumeId(), interviewRecord.getInterviewRound());
@@ -94,6 +102,11 @@ public class InterviewRecordServiceImpl implements InterviewRecordService {
         return null;
     }
 
+    @Override
+    public int countByResumeId(Long resumeId) {
+        return interviewRecordMapper.countByResumeId(resumeId);
+    }
+
     /**
      * 更新简历的面试状态
      * @param resumeId 简历ID
@@ -135,5 +148,10 @@ public class InterviewRecordServiceImpl implements InterviewRecordService {
             resume.setUpdateUserName("系统用户");
             resumeMapper.updateByPrimaryKey(resume);
         }
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        interviewRecordMapper.deleteByPrimaryKey(id);
     }
 }

@@ -2,6 +2,7 @@ package com.hr.service;
 
 import com.hr.entity.Resume;
 import java.util.List;
+import java.util.Map;
 
 public interface ResumeService {
     /**
@@ -45,4 +46,8 @@ public interface ResumeService {
      * @return 更新后的简历对象
      */
     Resume updateStatus(Long id, String status);
+
+    int deleteById(Long id);
+
+    List<Map<String, Object>> getRequirementOptions();
 }

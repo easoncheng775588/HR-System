@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.OrgUnitMapper">
+
+    <resultMap id="OrgUnitResultMap" type="com.hr.entity.OrgUnit">
+        <id property="unitId" column="unit_id"/>
+        <result property="unitName" column="unit_name"/>
+        <result property="unitType" column="unit_type"/>
+        <result property="parentUnitName" column="parent_unit_name"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <select id="getActiveOrgUnits" resultMap="OrgUnitResultMap">
+        SELECT *
+        FROM org_unit
+        WHERE status = 'ACTIVE'
+        ORDER BY
+            CASE unit_type WHEN 'TEAM' THEN 1 ELSE 2 END,
+            unit_name ASC
+    </select>
+
+    <select id="countByUnitName" resultType="Integer">
+        SELECT COUNT(1) FROM org_unit WHERE unit_name = #{unitName}
+    </select>
+
+    <select id="getByUnitName" resultMap="OrgUnitResultMap">
+        SELECT *
+        FROM org_unit
+        WHERE unit_name = #{unitName}
+        LIMIT 1
+    </select>
+
+</mapper>

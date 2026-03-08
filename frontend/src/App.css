@@ -1,4 +1,4 @@
-#root {
+﻿#root {
   width: 100%;
   margin: 0;
   padding: 0;
@@ -6,387 +6,131 @@
 
 .App {
   min-height: 100vh;
-  background-color: #f8f9fa;
-  padding: 24px;
+  width: 100%;
+  padding: 0;
+  background-color: #f5f7fb;
 }
 
-/* 自定义Ant Design样式 */
-.ant-card {
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  margin-bottom: 24px;
-  border: 1px solid #f0f0f0;
-}
-
-/* 主要按钮样式 - 清新蓝色 */
-.ant-btn-primary {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
-  box-shadow: none;
-}
-
-.ant-btn-primary:hover {
-  background-color: #69c0ff;
-  border-color: #69c0ff;
-}
-
-/* 危险按钮样式 - 柔和红色 */
-.ant-btn-danger {
-  background-color: #ff7875;
-  border-color: #ff7875;
-  box-shadow: none;
-}
-
-.ant-btn-danger:hover {
-  background-color: #ffa39e;
-  border-color: #ffa39e;
-}
-
-/* 链接按钮样式 - 清新蓝色 */
-.ant-btn-link {
-  color: #40a9ff;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.ant-btn-link:hover {
-  color: #ffffff;
-  background-color: #40a9ff;
-  text-decoration: none;
-}
-
-.ant-btn-link:active {
-  color: #ffffff;
-  background-color: #1890ff;
-}
-
-.ant-btn-link.danger:hover {
-  color: #ffffff;
-  background-color: #ff4d4f;
-}
-
-.ant-btn-link.danger:active {
-  color: #ffffff;
-  background-color: #cf1322;
-}
-
-/* 标题样式 - 柔和深灰色 */
-h1, h2, h3, h4, h5, h6 {
-  color: #4a5568;
-  font-weight: 500;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.88);
   line-height: 1.5;
 }
 
-/* 卡片标题样式 - 柔和深灰色 */
-.ant-card-head-title {
-  color: #4a5568;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-/* 表格表头样式 - 非常浅的灰色背景 */
-.ant-table-thead > tr > th {
-  background-color: #f9fafb;
-  color: #4a5568;
-  font-weight: 500;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* 标签样式 - 更柔和的颜色 */
-.ant-tag-blue {
-  background-color: #ebf5ff;
-  color: #40a9ff;
-  border-color: #bfdbfe;
-}
-
-.ant-tag-success {
-  background-color: #f0fff4;
-  color: #67c23a;
-  border-color: #b7eb8f;
-}
-
-.ant-tag-warning {
-  background-color: #fffbeb;
-  color: #faad14;
-  border-color: #ffe7ba;
-}
-
-/* 菜单样式 - 更柔和的选中状态 */
-.ant-menu-item-selected {
-  background-color: #ebf5ff !important;
-  color: #40a9ff !important;
-}
-
-.ant-menu-item:hover {
-  color: #40a9ff !important;
-  background-color: #f0f9ff !important;
-}
-
-/* 输入框聚焦样式 - 柔和蓝色边框 */
-.ant-input:focus,
-.ant-select-selector:focus,
-.ant-input-affix-wrapper:focus {
-  border-color: #69c0ff !important;
-  box-shadow: 0 0 0 2px rgba(105, 192, 255, 0.2) !important;
-}
-
-/* 表单标签样式 - 柔和深灰色 */
-.ant-form-item-label > label {
-  color: #4a5568;
-  font-weight: 400;
-}
-
-/* 表单样式 */
-.ant-form {
-  max-width: 100%;
-}
-
-.ant-form-item {
-  margin-bottom: 20px;
-}
-
-/* 输入框样式 - 更柔和的边框 */
-.ant-input,
-.ant-select-selector,
-.ant-input-number {
-  border-radius: 6px;
-  height: 36px;
-  border: 1px solid #e5e7eb;
-}
-
-/* 按钮样式 - 更现代的设计 */
-.ant-btn {
-  border-radius: 6px;
-  height: 36px;
-  font-size: 14px;
-  font-weight: 400;
-}
-
-/* 页面容器样式 */
-.page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-}
-
-/* 页面标题样式 */
-.page-title {
-  font-size: 22px;
-  color: #2d3748;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 500;
-}
-
-/* 页面副标题样式 */
-.page-subtitle {
-  font-size: 16px;
-  color: #4a5568;
-  margin-bottom: 20px;
-  font-weight: 500;
-}
-
-/* 表单卡片样式 */
-.form-card {
-  margin-bottom: 12px;
-}
-
-/* 表单卡片标题样式 - 更柔和的边框 */
-.form-card-title {
-  font-size: 14px;
-  color: #4a5568;
-  margin-bottom: 12px;
-  padding-left: 12px;
-  border-left: 3px solid #40a9ff;
-  font-weight: 500;
-}
-
-/* 面试安排页面样式 */
+.app-page,
+.page-container,
 .interview-scheduling {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 8px;
-  overflow: hidden;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(12px, 2vw, 24px);
 }
 
-.interview-scheduling .ant-card {
+.app-page-title,
+.page-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.app-page-subtitle,
+.page-subtitle {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.app-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.interview-scheduling .ant-form-item {
-  margin-bottom: 8px;
+.app-table-wrap {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.interview-scheduling .ant-btn {
-  padding: 4px 12px;
-  height: 32px;
+.app-table-wrap .table-empty-state .ant-table-placeholder {
+  min-height: 280px;
 }
 
-.interview-scheduling .ant-btn-link {
-  padding: 4px 8px;
+.app-table-wrap .table-empty-state .ant-table-body {
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
 }
 
-.interview-scheduling .ant-input,
-.interview-scheduling .ant-select-selector,
-.interview-scheduling .ant-radio-group {
+.app-table-wrap .table-empty-state .ant-table-content {
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+
+.form-card {
+  margin-bottom: 16px;
+}
+
+.form-card .ant-card-body {
+  padding: 16px;
+}
+
+.form-card-title {
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #1677ff;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.app-footer-note {
+  margin-top: 12px;
   font-size: 12px;
-  height: 32px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
 }
 
-.interview-scheduling .ant-input-textarea {
-  font-size: 12px;
+.ant-card {
+  border: 1px solid #f0f0f0;
 }
 
-/* 响应式设计 */
-@media screen and (max-width: 768px) {
-  .App {
-    padding: 16px;
+.ant-table-wrapper,
+.ant-table-container,
+.ant-table-body {
+  width: 100%;
+}
+
+@media screen and (max-width: 767px) {
+  .app-page,
+  .page-container,
+  .interview-scheduling {
+    padding: 12px;
   }
-  
-  .ant-card {
-    margin-bottom: 20px;
-    border-radius: 6px;
-  }
-  
-  .ant-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .ant-table {
-    font-size: 12px;
-    min-width: 600px;
-  }
-  
-  .ant-table-thead > tr > th {
-    font-size: 12px;
-    padding: 10px 6px;
-  }
-  
-  .ant-table-tbody > tr > td {
-    font-size: 12px;
-    padding: 10px 6px;
-  }
-  
-  .ant-btn {
-    font-size: 12px;
-    padding: 6px 12px;
-    height: 32px;
-  }
-  
-  .ant-card-head-title {
-    font-size: 14px;
-  }
-  
-  .ant-modal {
-    max-width: 95vw;
-    border-radius: 8px;
-  }
-  
-  .ant-modal-body {
-    padding: 20px;
-  }
-  
-  .ant-form-item-label > label {
-    font-size: 12px;
-  }
-  
-  .ant-input,
-  .ant-select-selector {
-    font-size: 12px;
-    height: 32px;
-  }
-  
-  .page-container {
-    padding: 16px;
-    border-radius: 6px;
-  }
-  
+
+  .app-page-title,
   .page-title {
     font-size: 18px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
-}
 
-@media screen and (max-width: 576px) {
-  .App {
+  .form-card .ant-card-body {
     padding: 12px;
   }
-  
-  .ant-card {
-    margin-bottom: 16px;
-    border-radius: 4px;
-  }
-  
-  .ant-table {
-    font-size: 11px;
-    min-width: 500px;
-  }
-  
-  .ant-table-thead > tr > th {
-    font-size: 11px;
-    padding: 8px 4px;
-  }
-  
-  .ant-table-tbody > tr > td {
-    font-size: 11px;
-    padding: 8px 4px;
-  }
-  
-  .ant-btn {
-    font-size: 11px;
-    padding: 4px 8px;
-    height: 28px;
-  }
-  
-  .ant-modal-body {
-    padding: 16px;
-  }
-  
-  .page-container {
-    padding: 12px;
-  }
-  
-  .page-title {
-    font-size: 16px;
-    margin-bottom: 16px;
-  }
-}
 
-@media screen and (min-width: 1200px) {
-  .App {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-}
-
-/* 表格滚动优化 */
-.ant-table-container {
-  overflow-x: auto;
-}
-
-.ant-table-body {
-  overflow-x: auto;
-}
-
-/* 确保表格不会超出容器 */
-.ant-table-wrapper {
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* 优化移动端表格显示 */
-@media screen and (max-width: 768px) {
   .ant-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
-  .ant-table {
-    min-width: 600px;
-  }
 }
+

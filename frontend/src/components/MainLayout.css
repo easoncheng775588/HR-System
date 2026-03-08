@@ -1,200 +1,107 @@
-/* MainLayout组件样式 */
-
-/* 侧边栏标题样式 */
-.sidebar-header {
+﻿.sidebar-header {
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 20px;
-  font-weight: bold;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 0 12px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-header.collapsed {
-  font-size: 16px;
+  font-size: 14px;
 }
 
-/* 移动端头部样式 */
-.mobile-header {
+.mobile-header,
+.desktop-header {
+  height: 64px;
   padding: 0 16px;
-  background: #fff;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  height: 64px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-/* 用户信息区域样式 */
 .user-info {
   display: flex;
   align-items: center;
   cursor: pointer;
+  gap: 8px;
 }
 
 .user-info .avatar {
-  margin-right: 6px;
+  margin-right: 0;
 }
 
 .user-info .user-name {
   font-size: 14px;
+  color: rgba(0, 0, 0, 0.88);
 }
 
-/* 桌面端头部样式 */
-.desktop-header {
-  padding: 0 24px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* 头部操作区域样式 */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-/* 内容区域样式 */
-.content-area {
-  margin: 8px;
-  padding: 8px;
-  min-height: 280;
-  background: #ffffff;
-  overflow: hidden;
-}
-
-/* 移动端内容区域样式 */
+.content-area,
 .mobile-content-area {
-  margin: 4px;
-  padding: 4px;
-  min-height: 280;
-  background: #ffffff;
+  margin: 0;
+  padding: clamp(12px, 1.6vw, 20px);
+  min-height: calc(100vh - 64px);
+  background: #f5f7fb;
   overflow: hidden;
 }
 
-/* 主内容容器样式 */
-.main-content-container {
-  display: flex;
-  gap: 4px;
-  flex-direction: row;
-  height: 100%;
-}
-
-/* 移动端主内容容器样式 */
+.main-content-container,
 .mobile-main-content-container {
   display: flex;
-  gap: 0;
-  flex-direction: column;
+  gap: 12px;
   height: 100%;
 }
 
-/* 主要内容区域样式 */
-.main-content {
-  flex: 1;
-  overflow: auto;
-  max-height: calc(100vh - 100px);
+.main-content-container {
+  flex-direction: row;
 }
 
-/* 移动端主要内容区域样式 */
+.mobile-main-content-container {
+  flex-direction: column;
+  gap: 0;
+}
+
+.main-content,
 .mobile-main-content {
   flex: 1;
   overflow: auto;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 96px);
 }
 
-/* 侧边栏样式 */
 .sidebar {
-  width: 140px;
+  width: 200px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   flex-shrink: 0;
   overflow: auto;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 96px);
 }
 
-/* 列表项样式 */
-.list-item {
-  padding: 8px 0;
-  cursor: pointer;
+@media (max-width: 767px) {
+  .mobile-header,
+  .desktop-header {
+    padding: 0 12px;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+
+  .content-area,
+  .mobile-content-area {
+    padding: 10px;
+  }
 }
 
-/* 列表项标题样式 */
-.list-item-title {
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* 列表项描述样式 */
-.list-item-description {
-  font-size: 11;
-}
-
-/* 待办事项徽章样式 */
-.todo-badge {
-  background-color: #6366f1;
-  margin-left: 8px;
-}
-
-/* 用户信息卡片样式 */
-.user-info-card {
-  text-align: center;
-}
-
-/* 用户头像样式 */
-.user-avatar {
-  margin-bottom: 12px;
-}
-
-/* 用户姓名样式 */
-.user-fullname {
-  font-size: 14px;
-  margin: 0 0 8px 0;
-}
-
-/* 用户职位样式 */
-.user-position {
-  color: #666;
-  margin: 0;
-  font-size: 12px;
-}
-
-/* 用户详情样式 */
-.user-details {
-  margin-top: 12px;
-  text-align: left;
-  font-size: 12px;
-}
-
-/* 用户详情行样式 */
-.user-detail-row {
-  margin: 4px 0;
-}
-
-/* 消息通知列表项样式 */
-.message-item {
-  padding: 8px 0;
-  cursor: pointer;
-}
-
-/* 未读消息样式 */
-.unread-message {
-  background-color: #f0f9ff;
-}
-
-/* 未读消息标题样式 */
-.unread-message-title {
-  font-weight: bold;
-}
-
-/* 已读消息标题样式 */
-.read-message-title {
-  font-weight: normal;
-}

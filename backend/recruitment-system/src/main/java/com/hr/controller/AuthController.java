@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import com.hr.entity.User;
 import com.hr.service.ConfigService;
 import com.hr.service.UserService;
+import com.hr.common.ErrorMessage;
 
 /**
  * 认证控制器
@@ -46,7 +47,7 @@ public class AuthController {
             if (request == null) {
                 logger.warn("登录请求参数为空");
                 result.put("returnCode", "ERR0001");
-                result.put("errorMsg", "登录失败：请求参数为空");
+                result.put("errorMsg", ErrorMessage.get("auth.login.empty.request"));
                 result.put("body", null);
                 return result;
             }
@@ -56,7 +57,7 @@ public class AuthController {
             if (username == null || username.trim().isEmpty()) {
                 logger.warn("用户名为空");
                 result.put("returnCode", "ERR0001");
-                result.put("errorMsg", "登录失败：用户名不能为空");
+                result.put("errorMsg", ErrorMessage.get("auth.login.empty.username"));
                 result.put("body", null);
                 return result;
             }
@@ -64,7 +65,7 @@ public class AuthController {
             if (username.length() > 50) {
                 logger.warn("用户名过长：username={}", username);
                 result.put("returnCode", "ERR0001");
-                result.put("errorMsg", "登录失败：用户名长度不能超过50个字符");
+                result.put("errorMsg", ErrorMessage.get("auth.login.username.too.long"));
                 result.put("body", null);
                 return result;
             }
@@ -76,7 +77,7 @@ public class AuthController {
             if (password == null || password.trim().isEmpty()) {
                 logger.warn("密码为空：username={}", username);
                 result.put("returnCode", "ERR0001");
-                result.put("errorMsg", "登录失败：密码不能为空");
+                result.put("errorMsg", ErrorMessage.get("auth.login.empty.password"));
                 result.put("body", null);
                 return result;
             }
@@ -84,7 +85,7 @@ public class AuthController {
             if (password.length() > 100) {
                 logger.warn("密码过长：username={}", username);
                 result.put("returnCode", "ERR0001");
-                result.put("errorMsg", "登录失败：密码长度不能超过100个字符");
+                result.put("errorMsg", ErrorMessage.get("auth.login.password.too.long"));
                 result.put("body", null);
                 return result;
             }
@@ -94,7 +95,7 @@ public class AuthController {
             if (user == null) {
                 logger.warn("用户不存在：username={}", username);
                 result.put("returnCode", "ERR0003");
-                result.put("errorMsg", "用户不存在");
+                result.put("errorMsg", ErrorMessage.get("auth.login.user.not.exist"));
                 result.put("body", null);
                 return result;
             }
@@ -102,7 +103,7 @@ public class AuthController {
             if (!checkPassword(password, user.getPassword())) {
                 logger.warn("密码错误：username={}", username);
                 result.put("returnCode", "ERR0004");
-                result.put("errorMsg", "密码错误");
+                result.put("errorMsg", ErrorMessage.get("auth.login.password.wrong"));
                 result.put("body", null);
                 return result;
             }
@@ -110,7 +111,7 @@ public class AuthController {
             if (!"ACTIVE".equals(user.getStatus())) {
                 logger.warn("用户已被禁用：username={}, status={}", username, user.getStatus());
                 result.put("returnCode", "ERR0005");
-                result.put("errorMsg", "用户已被禁用");
+                result.put("errorMsg", ErrorMessage.get("auth.login.user.disabled"));
                 result.put("body", null);
                 return result;
             }
@@ -131,17 +132,17 @@ public class AuthController {
         } catch (NullPointerException e) {
             logger.error("登录失败：参数错误", e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "登录失败：参数错误");
+            result.put("errorMsg", ErrorMessage.get("auth.login.param.error"));
             result.put("body", null);
         } catch (IllegalArgumentException e) {
             logger.error("登录失败：参数格式错误", e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "登录失败：参数格式错误");
+            result.put("errorMsg", ErrorMessage.get("auth.login.param.format.error"));
             result.put("body", null);
         } catch (Exception e) {
             logger.error("登录失败：{}", e.getMessage(), e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "登录失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("auth.login.failed", e.getMessage()));
             result.put("body", null);
         }
         return result;
@@ -161,7 +162,7 @@ public class AuthController {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 logger.warn("未提供认证信息");
                 result.put("returnCode", "ERR0006");
-                result.put("errorMsg", "未提供认证信息");
+                result.put("errorMsg", ErrorMessage.get("auth.no.auth.info"));
                 result.put("body", null);
                 return result;
             }
@@ -172,7 +173,7 @@ public class AuthController {
             if (userId == null) {
                 logger.warn("无效的token");
                 result.put("returnCode", "ERR0007");
-                result.put("errorMsg", "无效的token");
+                result.put("errorMsg", ErrorMessage.get("auth.invalid.token"));
                 result.put("body", null);
                 return result;
             }
@@ -181,7 +182,7 @@ public class AuthController {
             if (user == null) {
                 logger.warn("用户不存在：userId={}", userId);
                 result.put("returnCode", "ERR0003");
-                result.put("errorMsg", "用户不存在");
+                result.put("errorMsg", ErrorMessage.get("auth.user.not.exist"));
                 result.put("body", null);
                 return result;
             }
@@ -200,17 +201,17 @@ public class AuthController {
         } catch (NullPointerException e) {
             logger.error("获取用户信息失败：参数错误", e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取用户信息失败：参数错误");
+            result.put("errorMsg", ErrorMessage.get("auth.getUserInfoParamError"));
             result.put("body", null);
         } catch (IllegalArgumentException e) {
             logger.error("获取用户信息失败：参数格式错误", e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取用户信息失败：参数格式错误");
+            result.put("errorMsg", ErrorMessage.get("auth.getUserInfoParamFormatError"));
             result.put("body", null);
         } catch (Exception e) {
             logger.error("获取用户信息失败：{}", e.getMessage(), e);
             result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取用户信息失败：" + e.getMessage());
+            result.put("errorMsg", ErrorMessage.get("auth.getUserInfoFailed", e.getMessage()));
             result.put("body", null);
         }
         return result;

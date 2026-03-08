@@ -1,10 +1,18 @@
 package com.hr.service.impl;
 
-import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.ApprovalHistory;
-import com.hr.mapper.RecruitmentRequestMapper;
+import com.hr.entity.OrgUnit;
+import com.hr.entity.RecruitmentRequest;
+import com.hr.entity.User;
+import com.hr.entity.WorkflowProcessLog;
 import com.hr.mapper.ApprovalHistoryMapper;
+import com.hr.mapper.OrgUnitMapper;
+import com.hr.mapper.RecruitmentRequestMapper;
+import com.hr.mapper.UserMapper;
+import com.hr.mapper.WorkflowProcessLogMapper;
 import com.hr.service.RecruitmentRequestService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,35 +25,41 @@ import java.util.Map;
 @Service
 public class RecruitmentRequestServiceImpl implements RecruitmentRequestService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RecruitmentRequestServiceImpl.class);
+
     @Autowired
     private RecruitmentRequestMapper recruitmentRequestMapper;
-    
+
     @Autowired
     private ApprovalHistoryMapper approvalHistoryMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private OrgUnitMapper orgUnitMapper;
+
+    @Autowired
+    private WorkflowProcessLogMapper workflowProcessLogMapper;
+
     @Override
     public RecruitmentRequest saveDraft(RecruitmentRequest request) {
-        // 设置默认的用户信息（实际项目中应该从登录信息中获取）
         if (request.getCreateUserId() == null) {
             request.setCreateUserId("1001");
             request.setCreateUserName("系统用户");
         }
-        request.setUpdateUserId("1001");
-        request.setUpdateUserName("系统用户");
-        
-        // 设置默认的审批状态
+        request.setUpdateUserId(request.getCreateUserId());
+        request.setUpdateUserName(request.getCreateUserName());
+
         if (request.getApprovalStatus() == null) {
             request.setApprovalStatus("DRAFT");
         }
-        // 设置默认的岗位发布状态
         if (request.getPositionPublishStatus() == null) {
             request.setPositionPublishStatus("NOT_PUBLISHED");
         }
-        // 设置默认的当前审批级别
         if (request.getCurrentApprovalLevel() == null) {
             request.setCurrentApprovalLevel(0);
         }
-        // 设置默认的各级审批状态
         if (request.getApprovalLevel1Status() == null) {
             request.setApprovalLevel1Status("PENDING");
         }
@@ -55,12 +69,13 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         if (request.getApprovalLevel3Status() == null) {
             request.setApprovalLevel3Status("PENDING");
         }
-        
+
+        ensureDraftDefaults(request);
+
         if (request.getRecruitmentRequestId() == null) {
-            // 新增
             recruitmentRequestMapper.insert(request);
         } else {
-            // 更新
+            request.setUpdateTime(new Date());
             recruitmentRequestMapper.updateByPrimaryKey(request);
         }
         return request;
@@ -68,32 +83,45 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
 
     @Override
     public RecruitmentRequest submitRequest(RecruitmentRequest request) {
-        // 设置审批状态为待审批
+        if (request.getCreateUserId() == null || request.getCreateUserId().trim().isEmpty()) {
+            request.setCreateUserId("1001");
+            request.setCreateUserName("系统用户");
+        }
+
+        User submitter = userMapper.getUserById(request.getCreateUserId());
+        if (submitter != null && !"1001".equals(request.getCreateUserId())) {
+            String position = submitter.getPosition() == null ? "" : submitter.getPosition();
+            if (!position.contains("室经理")) {
+                throw new RuntimeException("仅室经理可提交用人申请");
+            }
+        }
+
+        if ((request.getTeam() == null || request.getTeam().trim().isEmpty()) && submitter != null) {
+            request.setTeam(submitter.getDepartment());
+        }
+
         request.setApprovalStatus("PENDING");
-        // 设置初始审批级别为1（第一级：编制管理岗）
         request.setCurrentApprovalLevel(1);
-        // 设置各审批级别的初始状态为待审批
         request.setApprovalLevel1Status("PENDING");
         request.setApprovalLevel2Status("PENDING");
         request.setApprovalLevel3Status("PENDING");
-        // 设置默认的用户信息（实际项目中应该从登录信息中获取）
+
         Date now = new Date();
-        if (request.getCreateUserId() == null) {
-            request.setCreateUserId("1001");
-            request.setCreateUserName("系统用户");
-            request.setCreateTime(now);
-        }
-        request.setUpdateUserId("1001");
-        request.setUpdateUserName("系统用户");
+        request.setCreateTime(now);
         request.setUpdateTime(now);
-        
+        if (request.getCreateUserName() == null || request.getCreateUserName().trim().isEmpty()) {
+            request.setCreateUserName(submitter != null ? submitter.getRealName() : "系统用户");
+        }
+        request.setUpdateUserId(request.getCreateUserId());
+        request.setUpdateUserName(request.getCreateUserName());
+
         if (request.getRecruitmentRequestId() == null) {
-            // 新增
             recruitmentRequestMapper.insert(request);
         } else {
-            // 更新
             recruitmentRequestMapper.updateByPrimaryKey(request);
         }
+
+        recordWorkflowSubmitLog(request.getRecruitmentRequestId(), request.getTeam(), request.getCreateUserId(), request.getCreateUserName());
         return request;
     }
 
@@ -114,7 +142,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             throw new RuntimeException("申请不存在");
         }
         if (!"PENDING".equals(request.getApprovalStatus())) {
-            throw new RuntimeException("该申请已经审批过");
+            throw new RuntimeException("该申请已审批");
         }
 
         Map<String, Object> approvalParams = new HashMap<>();
@@ -134,7 +162,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             throw new RuntimeException("申请不存在");
         }
         if (!"PENDING".equals(request.getApprovalStatus())) {
-            throw new RuntimeException("该申请已经审批过");
+            throw new RuntimeException("该申请已审批");
         }
 
         Map<String, Object> approvalParams = new HashMap<>();
@@ -164,18 +192,25 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             throw new RuntimeException("申请不存在");
         }
 
-        // 将前端传递的更新字段合并到现有记录中
         existingRequest.setRequestTitle(request.getRequestTitle());
+        existingRequest.setTotalRecruitmentCount(request.getTotalRecruitmentCount());
+        existingRequest.setVacancyCount(request.getVacancyCount());
         existingRequest.setTeam(request.getTeam());
+        existingRequest.setTechnicalPlatform(request.getTechnicalPlatform());
+        existingRequest.setCategory(request.getCategory());
         existingRequest.setSupplementCount(request.getSupplementCount());
+        existingRequest.setUrgentRequirement(request.getUrgentRequirement());
         existingRequest.setProposedLevel(request.getProposedLevel());
+        existingRequest.setExperienceYears(request.getExperienceYears());
+        existingRequest.setSkillRequirement(request.getSkillRequirement());
         existingRequest.setPositionResponsibility(request.getPositionResponsibility());
-        
-        // 设置更新信息
-        existingRequest.setUpdateUserId("1001");
-        existingRequest.setUpdateUserName("系统用户");
+        existingRequest.setInterviewerId(request.getInterviewerId());
+        existingRequest.setInterviewerName(request.getInterviewerName());
+
+        existingRequest.setUpdateUserId(request.getUpdateUserId() == null ? "1001" : request.getUpdateUserId());
+        existingRequest.setUpdateUserName(request.getUpdateUserName() == null ? "系统用户" : request.getUpdateUserName());
         existingRequest.setUpdateTime(new Date());
-        
+
         recruitmentRequestMapper.updateByPrimaryKey(existingRequest);
         return recruitmentRequestMapper.selectByPrimaryKey(existingRequest.getRecruitmentRequestId());
     }
@@ -190,12 +225,13 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         existingRequest.setPositionPublishStatus(publishStatus);
         existingRequest.setUpdateUserId("1001");
         existingRequest.setUpdateUserName("系统用户");
+        existingRequest.setUpdateTime(new Date());
         recruitmentRequestMapper.updateByPrimaryKey(existingRequest);
         return recruitmentRequestMapper.selectByPrimaryKey(id);
     }
 
     @Override
-    public void threeLevelApproveRequest(Long id, Map<String, Object> params) {
+    public RecruitmentRequest threeLevelApproveRequest(Long id, Map<String, Object> params) {
         RecruitmentRequest request = recruitmentRequestMapper.selectByPrimaryKey(id);
         if (request == null) {
             throw new RuntimeException("申请不存在");
@@ -227,7 +263,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         Date now = new Date();
 
         if (currentLevel == 1) {
-            // 第一级审批：编制管理岗
             approvalParams.put("approvalLevel1Status", "APPROVED");
             approvalParams.put("approvalLevel1UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel1UserName", params.get("approvalUserName"));
@@ -236,7 +271,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             approvalParams.put("currentApprovalLevel", 2);
             approvalParams.put("approvalStatus", "1STAPPROVED");
         } else if (currentLevel == 2) {
-            // 第二级审批：外包招聘岗
             approvalParams.put("approvalLevel2Status", "APPROVED");
             approvalParams.put("approvalLevel2UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel2UserName", params.get("approvalUserName"));
@@ -245,22 +279,29 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             approvalParams.put("currentApprovalLevel", 3);
             approvalParams.put("approvalStatus", "2NDAPPROVED");
         } else if (currentLevel == 3) {
-            // 第三级审批：团队经理
+            String approvalUserId = String.valueOf(params.get("approvalUserId"));
+            if (!"1001".equals(approvalUserId)) {
+                String teamName = resolveTeamNameByDepartment(request.getTeam());
+                User teamManager = userMapper.getActiveTeamManagerByDepartment(teamName);
+                if (teamManager == null || !approvalUserId.equals(teamManager.getUserId())) {
+                    throw new RuntimeException("仅申请部门所属团队经理可进行第三级审批");
+                }
+            }
+
             approvalParams.put("approvalLevel3Status", "APPROVED");
             approvalParams.put("approvalLevel3UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel3UserName", params.get("approvalUserName"));
             approvalParams.put("approvalLevel3Time", now);
             approvalParams.put("approvalLevel3Comment", params.get("approvalComment"));
-            approvalParams.put("currentApprovalLevel", 4); // 审批完成
+            approvalParams.put("currentApprovalLevel", 4);
             approvalParams.put("approvalStatus", "3RDAPPROVED");
         } else {
             throw new RuntimeException("审批流程已完成");
         }
 
         recruitmentRequestMapper.updateThreeLevelApprovalStatus(approvalParams);
-        
-        // 记录审批历史
         recordApprovalHistory(id, currentLevel, params, "APPROVED");
+        return recruitmentRequestMapper.selectByPrimaryKey(id);
     }
 
     @Override
@@ -296,7 +337,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         Date now = new Date();
 
         if (currentLevel == 1) {
-            // 第一级审批：编制管理岗
             approvalParams.put("approvalLevel1Status", "REJECTED");
             approvalParams.put("approvalLevel1UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel1UserName", params.get("approvalUserName"));
@@ -304,13 +344,11 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             approvalParams.put("approvalLevel1Comment", params.get("approvalComment"));
             approvalParams.put("currentApprovalLevel", currentLevel);
         } else if (currentLevel == 2) {
-            // 第二级审批：外包招聘岗
             approvalParams.put("approvalLevel2Status", "REJECTED");
             approvalParams.put("approvalLevel2UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel2UserName", params.get("approvalUserName"));
             approvalParams.put("approvalLevel2Time", now);
             approvalParams.put("approvalLevel2Comment", params.get("approvalComment"));
-            // 第二级审批拒绝，回退到第一级审批
             approvalParams.put("currentApprovalLevel", 1);
             approvalParams.put("approvalLevel1Status", "PENDING");
             approvalParams.put("approvalLevel1UserId", null);
@@ -318,7 +356,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             approvalParams.put("approvalLevel1Time", null);
             approvalParams.put("approvalLevel1Comment", null);
         } else if (currentLevel == 3) {
-            // 第三级审批：团队经理
             approvalParams.put("approvalLevel3Status", "REJECTED");
             approvalParams.put("approvalLevel3UserId", params.get("approvalUserId"));
             approvalParams.put("approvalLevel3UserName", params.get("approvalUserName"));
@@ -330,10 +367,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         }
 
         approvalParams.put("approvalStatus", "REJECTED");
-
         recruitmentRequestMapper.updateThreeLevelApprovalStatus(approvalParams);
-        
-        // 记录审批历史
         recordApprovalHistory(id, currentLevel, params, "REJECTED");
     }
 
@@ -342,40 +376,98 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         List<RecruitmentRequest> allPending = recruitmentRequestMapper.selectPendingApproval();
         List<RecruitmentRequest> rolePending = new ArrayList<>();
 
-        System.out.println("获取待审批列表，用户角色：" + userRole);
-        System.out.println("所有待审批申请数量：" + allPending.size());
-
+        logger.debug("获取待审批列表，用户角色：{}", userRole);
         for (RecruitmentRequest request : allPending) {
             Integer currentLevel = request.getCurrentApprovalLevel();
             String approvalStatus = request.getApprovalStatus();
-            
-            System.out.println("申请ID：" + request.getRecruitmentRequestId() + ", 当前审批级别：" + currentLevel + ", 审批状态：" + approvalStatus);
-
             if (currentLevel == null) {
                 continue;
             }
 
             if ("编制管理岗".equals(userRole) && currentLevel == 1 && "PENDING".equals(approvalStatus)) {
-                // 第一级审批：编制管理岗，查看状态为PENDING的申请
-                System.out.println("添加到编制管理岗待审批列表：" + request.getRecruitmentRequestId());
                 rolePending.add(request);
-            } else if ("外包招聘岗".equals(userRole) && currentLevel == 2 && "1STAPPROVED".equals(approvalStatus)) {
-                // 第二级审批：外包招聘岗，查看状态为1STAPPROVED的申请
-                System.out.println("添加到外包招聘岗待审批列表：" + request.getRecruitmentRequestId());
+            } else if (("外包招聘岗".equals(userRole) || "外包招聘管理岗".equals(userRole)) && currentLevel == 2 && "1STAPPROVED".equals(approvalStatus)) {
                 rolePending.add(request);
             } else if ("团队经理".equals(userRole) && currentLevel == 3 && "2NDAPPROVED".equals(approvalStatus)) {
-                // 第三级审批：团队经理，查看状态为2NDAPPROVED的申请
-                System.out.println("添加到团队经理待审批列表：" + request.getRecruitmentRequestId());
                 rolePending.add(request);
-            } else if ("室经理".equals(userRole) || "分管总".equals(userRole) || "总经理".equals(userRole) || "外包供应商".equals(userRole)) {
-                // 其他角色可以查看所有待审批的申请
-                System.out.println("添加到其他角色待审批列表：" + request.getRecruitmentRequestId());
+            } else if ("管理员".equals(userRole) || "系统管理员".equals(userRole)) {
                 rolePending.add(request);
             }
         }
 
-        System.out.println("最终待审批列表数量：" + rolePending.size());
         return rolePending;
+    }
+
+    private void ensureDraftDefaults(RecruitmentRequest request) {
+        if (request.getRequestTitle() == null || request.getRequestTitle().trim().isEmpty()) {
+            request.setRequestTitle("未命名申请");
+        }
+        if (request.getTotalRecruitmentCount() == null) {
+            request.setTotalRecruitmentCount(0);
+        }
+        if (request.getVacancyCount() == null) {
+            request.setVacancyCount(0);
+        }
+        if (request.getTeam() == null || request.getTeam().trim().isEmpty()) {
+            request.setTeam("未设置部门");
+        }
+        if (request.getTechnicalPlatform() == null || request.getTechnicalPlatform().trim().isEmpty()) {
+            request.setTechnicalPlatform("其他");
+        }
+        if (request.getCategory() == null || request.getCategory().trim().isEmpty()) {
+            request.setCategory("其他");
+        }
+        if (request.getSupplementCount() == null) {
+            request.setSupplementCount(0);
+        }
+        if (request.getUrgentRequirement() == null || request.getUrgentRequirement().trim().isEmpty()) {
+            request.setUrgentRequirement("NO");
+        }
+        if (request.getProposedLevel() == null || request.getProposedLevel().trim().isEmpty()) {
+            request.setProposedLevel("PT");
+        }
+        if (request.getExperienceYears() == null || request.getExperienceYears().trim().isEmpty()) {
+            request.setExperienceYears("-");
+        }
+        if (request.getPositionResponsibility() == null || request.getPositionResponsibility().trim().isEmpty()) {
+            request.setPositionResponsibility("-");
+        }
+        if (request.getSkillRequirement() == null || request.getSkillRequirement().trim().isEmpty()) {
+            request.setSkillRequirement("-");
+        }
+    }
+
+    private String resolveTeamNameByDepartment(String department) {
+        if (department == null || department.trim().isEmpty()) {
+            return "";
+        }
+        OrgUnit orgUnit = orgUnitMapper.getByUnitName(department);
+        if (orgUnit == null) {
+            return department;
+        }
+        if (orgUnit.getParentUnitName() == null || orgUnit.getParentUnitName().trim().isEmpty()) {
+            return orgUnit.getUnitName();
+        }
+        return orgUnit.getParentUnitName();
+    }
+
+    private void recordWorkflowSubmitLog(Long requestId, String department, String userId, String userName) {
+        if (requestId == null) {
+            return;
+        }
+        WorkflowProcessLog log = new WorkflowProcessLog();
+        log.setProcessCode("RECRUITMENT_REQUEST");
+        log.setBusinessId(requestId);
+        log.setNodeOrder(0);
+        log.setNodeName("提交申请");
+        log.setActionType("SUBMIT");
+        log.setActionResult("SUCCESS");
+        log.setOperatorId(userId);
+        log.setOperatorName(userName);
+        log.setOperatorRole("室经理");
+        log.setActionComment("申请部门: " + (department == null ? "-" : department));
+        log.setActionTime(new Date());
+        workflowProcessLogMapper.insert(log);
     }
 
     private void recordApprovalHistory(Long recruitmentRequestId, Integer approvalLevel, Map<String, Object> params, String approvalStatus) {
@@ -387,7 +479,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         history.setApprovalStatus(approvalStatus);
         history.setApprovalComment((String) params.get("approvalComment"));
         history.setApprovalTime(new Date());
-        
         approvalHistoryMapper.insert(history);
     }
 
