@@ -43,13 +43,38 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "vacancy_count INT NOT NULL COMMENT '空缺编制', " +
                 "team VARCHAR(100) NOT NULL COMMENT '所属团队', " +
                 "technical_platform VARCHAR(50) NOT NULL COMMENT '技术平台', " +
+                "category VARCHAR(50) DEFAULT '其他' COMMENT '所属分类', " +
                 "supplement_count INT NOT NULL COMMENT '补充人数', " +
                 "urgent_requirement VARCHAR(10) NOT NULL COMMENT '是否近期紧急要求', " +
                 "proposed_level VARCHAR(50) NOT NULL COMMENT '建议级别', " +
                 "experience_years VARCHAR(50) NOT NULL COMMENT '相关经验年限要求', " +
                 "skill_requirement TEXT COMMENT '技能要求描述', " +
                 "position_responsibility TEXT NOT NULL COMMENT '岗位职责', " +
-                "status VARCHAR(20) NOT NULL COMMENT '状态（DRAFT：草稿，SUBMITTED：已提交）', " +
+                "interviewer_id VARCHAR(20) DEFAULT NULL COMMENT '面试官ID', " +
+                "interviewer_name VARCHAR(50) DEFAULT NULL COMMENT '面试官姓名', " +
+                "approval_status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '审批状态', " +
+                "position_publish_status VARCHAR(20) NOT NULL DEFAULT 'NOT_PUBLISHED' COMMENT '岗位发布状态', " +
+                "approval_user_id VARCHAR(20) DEFAULT NULL COMMENT '审批人ID', " +
+                "approval_user_name VARCHAR(50) DEFAULT NULL COMMENT '审批人姓名', " +
+                "approval_time DATETIME DEFAULT NULL COMMENT '审批时间', " +
+                "approval_comment TEXT COMMENT '审批意见', " +
+                "current_approval_level INT NOT NULL DEFAULT 0 COMMENT '当前审批级别', " +
+                "approval_level1_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '一级审批状态', " +
+                "approval_level1_user_id VARCHAR(20) DEFAULT NULL COMMENT '一级审批人ID', " +
+                "approval_level1_user_name VARCHAR(50) DEFAULT NULL COMMENT '一级审批人姓名', " +
+                "approval_level1_time DATETIME DEFAULT NULL COMMENT '一级审批时间', " +
+                "approval_level1_comment TEXT COMMENT '一级审批意见', " +
+                "approval_level2_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '二级审批状态', " +
+                "approval_level2_user_id VARCHAR(20) DEFAULT NULL COMMENT '二级审批人ID', " +
+                "approval_level2_user_name VARCHAR(50) DEFAULT NULL COMMENT '二级审批人姓名', " +
+                "approval_level2_time DATETIME DEFAULT NULL COMMENT '二级审批时间', " +
+                "approval_level2_comment TEXT COMMENT '二级审批意见', " +
+                "approval_level3_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '三级审批状态', " +
+                "approval_level3_user_id VARCHAR(20) DEFAULT NULL COMMENT '三级审批人ID', " +
+                "approval_level3_user_name VARCHAR(50) DEFAULT NULL COMMENT '三级审批人姓名', " +
+                "approval_level3_time DATETIME DEFAULT NULL COMMENT '三级审批时间', " +
+                "approval_level3_comment TEXT COMMENT '三级审批意见', " +
+                "status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '兼容旧流程状态字段', " +
                 "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
                 "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
                 "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
@@ -67,6 +92,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 logger.info("索引 idx_status 创建成功");
             } catch (Exception e) {
                 logger.info("索引 idx_status 已存在或创建失败: {}", e.getMessage());
+            }
+
+            try {
+                jdbcTemplate.execute("CREATE INDEX idx_approval_status ON recruitment_request(approval_status)");
+                logger.info("索引 idx_approval_status 创建成功");
+            } catch (Exception e) {
+                logger.info("索引 idx_approval_status 已存在或创建失败: {}", e.getMessage());
             }
             
             try {
