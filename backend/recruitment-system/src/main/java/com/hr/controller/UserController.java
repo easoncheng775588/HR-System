@@ -62,7 +62,9 @@ public class UserController {
             if (count > 0) {
                 result.put("returnCode", "SUC0000");
                 result.put("errorMsg", "");
-                result.put("body", "用户创建成功");
+                Map<String, Object> body = new HashMap<>();
+                body.put("userId", user.getUserId());
+                result.put("body", body);
             } else {
                 result.put("returnCode", "ERR0002");
                 result.put("errorMsg", ErrorMessage.get("user.createFailed"));
@@ -85,7 +87,7 @@ public class UserController {
             if (count > 0) {
                 result.put("returnCode", "SUC0000");
                 result.put("errorMsg", "");
-                result.put("body", "用户更新成功");
+                result.put("body", userService.getUserById(userId));
             } else {
                 result.put("returnCode", "ERR0002");
                 result.put("errorMsg", ErrorMessage.get("user.updateFailed"));
@@ -155,6 +157,21 @@ public class UserController {
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
             result.put("errorMsg", "搜索用户失败: " + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
+
+    @GetMapping("/department-options")
+    public Map<String, Object> getDepartmentOptions() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", userService.getDepartmentOptions());
+        } catch (Exception e) {
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "获取部门选项失败: " + e.getMessage());
             result.put("body", null);
         }
         return result;

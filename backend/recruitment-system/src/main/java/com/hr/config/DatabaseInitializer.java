@@ -117,6 +117,8 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "email VARCHAR(100) COMMENT '邮箱', " +
                 "phone VARCHAR(20) COMMENT '电话', " +
                 "department VARCHAR(100) COMMENT '部门', " +
+                "team_name VARCHAR(100) COMMENT '团队名称', " +
+                "group_name VARCHAR(100) COMMENT '室组名称', " +
                 "position VARCHAR(100) COMMENT '职位', " +
                 "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT '状态（ACTIVE：启用，DISABLED：禁用）', " +
                 "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
@@ -129,6 +131,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             jdbcTemplate.execute(createUserTableSQL);
             logger.info("表 sys_user 创建成功");
+            ensureUserColumns();
             
             // 创建角色表
             String createRoleTableSQL = "CREATE TABLE IF NOT EXISTS sys_role (" +
@@ -520,6 +523,25 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.error("所属团队参数初始化失败: {}", e.getMessage(), e);
+        }
+    }
+
+    private void ensureUserColumns() {
+        addColumnIfMissing("sys_user", "team_name", "VARCHAR(100) COMMENT '团队名称'");
+        addColumnIfMissing("sys_user", "group_name", "VARCHAR(100) COMMENT '室组名称'");
+    }
+
+    private void addColumnIfMissing(String tableName, String columnName, String definition) {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM information_schema.COLUMNS " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+            Integer.class,
+            tableName,
+            columnName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+            logger.info("表 {} 新增字段 {}", tableName, columnName);
         }
     }
 }

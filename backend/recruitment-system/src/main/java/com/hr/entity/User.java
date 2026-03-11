@@ -10,6 +10,10 @@ public class User {
     private String email;
     private String phone;
     private String department;
+    private String teamName;
+    private String groupName;
+    private String departmentType;
+    private String departmentDisplay;
     private String position;
     private String status;
     private Date createTime;
@@ -77,6 +81,38 @@ public class User {
 
     public String getPosition() {
         return position;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public String getDepartmentType() {
+        return departmentType;
+    }
+
+    public void setDepartmentType(String departmentType) {
+        this.departmentType = departmentType;
+    }
+
+    public String getDepartmentDisplay() {
+        return departmentDisplay;
+    }
+
+    public void setDepartmentDisplay(String departmentDisplay) {
+        this.departmentDisplay = departmentDisplay;
     }
 
     public void setPosition(String position) {
