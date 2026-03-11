@@ -54,7 +54,8 @@ const PositionPublishing = () => {
       if (response.data?.returnCode === 'SUC0000') {
         const approvedRequests = (response.data.body || []).map((item) => ({
           ...item,
-          positionPublishStatus: item.positionPublishStatus || 'UNPUBLISHED',
+          positionPublishStatus:
+            item.positionPublishStatus === 'PUBLISHED' ? 'PUBLISHED' : 'NOT_PUBLISHED',
         }));
         setData(approvedRequests);
         CacheManager.set(cacheKey, approvedRequests, 5 * 60 * 1000);
@@ -131,7 +132,7 @@ const PositionPublishing = () => {
     try {
       const response = await api.put(
         `/api/recruitment-request/${record.recruitmentRequestId}/publish-status`,
-        { publishStatus: 'UNPUBLISHED' }
+        { publishStatus: 'NOT_PUBLISHED' }
       );
 
       if (response.data?.returnCode === 'SUC0000') {
@@ -208,7 +209,7 @@ const PositionPublishing = () => {
           <Button type="link" icon={<EyeOutlined />} onClick={() => handleView(record)}>
             查看
           </Button>
-          {record.positionPublishStatus === 'UNPUBLISHED' ? (
+          {record.positionPublishStatus === 'NOT_PUBLISHED' ? (
             <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handlePublish(record)}>
               发布
             </Button>

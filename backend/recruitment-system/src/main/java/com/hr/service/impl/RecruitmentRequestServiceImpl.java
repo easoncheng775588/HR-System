@@ -101,6 +101,9 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         }
 
         request.setApprovalStatus("PENDING");
+        if (request.getPositionPublishStatus() == null || request.getPositionPublishStatus().trim().isEmpty()) {
+            request.setPositionPublishStatus("NOT_PUBLISHED");
+        }
         request.setCurrentApprovalLevel(1);
         request.setApprovalLevel1Status("PENDING");
         request.setApprovalLevel2Status("PENDING");
@@ -222,7 +225,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             throw new RuntimeException("申请不存在");
         }
 
-        existingRequest.setPositionPublishStatus(publishStatus);
+        existingRequest.setPositionPublishStatus(normalizePublishStatus(publishStatus));
         existingRequest.setUpdateUserId("1001");
         existingRequest.setUpdateUserName("系统用户");
         existingRequest.setUpdateTime(new Date());
@@ -435,6 +438,16 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         if (request.getSkillRequirement() == null || request.getSkillRequirement().trim().isEmpty()) {
             request.setSkillRequirement("-");
         }
+    }
+
+    private String normalizePublishStatus(String publishStatus) {
+        if (publishStatus == null || publishStatus.trim().isEmpty()) {
+            return "NOT_PUBLISHED";
+        }
+        if ("UNPUBLISHED".equalsIgnoreCase(publishStatus) || "NOT_PUBLISHED".equalsIgnoreCase(publishStatus)) {
+            return "NOT_PUBLISHED";
+        }
+        return publishStatus.trim();
     }
 
     private String resolveTeamNameByDepartment(String department) {
