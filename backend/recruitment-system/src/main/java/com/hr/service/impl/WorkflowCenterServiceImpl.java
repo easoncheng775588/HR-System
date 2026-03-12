@@ -99,7 +99,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             item.setSummary(buildSummary(req));
             item.setCurrentNode(resolveNodeName(req, nodeConfig));
             item.setApplicant(req.getCreateUserName());
-            item.setApplicantDept(req.getTeam());
+            item.setApplicantDept(resolveApplicantDepartment(req));
             item.setArriveTime(resolveArriveTime(req));
             result.add(item);
         }
@@ -121,7 +121,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
                 item.setProcessName(PROCESS_NAME);
                 item.setSummary(buildSummary(req));
                 item.setCurrentNode(resolveCurrentNode(req, nodeConfigMap));
-                item.setApplicantDept(req.getTeam());
+                item.setApplicantDept(resolveApplicantDepartment(req));
                 item.setProcessStatus(resolveProcessStatus(req.getApprovalStatus()));
                 item.setStartTime(req.getCreateTime());
                 return item;
@@ -144,7 +144,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             item.setProcessName(PROCESS_NAME);
             item.setSummary(buildSummary(req));
             item.setApplicant(req.getCreateUserName());
-            item.setApplicantDept(req.getTeam());
+            item.setApplicantDept(resolveApplicantDepartment(req));
             item.setApplyTime(req.getCreateTime());
             item.setHandleTime(history.getApprovalTime());
             result.add(item);
@@ -343,7 +343,17 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
     }
 
     private String buildSummary(RecruitmentRequest req) {
-        return "岗位:" + nullSafe(req.getRequestTitle()) + " | 申请部门:" + nullSafe(req.getTeam()) + " | 补充:" + (req.getSupplementCount() == null ? 0 : req.getSupplementCount());
+        return "岗位:" + nullSafe(req.getRequestTitle()) + " | 申请部门:" + nullSafe(resolveApplicantDepartment(req)) + " | 补充:" + (req.getSupplementCount() == null ? 0 : req.getSupplementCount());
+    }
+
+    private String resolveApplicantDepartment(RecruitmentRequest req) {
+        if (req == null) {
+            return "-";
+        }
+        if (req.getApplicationDepartment() != null && !req.getApplicationDepartment().trim().isEmpty()) {
+            return req.getApplicationDepartment();
+        }
+        return nullSafe(req.getTeam());
     }
 
     private String nullSafe(String text) {
@@ -392,7 +402,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             return true;
         }
 
-        String teamName = resolveTeamNameByDepartment(request.getTeam());
+        String teamName = resolveTeamNameByDepartment(resolveRequestOrgUnit(request));
         if (teamName == null || teamName.trim().isEmpty()) {
             return false;
         }
@@ -443,6 +453,19 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             return unit.getUnitName();
         }
         return unit.getParentUnitName();
+    }
+
+    private String resolveRequestOrgUnit(RecruitmentRequest request) {
+        if (request == null) {
+            return "";
+        }
+        if (request.getOrgUnitName() != null && !request.getOrgUnitName().trim().isEmpty()) {
+            return request.getOrgUnitName();
+        }
+        if (request.getApplicationDepartment() != null && !request.getApplicationDepartment().trim().isEmpty()) {
+            return request.getApplicationDepartment();
+        }
+        return request.getTeam();
     }
 
     private User findTeamManager(String teamName) {

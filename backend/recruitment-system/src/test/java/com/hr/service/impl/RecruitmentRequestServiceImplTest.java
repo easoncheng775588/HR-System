@@ -374,6 +374,51 @@ class RecruitmentRequestServiceImplTest {
     }
 
     @Test
+    void secondLevelApprovalSendsPendingMessageToTeamManager() {
+        RecruitmentRequest request = new RecruitmentRequest();
+        request.setRecruitmentRequestId(15L);
+        request.setRequestTitle("团队补员");
+        request.setTeam("基础业务开发团队 / 办公系统开发室");
+        request.setApplicationDepartment("基础业务开发团队 / 办公系统开发室");
+        request.setOrgUnitName("办公系统开发室");
+        request.setCreateUserId("1007");
+        request.setCreateUserName("胡俊峰");
+        request.setCurrentApprovalLevel(2);
+        request.setApprovalStatus("1STAPPROVED");
+        request.setSubmitterRoleType("ROOM_MANAGER");
+        request.setFinalApproverUserId("1009");
+        request.setFinalApproverUserName("韦武");
+
+        RecruitmentRequest transferred = new RecruitmentRequest();
+        transferred.setRecruitmentRequestId(15L);
+        transferred.setTeam("基础业务开发团队 / 办公系统开发室");
+        transferred.setApplicationDepartment("基础业务开发团队 / 办公系统开发室");
+        transferred.setOrgUnitName("办公系统开发室");
+        transferred.setCreateUserId("1007");
+        transferred.setCreateUserName("胡俊峰");
+        transferred.setCurrentApprovalLevel(3);
+        transferred.setApprovalStatus("2NDAPPROVED");
+        transferred.setSubmitterRoleType("ROOM_MANAGER");
+        transferred.setFinalApproverUserId("1009");
+        transferred.setFinalApproverUserName("韦武");
+
+        when(recruitmentRequestMapper.selectByPrimaryKey(15L)).thenReturn(request, transferred);
+        when(orgUnitMapper.getByUnitName("办公系统开发室")).thenReturn(orgUnit("办公系统开发室", "GROUP", "基础业务开发团队"));
+        when(userMapper.getActiveTeamManagerByDepartment("基础业务开发团队"))
+            .thenReturn(activeUser("1009", "韦武", "团队经理", "基础业务开发团队", "基础业务开发团队", null));
+
+        recruitmentRequestService.threeLevelApproveRequest(15L, Map.of(
+            "approvalUserId", "1002",
+            "approvalUserName", "梁秋怡",
+            "approvalComment", "通过"
+        ));
+
+        verify(messageService).createMessage(messageCaptor.capture());
+        assertEquals("1009", messageCaptor.getValue().getTargetUserId());
+        assertTrue(messageCaptor.getValue().getContent().contains("基础业务开发团队 / 办公系统开发室"));
+    }
+
+    @Test
     void getAllByViewerReturnsOwnRequestsForRoomManager() {
         RecruitmentRequest own = new RecruitmentRequest();
         own.setRecruitmentRequestId(1L);

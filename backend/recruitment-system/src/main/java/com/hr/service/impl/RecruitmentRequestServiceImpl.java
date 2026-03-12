@@ -398,6 +398,9 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         recruitmentRequestMapper.updateThreeLevelApprovalStatus(approvalParams);
         recordApprovalHistory(id, currentLevel, params, "APPROVED");
         RecruitmentRequest updatedRequest = recruitmentRequestMapper.selectByPrimaryKey(id);
+        if (updatedRequest != null && Integer.valueOf(3).equals(updatedRequest.getCurrentApprovalLevel())) {
+            sendLevelThreePendingNotification(updatedRequest);
+        }
         if (updatedRequest != null && isFinalApproved(updatedRequest)) {
             sendCompletionNotifications(updatedRequest);
         }
@@ -911,6 +914,48 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             return false;
         }
         return "3RDAPPROVED".equals(request.getApprovalStatus()) || "APPROVED".equals(request.getApprovalStatus());
+    }
+
+    private void sendLevelThreePendingNotification(RecruitmentRequest request) {
+        try {
+            User approver = resolveLevelThreeApprover(request);
+            if (approver == null || approver.getUserId() == null || approver.getUserId().trim().isEmpty()) {
+                return;
+            }
+
+            Message message = new Message();
+            message.setTitle("用人需求审批提醒");
+            message.setContent("用人需求审批提醒：" + nullSafe(buildDisplayDepartment(request)) + "的用人申请已到达您审批环节，请及时查看！");
+            message.setType("SYSTEM");
+            message.setTargetUserId(approver.getUserId());
+            message.setCreateUserId(SYSTEM_USER_ID);
+            message.setCreateUserName(SYSTEM_USER_NAME);
+            messageService.createMessage(message);
+            logger.info("已发送第三级审批通知: targetUserId={}, targetUserName={}", approver.getUserId(), approver.getRealName());
+        } catch (Exception e) {
+            logger.error("第三级审批通知发送失败: {}", e.getMessage(), e);
+        }
+    }
+
+    private User resolveLevelThreeApprover(RecruitmentRequest request) {
+        if (request == null) {
+            return null;
+        }
+        if (DIRECT_TEAM_MANAGER_TYPE.equals(request.getSubmitterRoleType())) {
+            String realName = request.getFinalApproverUserName();
+            if (realName != null && !realName.trim().isEmpty()) {
+                User director = userMapper.getActiveUserByRealName(realName);
+                if (director != null) {
+                    return director;
+                }
+            }
+            if (request.getFinalApproverUserId() != null && !request.getFinalApproverUserId().trim().isEmpty()) {
+                return userMapper.getUserById(request.getFinalApproverUserId());
+            }
+            return null;
+        }
+        String teamName = resolveTeamNameByDepartment(resolveRequestOrgUnit(request));
+        return findTeamManager(teamName);
     }
 
     private void sendCompletionNotifications(RecruitmentRequest request) {
