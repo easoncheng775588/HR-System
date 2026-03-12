@@ -1,12 +1,19 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Descriptions, Drawer, Space, Table, Tag, message } from 'antd';
 import { EditOutlined, EyeOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
+import {
+  buildRecruitmentRequestViewerParams,
+  getDepartmentDisplayText,
+  getRequestTypeLabel,
+} from './recruitmentRequestHelpers';
 
 const RecruitmentRequestList = () => {
   const { getLevelText, getPlatformText } = useParam();
+  const { user } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -14,18 +21,12 @@ const RecruitmentRequestList = () => {
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRequests();
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/recruitment-request/list');
+      const response = await api.get('/api/recruitment-request/list', {
+        params: buildRecruitmentRequestViewerParams(user || {}),
+      });
       if (response.data?.returnCode === 'SUC0000') {
         setData(response.data.body || []);
       } else {
@@ -37,7 +38,18 @@ const RecruitmentRequestList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const getApprovalStatusTag = (approvalStatus) => {
     if (approvalStatus === 'DRAFT') return <Tag>未提交</Tag>;
@@ -52,7 +64,7 @@ const RecruitmentRequestList = () => {
 
   const columns = [
     {
-      title: '岗位标题',
+      title: '申请标题',
       dataIndex: 'requestTitle',
       key: 'requestTitle',
       width: isMobile ? 140 : 220,
@@ -60,12 +72,20 @@ const RecruitmentRequestList = () => {
     },
     {
       title: '申请部门',
-      dataIndex: 'team',
-      key: 'team',
-      width: 140,
+      dataIndex: 'applicationDepartment',
+      key: 'applicationDepartment',
+      width: 220,
       ellipsis: true,
       responsive: ['md', 'lg', 'xl', 'xxl'],
-      render: (text) => text || '-',
+      render: (_, record) => getDepartmentDisplayText(record) || '-',
+    },
+    {
+      title: '所属类型',
+      dataIndex: 'requestType',
+      key: 'requestType',
+      width: 120,
+      responsive: ['md', 'lg', 'xl', 'xxl'],
+      render: (text) => getRequestTypeLabel(text),
     },
     {
       title: '技术平台',
@@ -130,7 +150,7 @@ const RecruitmentRequestList = () => {
     <div className="app-page">
       <div className="app-page-actions">
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/recruitment-request/new')}>
-          新增用人申请
+          发起用人申请
         </Button>
       </div>
 
@@ -165,15 +185,18 @@ const RecruitmentRequestList = () => {
       >
         {selectedRecord && (
           <Descriptions column={1} size={isMobile ? 'small' : 'default'}>
-            <Descriptions.Item label="岗位标题">{selectedRecord.requestTitle}</Descriptions.Item>
-            <Descriptions.Item label="申请部门">{selectedRecord.team || '-'}</Descriptions.Item>
+            <Descriptions.Item label="申请标题">{selectedRecord.requestTitle}</Descriptions.Item>
+            <Descriptions.Item label="申请部门">{getDepartmentDisplayText(selectedRecord) || '-'}</Descriptions.Item>
+            <Descriptions.Item label="所属类型">{getRequestTypeLabel(selectedRecord.requestType)}</Descriptions.Item>
             <Descriptions.Item label="技术平台">{getPlatformText(selectedRecord.technicalPlatform)}</Descriptions.Item>
             <Descriptions.Item label="补充人数">{selectedRecord.supplementCount}</Descriptions.Item>
             <Descriptions.Item label="建议级别">{getLevelText(selectedRecord.proposedLevel)}</Descriptions.Item>
             <Descriptions.Item label="创建时间">
               {selectedRecord.createTime ? new Date(selectedRecord.createTime).toLocaleString('zh-CN') : '-'}
             </Descriptions.Item>
+            <Descriptions.Item label="任职要求">{selectedRecord.skillRequirement || '-'}</Descriptions.Item>
             <Descriptions.Item label="岗位职责">{selectedRecord.positionResponsibility || '-'}</Descriptions.Item>
+            <Descriptions.Item label="备注">{selectedRecord.remark || '-'}</Descriptions.Item>
           </Descriptions>
         )}
       </Drawer>

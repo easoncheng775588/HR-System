@@ -58,7 +58,7 @@ const MainLayout = ({ children }) => {
 
       const items = [];
       if (hasApprovalPermission) {
-        items.push({ id: 1, title: '审核用人申请', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
+        items.push({ id: 1, title: '流程中心待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
       }
       items.push({ id: 2, title: '待面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount });
 
@@ -95,7 +95,6 @@ const MainLayout = ({ children }) => {
   const allMenuItems = useMemo(() => ([
     { key: 'dashboard', icon: <HomeOutlined />, label: '欢迎页面' },
     { key: 'recruitment-request', icon: <FormOutlined />, label: '用人申请' },
-    { key: 'approval-management', icon: <CheckCircleOutlined />, label: '用人审批' },
     { key: 'position-publishing', icon: <TableOutlined />, label: '岗位发布' },
     { key: 'resume-submission', icon: <FileTextOutlined />, label: '简历提交' },
     { key: 'resume-screening', icon: <StarOutlined />, label: '简历筛选' },
@@ -225,7 +224,7 @@ const MainLayout = ({ children }) => {
                         renderItem={(item) => (
                           <List.Item
                             style={{ padding: '2px 0', cursor: 'pointer' }}
-                            onClick={() => navigate(item.id === 1 ? '/approval-management' : '/interview-scheduling')}
+                            onClick={() => navigate(item.id === 1 ? '/workflow-center' : '/interview-scheduling')}
                           >
                             <List.Item.Meta
                               title={
