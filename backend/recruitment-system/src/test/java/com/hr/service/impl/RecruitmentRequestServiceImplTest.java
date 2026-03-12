@@ -2,6 +2,7 @@ package com.hr.service.impl;
 
 import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.OrgUnit;
+import com.hr.entity.Message;
 import com.hr.entity.Staffing;
 import com.hr.entity.User;
 import com.hr.mapper.ApprovalHistoryMapper;
@@ -64,6 +65,9 @@ class RecruitmentRequestServiceImplTest {
 
     @Captor
     private ArgumentCaptor<RecruitmentRequest> requestCaptor;
+
+    @Captor
+    private ArgumentCaptor<Message> messageCaptor;
 
     @Test
     void saveDraftSetsLegacyStatusBeforeInsert() {
@@ -324,6 +328,49 @@ class RecruitmentRequestServiceImplTest {
         ));
 
         verify(messageService, times(2)).createMessage(any());
+    }
+
+    @Test
+    void completionNotificationUsesDisplayDepartmentText() {
+        RecruitmentRequest request = new RecruitmentRequest();
+        request.setRecruitmentRequestId(14L);
+        request.setRequestTitle("团队补员");
+        request.setTeam("办公系统开发室");
+        request.setApplicationDepartment("办公系统开发室");
+        request.setOrgUnitName("办公系统开发室");
+        request.setCreateUserId("1007");
+        request.setCreateUserName("胡俊峰");
+        request.setCurrentApprovalLevel(3);
+        request.setApprovalStatus("2NDAPPROVED");
+        request.setSubmitterRoleType("ROOM_MANAGER");
+        request.setFinalApproverUserId("1009");
+        request.setFinalApproverUserName("韦武");
+
+        RecruitmentRequest approved = new RecruitmentRequest();
+        approved.setRecruitmentRequestId(14L);
+        approved.setTeam("办公系统开发室");
+        approved.setApplicationDepartment("办公系统开发室");
+        approved.setOrgUnitName("办公系统开发室");
+        approved.setCreateUserId("1007");
+        approved.setCreateUserName("胡俊峰");
+        approved.setCurrentApprovalLevel(4);
+        approved.setApprovalStatus("3RDAPPROVED");
+
+        when(recruitmentRequestMapper.selectByPrimaryKey(14L)).thenReturn(request, approved);
+        when(orgUnitMapper.getByUnitName("办公系统开发室")).thenReturn(orgUnit("办公系统开发室", "GROUP", "基础业务开发团队"));
+        when(userMapper.getActiveTeamManagerByDepartment("基础业务开发团队")).thenReturn(activeUser("1009", "韦武", "团队经理", "办公系统开发室", "基础业务开发团队", null));
+        when(userMapper.getActiveUsersByRoleName("外包招聘管理岗")).thenReturn(Collections.emptyList());
+        when(userMapper.getActiveUsersByRoleName("外包招聘岗")).thenReturn(Collections.emptyList());
+        when(userMapper.getActiveUsersByRoleName("外包招聘管理")).thenReturn(Collections.emptyList());
+
+        recruitmentRequestService.threeLevelApproveRequest(14L, Map.of(
+            "approvalUserId", "1009",
+            "approvalUserName", "韦武",
+            "approvalComment", "通过"
+        ));
+
+        verify(messageService).createMessage(messageCaptor.capture());
+        assertTrue(messageCaptor.getValue().getContent().contains("基础业务开发团队 / 办公系统开发室"));
     }
 
     @Test

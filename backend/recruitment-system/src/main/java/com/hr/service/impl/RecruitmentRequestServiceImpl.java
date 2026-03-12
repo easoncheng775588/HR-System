@@ -940,7 +940,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
     private void createApprovalCompleteMessage(RecruitmentRequest request, String targetUserId, String targetUserName) {
         Message message = new Message();
         message.setTitle("用人需求审批提醒");
-        message.setContent("用人需求审批提醒：" + nullSafe(request.getApplicationDepartment()) + "的用人申请需求已审批完成，请及时查看！");
+        message.setContent("用人需求审批提醒：" + nullSafe(buildDisplayDepartment(request)) + "的用人申请需求已审批完成，请及时查看！");
         message.setType("SYSTEM");
         message.setTargetUserId(targetUserId);
         message.setCreateUserId(SYSTEM_USER_ID);
