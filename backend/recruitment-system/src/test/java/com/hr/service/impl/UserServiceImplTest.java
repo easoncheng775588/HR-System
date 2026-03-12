@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -121,6 +122,28 @@ class UserServiceImplTest {
         assertNull(result.getGroupName());
         assertEquals("TEAM_ONLY", result.getDepartmentType());
         assertEquals("技术管理团队", result.getDepartmentDisplay());
+    }
+
+    @Test
+    void getUserByIdFallsBackToPrimaryRoleForPosition() {
+        User storedUser = new User();
+        storedUser.setUserId("1004");
+        storedUser.setUsername("simone");
+        storedUser.setRealName("何诗敏");
+        storedUser.setDepartment("人力资源团队");
+        storedUser.setTeamName("人力资源团队");
+
+        when(userMapper.getUserById("1004")).thenReturn(storedUser);
+        when(userMapper.getRoleNamesByUserId("1004")).thenReturn(Collections.singletonList("编制管理岗"));
+        when(orgUnitMapper.getActiveOrgUnits()).thenReturn(Arrays.asList(
+            orgUnit("永隆信息有限公司", "ROOT", null),
+            orgUnit("人力资源团队", "TEAM", "永隆信息有限公司")
+        ));
+
+        User result = userService.getUserById("1004");
+
+        assertEquals("编制管理岗", result.getPosition());
+        assertEquals("TEAM_ONLY", result.getDepartmentType());
     }
 
     @Test

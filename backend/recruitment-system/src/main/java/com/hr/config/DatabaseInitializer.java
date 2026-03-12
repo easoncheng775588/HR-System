@@ -367,6 +367,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             // 初始化超级管理员数据
             initSuperAdmin();
+            ensureDirectorRole();
+            ensureDirectorUsers();
             
             logger.info("数据库初始化完成！");
             
@@ -573,6 +575,86 @@ public class DatabaseInitializer implements CommandLineRunner {
     private void ensureUserColumns() {
         addColumnIfMissing("sys_user", "team_name", "VARCHAR(100) COMMENT '团队名称'");
         addColumnIfMissing("sys_user", "group_name", "VARCHAR(100) COMMENT '室组名称'");
+    }
+
+    private void ensureDirectorRole() {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_role WHERE role_name = ?",
+            Integer.class,
+            "分管总"
+        );
+        if (count != null && count > 0) {
+            return;
+        }
+
+        jdbcTemplate.update(
+            "INSERT INTO sys_role (role_name, role_code, description, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                "VALUES (?, ?, ?, 'ACTIVE', '1001', '系统', '1001', '系统')",
+            "分管总",
+            "DIRECTOR",
+            "直属团队最终审批角色"
+        );
+        logger.info("分管总角色创建成功");
+    }
+
+    private void ensureDirectorUsers() {
+        ensureDirectorUser("1011", "dengjiansheng", "邓检生", "直属人员", "分管总", "分管总");
+    }
+
+    private void ensureDirectorUser(String userId, String username, String realName, String teamName, String groupName, String roleName) {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_user WHERE real_name = ?",
+            Integer.class,
+            realName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_user (user_id, username, password, real_name, department, team_name, group_name, position, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', '1001', '系统', '1001', '系统')",
+                userId,
+                username,
+                passwordEncoder.encode("123321"),
+                realName,
+                groupName,
+                teamName,
+                groupName,
+                roleName
+            );
+            logger.info("分管总用户创建成功: {}", realName);
+        } else {
+            jdbcTemplate.update(
+                "UPDATE sys_user SET department = ?, team_name = ?, group_name = ?, position = ?, status = 'ACTIVE' WHERE real_name = ?",
+                groupName,
+                teamName,
+                groupName,
+                roleName,
+                realName
+            );
+        }
+
+        Long roleId = jdbcTemplate.queryForObject(
+            "SELECT role_id FROM sys_role WHERE role_name = ? LIMIT 1",
+            Long.class,
+            roleName
+        );
+        if (roleId == null) {
+            return;
+        }
+
+        Integer userRoleCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ? AND role_id = ?",
+            Integer.class,
+            userId,
+            roleId
+        );
+        if (userRoleCount == null || userRoleCount == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_user_role (user_id, role_id, create_user_id, create_user_name) VALUES (?, ?, '1001', '系统')",
+                userId,
+                roleId
+            );
+            logger.info("分管总角色关联创建成功: {}", realName);
+        }
     }
 
     private void addColumnIfMissing(String tableName, String columnName, String definition) {

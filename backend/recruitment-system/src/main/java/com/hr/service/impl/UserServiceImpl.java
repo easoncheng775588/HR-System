@@ -190,8 +190,20 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
+        fillPositionFromRoles(user);
         fillDepartmentDisplay(user);
         return user;
+    }
+
+    private void fillPositionFromRoles(User user) {
+        if (user == null || (user.getPosition() != null && !user.getPosition().trim().isEmpty())) {
+            return;
+        }
+        List<String> roleNames = userMapper.getRoleNamesByUserId(user.getUserId());
+        if (roleNames == null || roleNames.isEmpty()) {
+            return;
+        }
+        user.setPosition(roleNames.get(0));
     }
 
     private void applyDepartmentFields(User user, boolean updateMode) {

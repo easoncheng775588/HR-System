@@ -1,6 +1,7 @@
 package com.hr.service.impl;
 
 import com.hr.entity.RecruitmentRequest;
+import com.hr.entity.OrgUnit;
 import com.hr.entity.Staffing;
 import com.hr.entity.User;
 import com.hr.mapper.ApprovalHistoryMapper;
@@ -207,6 +208,45 @@ class RecruitmentRequestServiceImplTest {
     }
 
     @Test
+    void submitRequestAllowsDirectTeamManagerResolvedFromTeamManagerRole() {
+        RecruitmentRequest request = new RecruitmentRequest();
+        request.setRequestTitle("直属团队提交");
+        request.setRequestType("NEW_DEMAND");
+        request.setTechnicalPlatform("Java");
+        request.setCategory("社招");
+        request.setSupplementCount(1);
+        request.setUrgentRequirement("NO");
+        request.setProposedLevel("P6");
+        request.setExperienceYears("3年");
+        request.setSkillRequirement("Spring Boot");
+        request.setPositionResponsibility("负责后端开发");
+        request.setCreateUserId("1006");
+        request.setCreateUserName("孙治洲");
+
+        User submitter = activeUser("1006", "孙治洲", null, "人力资源团队", "人力资源团队", null);
+        Staffing staffing = staffing("人力资源团队", 10, 2);
+        User director = activeUser("6001", "邓检生", "分管总", "直属人员 / 分管总", "直属人员", "分管总");
+
+        when(userMapper.getUserById("1006")).thenReturn(submitter);
+        when(userMapper.getRoleNamesByUserId("1006")).thenReturn(Collections.singletonList("人力资源团队经理"));
+        when(orgUnitMapper.getActiveOrgUnits()).thenReturn(Collections.singletonList(orgUnit("直属人员", "CATEGORY", "永隆信息有限公司")));
+        when(staffingMapper.getStaffingByOrgUnitName("人力资源团队")).thenReturn(staffing);
+        when(userMapper.getActiveUserByRealName("邓检生")).thenReturn(director);
+        when(recruitmentRequestMapper.insert(any(RecruitmentRequest.class))).thenAnswer(invocation -> {
+            RecruitmentRequest inserted = invocation.getArgument(0);
+            inserted.setRecruitmentRequestId(13L);
+            return 1;
+        });
+
+        recruitmentRequestService.submitRequest(request);
+
+        verify(recruitmentRequestMapper).insert(requestCaptor.capture());
+        assertEquals("DIRECT_TEAM_MANAGER", requestCaptor.getValue().getSubmitterRoleType());
+        assertEquals("人力资源团队", requestCaptor.getValue().getApplicationDepartment());
+        assertEquals("6001", requestCaptor.getValue().getFinalApproverUserId());
+    }
+
+    @Test
     void directTeamFinalApprovalSendsMessagesToApplicantAndOutsourcingManagers() {
         RecruitmentRequest request = new RecruitmentRequest();
         request.setRecruitmentRequestId(9L);
@@ -306,12 +346,37 @@ class RecruitmentRequestServiceImplTest {
         assertEquals(Long.valueOf(1L), visible.get(0).getRecruitmentRequestId());
     }
 
+    @Test
+    void getByIdNormalizesApplicationDepartmentForDisplay() {
+        RecruitmentRequest stored = new RecruitmentRequest();
+        stored.setRecruitmentRequestId(7L);
+        stored.setOrgUnitName("办公系统开发室");
+        stored.setApplicationDepartment("办公系统开发室");
+        stored.setTeam("办公系统开发室");
+
+        when(recruitmentRequestMapper.selectByPrimaryKey(7L)).thenReturn(stored);
+        when(orgUnitMapper.getByUnitName("办公系统开发室")).thenReturn(orgUnit("办公系统开发室", "GROUP", "基础业务开发团队"));
+
+        RecruitmentRequest result = recruitmentRequestService.getById(7L);
+
+        assertEquals("基础业务开发团队 / 办公系统开发室", result.getApplicationDepartment());
+    }
+
     private Staffing staffing(String orgUnitName, int total, int vacancy) {
         Staffing staffing = new Staffing();
         staffing.setOrgUnitName(orgUnitName);
         staffing.setTotalHeadcount(total);
         staffing.setVacancyHeadcount(vacancy);
         return staffing;
+    }
+
+    private OrgUnit orgUnit(String unitName, String unitType, String parentUnitName) {
+        OrgUnit orgUnit = new OrgUnit();
+        orgUnit.setUnitName(unitName);
+        orgUnit.setUnitType(unitType);
+        orgUnit.setParentUnitName(parentUnitName);
+        orgUnit.setStatus("ACTIVE");
+        return orgUnit;
     }
 
     private User activeUser(String userId, String realName, String position, String department, String teamName, String groupName) {

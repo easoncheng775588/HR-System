@@ -171,17 +171,17 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
 
     @Override
     public RecruitmentRequest getById(Long id) {
-        return recruitmentRequestMapper.selectByPrimaryKey(id);
+        return normalizeRequestDisplay(recruitmentRequestMapper.selectByPrimaryKey(id));
     }
 
     @Override
     public List<RecruitmentRequest> getAll() {
-        return recruitmentRequestMapper.selectAll();
+        return normalizeRequestDisplays(recruitmentRequestMapper.selectAll());
     }
 
     @Override
     public List<RecruitmentRequest> getAll(String viewerId, String viewerRole) {
-        List<RecruitmentRequest> allRequests = recruitmentRequestMapper.selectAll();
+        List<RecruitmentRequest> allRequests = normalizeRequestDisplays(recruitmentRequestMapper.selectAll());
         if (viewerId == null || viewerId.trim().isEmpty()) {
             return allRequests;
         }
@@ -682,6 +682,9 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         if (roles.contains(ROLE_DIRECT_TEAM_MANAGER)) {
             return DIRECT_TEAM_MANAGER_TYPE;
         }
+        if (roles.contains(ROLE_TEAM_MANAGER) && isDirectTeam(submitter.getTeamName())) {
+            return DIRECT_TEAM_MANAGER_TYPE;
+        }
 
         String position = submitter.getPosition() == null ? "" : submitter.getPosition();
         if (position.contains(ROLE_ROOM_MANAGER)) {
@@ -764,11 +767,14 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         if (submitter.getDepartmentDisplay() != null && !submitter.getDepartmentDisplay().trim().isEmpty()) {
             return submitter.getDepartmentDisplay();
         }
-        if (submitter.getDepartment() != null && !submitter.getDepartment().trim().isEmpty()) {
-            return submitter.getDepartment();
-        }
         if (submitter.getTeamName() != null && submitter.getGroupName() != null) {
             return submitter.getTeamName() + " / " + submitter.getGroupName();
+        }
+        if (submitter.getTeamName() != null && !submitter.getTeamName().trim().isEmpty()) {
+            return submitter.getTeamName();
+        }
+        if (submitter.getDepartment() != null && !submitter.getDepartment().trim().isEmpty()) {
+            return submitter.getDepartment();
         }
         return submitter.getTeamName();
     }
@@ -862,6 +868,42 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             }
         }
         return null;
+    }
+
+    private List<RecruitmentRequest> normalizeRequestDisplays(List<RecruitmentRequest> requests) {
+        List<RecruitmentRequest> normalized = new ArrayList<>();
+        for (RecruitmentRequest request : requests) {
+            normalized.add(normalizeRequestDisplay(request));
+        }
+        return normalized;
+    }
+
+    private RecruitmentRequest normalizeRequestDisplay(RecruitmentRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String displayDepartment = buildDisplayDepartment(request);
+        if (displayDepartment != null && !displayDepartment.trim().isEmpty()) {
+            request.setApplicationDepartment(displayDepartment);
+        }
+        return request;
+    }
+
+    private String buildDisplayDepartment(RecruitmentRequest request) {
+        String orgUnitName = request.getOrgUnitName();
+        if (orgUnitName == null || orgUnitName.trim().isEmpty()) {
+            return request.getApplicationDepartment();
+        }
+
+        String teamName = resolveTeamNameByDepartment(orgUnitName);
+        if (teamName == null || teamName.trim().isEmpty()) {
+            return request.getApplicationDepartment();
+        }
+
+        if (teamName.equals(orgUnitName)) {
+            return teamName;
+        }
+        return teamName + " / " + orgUnitName;
     }
 
     private boolean isFinalApproved(RecruitmentRequest request) {
