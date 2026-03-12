@@ -13,6 +13,13 @@ public class RecruitmentRequest {
     private Integer totalRecruitmentCount;
     private Integer vacancyCount;
     private String team;
+    private String applicationDepartment;
+    private String orgUnitName;
+    private String requestType;
+    private String remark;
+    private String submitterRoleType;
+    private String finalApproverUserId;
+    private String finalApproverUserName;
     private String technicalPlatform;
     private String category;
     private Integer supplementCount;
@@ -45,6 +52,7 @@ public class RecruitmentRequest {
     private String approvalLevel3UserName;
     private Date approvalLevel3Time;
     private String approvalLevel3Comment;
+    private String status;
     private Date createTime;
     private String createUserId;
     private String createUserName;
@@ -91,6 +99,62 @@ public class RecruitmentRequest {
 
     public void setTeam(String team) {
         this.team = team;
+    }
+
+    public String getApplicationDepartment() {
+        return applicationDepartment;
+    }
+
+    public void setApplicationDepartment(String applicationDepartment) {
+        this.applicationDepartment = applicationDepartment;
+    }
+
+    public String getOrgUnitName() {
+        return orgUnitName;
+    }
+
+    public void setOrgUnitName(String orgUnitName) {
+        this.orgUnitName = orgUnitName;
+    }
+
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public String getSubmitterRoleType() {
+        return submitterRoleType;
+    }
+
+    public void setSubmitterRoleType(String submitterRoleType) {
+        this.submitterRoleType = submitterRoleType;
+    }
+
+    public String getFinalApproverUserId() {
+        return finalApproverUserId;
+    }
+
+    public void setFinalApproverUserId(String finalApproverUserId) {
+        this.finalApproverUserId = finalApproverUserId;
+    }
+
+    public String getFinalApproverUserName() {
+        return finalApproverUserName;
+    }
+
+    public void setFinalApproverUserName(String finalApproverUserName) {
+        this.finalApproverUserName = finalApproverUserName;
     }
 
     public String getTechnicalPlatform() {
@@ -395,5 +459,13 @@ public class RecruitmentRequest {
 
     public void setApprovalLevel3Comment(String approvalLevel3Comment) {
         this.approvalLevel3Comment = approvalLevel3Comment;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

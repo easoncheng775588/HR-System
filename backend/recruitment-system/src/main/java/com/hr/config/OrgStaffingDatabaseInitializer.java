@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(OrgStaffingDatabaseInitializer.class);
+    private static final String COMPANY_NAME = "永隆信息有限公司";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -33,9 +34,9 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
     private void createTables() {
         String createOrgUnitSql = "CREATE TABLE IF NOT EXISTS org_unit ("
             + "unit_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unit ID', "
-            + "unit_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Team or Group Name', "
-            + "unit_type VARCHAR(20) NOT NULL COMMENT 'TEAM or GROUP', "
-            + "parent_unit_name VARCHAR(100) COMMENT 'Parent Team Name', "
+            + "unit_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Organization Unit Name', "
+            + "unit_type VARCHAR(20) NOT NULL COMMENT 'ROOT, TEAM, GROUP, CATEGORY or LEAF', "
+            + "parent_unit_name VARCHAR(100) COMMENT 'Parent Unit Name', "
             + "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT 'Status', "
             + "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create Time', "
             + "create_user_id VARCHAR(20) COMMENT 'Create User ID', "
@@ -65,16 +66,19 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
     }
 
     private void seedOrgUnits() {
+        insertOrUpdateOrgUnit(COMPANY_NAME, "ROOT", null);
+
         // 团队层级
-        insertOrUpdateOrgUnit("零售业务开发团队", "TEAM", null);
-        insertOrUpdateOrgUnit("批业务开发团队", "TEAM", null);
-        insertOrUpdateOrgUnit("基础业务开发团队", "TEAM", null);
-        insertOrUpdateOrgUnit("数据开发团队", "TEAM", null);
-        insertOrUpdateOrgUnit("测试团队", "TEAM", null);
-        insertOrUpdateOrgUnit("技术管理团队", "TEAM", null);
-        insertOrUpdateOrgUnit("人力资源团队", "TEAM", null);
-        insertOrUpdateOrgUnit("综合管理团队", "TEAM", null);
-        insertOrUpdateOrgUnit("其他人员", "TEAM", null);
+        insertOrUpdateOrgUnit("零售业务开发团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("批业务开发团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("基础业务开发团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("数据开发团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("测试团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("技术管理团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("人力资源团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("综合管理团队", "TEAM", COMPANY_NAME);
+        insertOrUpdateOrgUnit("直属人员", "CATEGORY", COMPANY_NAME);
+        insertOrUpdateOrgUnit("其他", "CATEGORY", COMPANY_NAME);
 
         // 室组层级
         insertOrUpdateOrgUnit("零售平台开发室", "GROUP", "零售业务开发团队");
@@ -95,6 +99,12 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
 
         insertOrUpdateOrgUnit("业务测试一室", "GROUP", "测试团队");
         insertOrUpdateOrgUnit("业务测试二室", "GROUP", "测试团队");
+
+        // 分类节点
+        insertOrUpdateOrgUnit("部门总经理", "LEAF", "直属人员");
+        insertOrUpdateOrgUnit("分管总", "LEAF", "直属人员");
+        insertOrUpdateOrgUnit("外包厂商人员", "LEAF", "其他");
+        insertOrUpdateOrgUnit("供应商HR", "LEAF", "其他");
     }
 
     private void insertOrUpdateOrgUnit(String unitName, String unitType, String parentUnitName) {

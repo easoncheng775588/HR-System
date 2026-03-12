@@ -19,7 +19,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        title, content, type, status, priority, target_user_id, target_user_role,
+        message_id, title, content, type, status, priority, target_user_id, target_user_role,
         create_user_id, create_user_name, create_time, read_time, is_deleted
     </sql>
 

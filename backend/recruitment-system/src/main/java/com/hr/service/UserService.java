@@ -2,6 +2,7 @@ package com.hr.service;
 
 import com.hr.entity.User;
 
+import java.util.Map;
 import java.util.List;
 
 public interface UserService {
@@ -25,4 +26,6 @@ public interface UserService {
     List<User> searchActiveUsers(String keyword);
 
     User getActiveTeamManagerByDepartment(String department);
+
+    Map<String, Object> getDepartmentOptions();
 }

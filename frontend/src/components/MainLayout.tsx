@@ -3,7 +3,6 @@ import { Layout, Menu, Avatar, Dropdown, Badge, Card, List, Drawer, Button } fro
 import {
   UserOutlined,
   BellOutlined,
-  CheckCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LogoutOutlined,
@@ -40,12 +39,17 @@ const MainLayout = ({ children }) => {
 
   const fetchPendingTasks = useCallback(async () => {
     try {
-      const approvalPositions = ['编制管理岗', '外包招聘管理岗', '团队经理'];
+      const approvalPositions = ['编制管理岗', '外包招聘管理岗', '团队经理', '分管总'];
       const hasApprovalPermission = user && approvalPositions.includes(user.position);
 
       let pendingApprovalCount = 0;
       if (hasApprovalPermission) {
-        const approvalResponse = await api.get('/api/recruitment-request/approval/pending');
+        const approvalResponse = await api.get('/api/workflow-center/todo', {
+          params: {
+            userId: String(user.userId),
+            userRole: user.position,
+          },
+        });
         pendingApprovalCount = approvalResponse.data?.returnCode === 'SUC0000'
           ? (approvalResponse.data.body?.length || 0)
           : 0;
@@ -58,7 +62,7 @@ const MainLayout = ({ children }) => {
 
       const items = [];
       if (hasApprovalPermission) {
-        items.push({ id: 1, title: '审核用人申请', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
+        items.push({ id: 1, title: '流程待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
       }
       items.push({ id: 2, title: '待面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount });
 
@@ -95,7 +99,6 @@ const MainLayout = ({ children }) => {
   const allMenuItems = useMemo(() => ([
     { key: 'dashboard', icon: <HomeOutlined />, label: '欢迎页面' },
     { key: 'recruitment-request', icon: <FormOutlined />, label: '用人申请' },
-    { key: 'approval-management', icon: <CheckCircleOutlined />, label: '用人审批' },
     { key: 'position-publishing', icon: <TableOutlined />, label: '岗位发布' },
     { key: 'resume-submission', icon: <FileTextOutlined />, label: '简历提交' },
     { key: 'resume-screening', icon: <StarOutlined />, label: '简历筛选' },
@@ -225,7 +228,7 @@ const MainLayout = ({ children }) => {
                         renderItem={(item) => (
                           <List.Item
                             style={{ padding: '2px 0', cursor: 'pointer' }}
-                            onClick={() => navigate(item.id === 1 ? '/approval-management' : '/interview-scheduling')}
+                            onClick={() => navigate(item.id === 1 ? '/workflow-center' : '/interview-scheduling')}
                           >
                             <List.Item.Meta
                               title={

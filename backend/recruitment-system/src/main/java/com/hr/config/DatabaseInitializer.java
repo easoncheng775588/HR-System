@@ -42,14 +42,46 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "total_recruitment_count INT NOT NULL COMMENT '总编制人数', " +
                 "vacancy_count INT NOT NULL COMMENT '空缺编制', " +
                 "team VARCHAR(100) NOT NULL COMMENT '所属团队', " +
+                "application_department VARCHAR(200) DEFAULT NULL COMMENT '申请部门展示值', " +
+                "org_unit_name VARCHAR(100) DEFAULT NULL COMMENT '组织单元名称', " +
+                "request_type VARCHAR(20) DEFAULT NULL COMMENT '所属类型', " +
+                "remark VARCHAR(500) DEFAULT NULL COMMENT '备注', " +
+                "submitter_role_type VARCHAR(20) DEFAULT NULL COMMENT '提交人角色类型', " +
+                "final_approver_user_id VARCHAR(20) DEFAULT NULL COMMENT '最终审批人ID', " +
+                "final_approver_user_name VARCHAR(50) DEFAULT NULL COMMENT '最终审批人姓名', " +
                 "technical_platform VARCHAR(50) NOT NULL COMMENT '技术平台', " +
+                "category VARCHAR(50) DEFAULT '其他' COMMENT '所属分类', " +
                 "supplement_count INT NOT NULL COMMENT '补充人数', " +
                 "urgent_requirement VARCHAR(10) NOT NULL COMMENT '是否近期紧急要求', " +
                 "proposed_level VARCHAR(50) NOT NULL COMMENT '建议级别', " +
                 "experience_years VARCHAR(50) NOT NULL COMMENT '相关经验年限要求', " +
                 "skill_requirement TEXT COMMENT '技能要求描述', " +
                 "position_responsibility TEXT NOT NULL COMMENT '岗位职责', " +
-                "status VARCHAR(20) NOT NULL COMMENT '状态（DRAFT：草稿，SUBMITTED：已提交）', " +
+                "interviewer_id VARCHAR(20) DEFAULT NULL COMMENT '面试官ID', " +
+                "interviewer_name VARCHAR(50) DEFAULT NULL COMMENT '面试官姓名', " +
+                "approval_status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '审批状态', " +
+                "position_publish_status VARCHAR(20) NOT NULL DEFAULT 'NOT_PUBLISHED' COMMENT '岗位发布状态', " +
+                "approval_user_id VARCHAR(20) DEFAULT NULL COMMENT '审批人ID', " +
+                "approval_user_name VARCHAR(50) DEFAULT NULL COMMENT '审批人姓名', " +
+                "approval_time DATETIME DEFAULT NULL COMMENT '审批时间', " +
+                "approval_comment TEXT COMMENT '审批意见', " +
+                "current_approval_level INT NOT NULL DEFAULT 0 COMMENT '当前审批级别', " +
+                "approval_level1_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '一级审批状态', " +
+                "approval_level1_user_id VARCHAR(20) DEFAULT NULL COMMENT '一级审批人ID', " +
+                "approval_level1_user_name VARCHAR(50) DEFAULT NULL COMMENT '一级审批人姓名', " +
+                "approval_level1_time DATETIME DEFAULT NULL COMMENT '一级审批时间', " +
+                "approval_level1_comment TEXT COMMENT '一级审批意见', " +
+                "approval_level2_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '二级审批状态', " +
+                "approval_level2_user_id VARCHAR(20) DEFAULT NULL COMMENT '二级审批人ID', " +
+                "approval_level2_user_name VARCHAR(50) DEFAULT NULL COMMENT '二级审批人姓名', " +
+                "approval_level2_time DATETIME DEFAULT NULL COMMENT '二级审批时间', " +
+                "approval_level2_comment TEXT COMMENT '二级审批意见', " +
+                "approval_level3_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '三级审批状态', " +
+                "approval_level3_user_id VARCHAR(20) DEFAULT NULL COMMENT '三级审批人ID', " +
+                "approval_level3_user_name VARCHAR(50) DEFAULT NULL COMMENT '三级审批人姓名', " +
+                "approval_level3_time DATETIME DEFAULT NULL COMMENT '三级审批时间', " +
+                "approval_level3_comment TEXT COMMENT '三级审批意见', " +
+                "status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '兼容旧流程状态字段', " +
                 "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
                 "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
                 "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
@@ -68,6 +100,13 @@ public class DatabaseInitializer implements CommandLineRunner {
             } catch (Exception e) {
                 logger.info("索引 idx_status 已存在或创建失败: {}", e.getMessage());
             }
+
+            try {
+                jdbcTemplate.execute("CREATE INDEX idx_approval_status ON recruitment_request(approval_status)");
+                logger.info("索引 idx_approval_status 创建成功");
+            } catch (Exception e) {
+                logger.info("索引 idx_approval_status 已存在或创建失败: {}", e.getMessage());
+            }
             
             try {
                 jdbcTemplate.execute("CREATE INDEX idx_create_time ON recruitment_request(create_time)");
@@ -85,6 +124,8 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "email VARCHAR(100) COMMENT '邮箱', " +
                 "phone VARCHAR(20) COMMENT '电话', " +
                 "department VARCHAR(100) COMMENT '部门', " +
+                "team_name VARCHAR(100) COMMENT '团队名称', " +
+                "group_name VARCHAR(100) COMMENT '室组名称', " +
                 "position VARCHAR(100) COMMENT '职位', " +
                 "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT '状态（ACTIVE：启用，DISABLED：禁用）', " +
                 "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
@@ -97,6 +138,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             jdbcTemplate.execute(createUserTableSQL);
             logger.info("表 sys_user 创建成功");
+            ensureUserColumns();
             
             // 创建角色表
             String createRoleTableSQL = "CREATE TABLE IF NOT EXISTS sys_role (" +
@@ -222,6 +264,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             jdbcTemplate.execute(createApprovalHistoryTableSQL);
             logger.info("表 approval_history 创建成功");
+
+            ensureMessageTable();
             
             // 创建简历表
             String createResumeTableSQL = "CREATE TABLE IF NOT EXISTS resume (" +
@@ -323,6 +367,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             // 初始化超级管理员数据
             initSuperAdmin();
+            ensureDirectorRole();
+            ensureDirectorUsers();
             
             logger.info("数据库初始化完成！");
             
@@ -488,6 +534,140 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.error("所属团队参数初始化失败: {}", e.getMessage(), e);
+        }
+    }
+
+    private void ensureMessageTable() {
+        String createMessageTableSQL = "CREATE TABLE IF NOT EXISTS message (" +
+            "message_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID', " +
+            "title VARCHAR(200) NOT NULL COMMENT '消息标题', " +
+            "content TEXT NOT NULL COMMENT '消息内容', " +
+            "type VARCHAR(50) NOT NULL COMMENT '消息类型', " +
+            "status VARCHAR(20) NOT NULL DEFAULT 'UNREAD' COMMENT '消息状态', " +
+            "priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL' COMMENT '优先级', " +
+            "target_user_id VARCHAR(20) DEFAULT NULL COMMENT '目标用户ID', " +
+            "target_user_role VARCHAR(50) DEFAULT NULL COMMENT '目标角色', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "read_time DATETIME DEFAULT NULL COMMENT '已读时间', " +
+            "is_deleted TINYINT NOT NULL DEFAULT 0 COMMENT '是否删除'" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息表'";
+
+        jdbcTemplate.execute(createMessageTableSQL);
+        logger.info("表 message 创建成功");
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_message_target_user_id ON message(target_user_id)");
+            logger.info("索引 idx_message_target_user_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_message_target_user_id 已存在或创建失败: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_message_status ON message(status)");
+            logger.info("索引 idx_message_status 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_message_status 已存在或创建失败: {}", e.getMessage());
+        }
+    }
+
+    private void ensureUserColumns() {
+        addColumnIfMissing("sys_user", "team_name", "VARCHAR(100) COMMENT '团队名称'");
+        addColumnIfMissing("sys_user", "group_name", "VARCHAR(100) COMMENT '室组名称'");
+    }
+
+    private void ensureDirectorRole() {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_role WHERE role_name = ?",
+            Integer.class,
+            "分管总"
+        );
+        if (count != null && count > 0) {
+            return;
+        }
+
+        jdbcTemplate.update(
+            "INSERT INTO sys_role (role_name, role_code, description, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                "VALUES (?, ?, ?, 'ACTIVE', '1001', '系统', '1001', '系统')",
+            "分管总",
+            "DIRECTOR",
+            "直属团队最终审批角色"
+        );
+        logger.info("分管总角色创建成功");
+    }
+
+    private void ensureDirectorUsers() {
+        ensureDirectorUser("1011", "dengjiansheng", "邓检生", "直属人员", "分管总", "分管总");
+    }
+
+    private void ensureDirectorUser(String userId, String username, String realName, String teamName, String groupName, String roleName) {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_user WHERE real_name = ?",
+            Integer.class,
+            realName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_user (user_id, username, password, real_name, department, team_name, group_name, position, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', '1001', '系统', '1001', '系统')",
+                userId,
+                username,
+                passwordEncoder.encode("123321"),
+                realName,
+                groupName,
+                teamName,
+                groupName,
+                roleName
+            );
+            logger.info("分管总用户创建成功: {}", realName);
+        } else {
+            jdbcTemplate.update(
+                "UPDATE sys_user SET department = ?, team_name = ?, group_name = ?, position = ?, status = 'ACTIVE' WHERE real_name = ?",
+                groupName,
+                teamName,
+                groupName,
+                roleName,
+                realName
+            );
+        }
+
+        Long roleId = jdbcTemplate.queryForObject(
+            "SELECT role_id FROM sys_role WHERE role_name = ? LIMIT 1",
+            Long.class,
+            roleName
+        );
+        if (roleId == null) {
+            return;
+        }
+
+        Integer userRoleCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ? AND role_id = ?",
+            Integer.class,
+            userId,
+            roleId
+        );
+        if (userRoleCount == null || userRoleCount == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_user_role (user_id, role_id, create_user_id, create_user_name) VALUES (?, ?, '1001', '系统')",
+                userId,
+                roleId
+            );
+            logger.info("分管总角色关联创建成功: {}", realName);
+        }
+    }
+
+    private void addColumnIfMissing(String tableName, String columnName, String definition) {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM information_schema.COLUMNS " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+            Integer.class,
+            tableName,
+            columnName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+            logger.info("表 {} 新增字段 {}", tableName, columnName);
         }
     }
 }

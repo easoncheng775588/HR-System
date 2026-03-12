@@ -10,6 +10,8 @@
         <result property="email" column="email"/>
         <result property="phone" column="phone"/>
         <result property="department" column="department"/>
+        <result property="teamName" column="team_name"/>
+        <result property="groupName" column="group_name"/>
         <result property="position" column="position"/>
         <result property="status" column="status"/>
         <result property="createTime" column="create_time"/>
@@ -34,27 +36,33 @@
     
     <insert id="insertUser" parameterType="com.hr.entity.User">
         INSERT INTO sys_user (
-            user_id, username, password, real_name, email, phone, department, position, status,
+            user_id, username, password, real_name, email, phone, department, team_name, group_name, position, status,
             create_time, create_user_id, create_user_name, update_time, update_user_id, update_user_name
         ) VALUES (
-            #{userId}, #{username}, #{password}, #{realName}, #{email}, #{phone}, #{department}, #{position}, #{status},
+            #{userId}, #{username}, #{password}, #{realName}, #{email}, #{phone}, #{department}, #{teamName}, #{groupName}, #{position}, #{status},
             #{createTime}, #{createUserId}, #{createUserName}, #{updateTime}, #{updateUserId}, #{updateUserName}
         )
     </insert>
     
     <update id="updateUser" parameterType="com.hr.entity.User">
-        UPDATE sys_user SET
+        UPDATE sys_user
+        <set>
             username = #{username},
-            password = #{password},
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
             real_name = #{realName},
             email = #{email},
             phone = #{phone},
             department = #{department},
+            team_name = #{teamName},
+            group_name = #{groupName},
             position = #{position},
             status = #{status},
             update_time = #{updateTime},
             update_user_id = #{updateUserId},
             update_user_name = #{updateUserName}
+        </set>
         WHERE user_id = #{userId}
     </update>
     

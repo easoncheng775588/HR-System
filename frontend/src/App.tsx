@@ -15,7 +15,6 @@ const Login = lazy(() => import('./components/Login'))
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const RecruitmentRequestList = lazy(() => import('./components/RecruitmentRequestList'))
 const RecruitmentRequestForm = lazy(() => import('./components/RecruitmentRequestForm'))
-const ApprovalManagement = lazy(() => import('./components/ApprovalManagement'))
 const PositionPublishing = lazy(() => import('./components/PositionPublishing'))
 const ResumeSubmission = lazy(() => import('./components/ResumeSubmission'))
 const ResumeScreening = lazy(() => import('./components/ResumeScreening'))
@@ -51,7 +50,7 @@ function AppContent() {
             <Route path="/recruitment-request" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestList /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/recruitment-request/new" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/recruitment-request/edit/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
-            <Route path="/approval-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ApprovalManagement /></Suspense></MainLayout></ProtectedRoute>} />
+            <Route path="/approval-management" element={<ProtectedRoute><Navigate to="/workflow-center" replace /></ProtectedRoute>} />
             <Route path="/position-publishing" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><PositionPublishing /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-submission" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeSubmission /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-screening" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeScreening /></Suspense></MainLayout></ProtectedRoute>} />

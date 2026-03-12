@@ -249,10 +249,10 @@ const WorkflowCenter: React.FC = () => {
       >
         {detailLoading ? null : (
           <>
-            <Descriptions title="申请信息" column={1} size="small">
+              <Descriptions title="申请信息" column={1} size="small">
               <Descriptions.Item label="流程名称">{PROCESS_NAME}</Descriptions.Item>
               <Descriptions.Item label="岗位标题">{String(request.requestTitle || '-')}</Descriptions.Item>
-              <Descriptions.Item label="申请部门">{String(request.team || '-')}</Descriptions.Item>
+              <Descriptions.Item label="申请部门">{String(request.applicationDepartment || request.team || '-')}</Descriptions.Item>
               <Descriptions.Item label="技术平台">{getPlatformText(String(request.technicalPlatform || ''))}</Descriptions.Item>
               <Descriptions.Item label="建议级别">{getLevelText(String(request.proposedLevel || ''))}</Descriptions.Item>
               <Descriptions.Item label="补充人数">{String(request.supplementCount || '-')}</Descriptions.Item>
