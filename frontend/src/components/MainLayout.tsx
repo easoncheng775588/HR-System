@@ -62,7 +62,7 @@ const MainLayout = ({ children }) => {
 
       const items = [];
       if (hasApprovalPermission) {
-        items.push({ id: 1, title: '流程待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
+        items.push({ id: 1, title: '流程中心待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
       }
       items.push({ id: 2, title: '待面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount });
 

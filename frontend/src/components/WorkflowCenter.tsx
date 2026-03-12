@@ -4,6 +4,12 @@ import { CheckOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
+import {
+  formatWorkflowNodeLabel,
+  getDepartmentDisplayText,
+  getRequestTypeLabel,
+  inferSubmitterRoleType,
+} from './recruitmentRequestHelpers';
 
 type TabKey = 'todo' | 'initiated' | 'processed';
 
@@ -158,7 +164,13 @@ const WorkflowCenter: React.FC = () => {
       { title: '序号', key: 'index', width: 70, render: (_: unknown, _r: WorkflowItem, i: number) => i + 1 },
       { title: '流程名称', dataIndex: 'processName', key: 'processName', width: 140 },
       { title: '摘要', dataIndex: 'summary', key: 'summary', width: 280, ellipsis: true },
-      { title: '当前环节', dataIndex: 'currentNode', key: 'currentNode', width: 120 },
+      {
+        title: '当前环节',
+        dataIndex: 'currentNode',
+        key: 'currentNode',
+        width: 120,
+        render: (value: string, record: WorkflowItem) => formatWorkflowNodeLabel(value, inferSubmitterRoleType(record)),
+      },
       { title: '申请人', dataIndex: 'applicant', key: 'applicant', width: 120 },
       { title: '申请部门', dataIndex: 'applicantDept', key: 'applicantDept', width: 160 },
       { title: '到达时间', dataIndex: 'arriveTime', key: 'arriveTime', width: 180, render: (v: string) => formatTime(v) },
@@ -172,7 +184,13 @@ const WorkflowCenter: React.FC = () => {
       { title: '序号', key: 'index', width: 70, render: (_: unknown, _r: WorkflowItem, i: number) => i + 1 },
       { title: '流程名称', dataIndex: 'processName', key: 'processName', width: 140 },
       { title: '摘要', dataIndex: 'summary', key: 'summary', width: 280, ellipsis: true },
-      { title: '当前环节', dataIndex: 'currentNode', key: 'currentNode', width: 120 },
+      {
+        title: '当前环节',
+        dataIndex: 'currentNode',
+        key: 'currentNode',
+        width: 120,
+        render: (value: string, record: WorkflowItem) => formatWorkflowNodeLabel(value, inferSubmitterRoleType(record)),
+      },
       { title: '申请部门', dataIndex: 'applicantDept', key: 'applicantDept', width: 160 },
       { title: '流程状态', dataIndex: 'processStatus', key: 'processStatus', width: 120, render: (v: string) => statusTag(v) },
       { title: '发起时间', dataIndex: 'startTime', key: 'startTime', width: 180, render: (v: string) => formatTime(v) },
@@ -197,7 +215,9 @@ const WorkflowCenter: React.FC = () => {
 
   const request = (detail?.request || {}) as Record<string, unknown>;
   const history = (detail?.approvalHistory || []) as Array<Record<string, unknown>>;
+  const nodeConfigs = (detail?.nodeConfigs || []) as Array<Record<string, unknown>>;
   const logs = (detail?.processLogs || []) as Array<Record<string, unknown>>;
+  const submitterRoleType = inferSubmitterRoleType(request);
 
   return (
     <div style={{ width: '100%' }}>
@@ -247,19 +267,30 @@ const WorkflowCenter: React.FC = () => {
           setApproveMode(false);
         }}
       >
-        {detailLoading ? null : (
+      {detailLoading ? null : (
           <>
-              <Descriptions title="申请信息" column={1} size="small">
+            <Descriptions title="申请信息" column={1} size="small">
               <Descriptions.Item label="流程名称">{PROCESS_NAME}</Descriptions.Item>
-              <Descriptions.Item label="岗位标题">{String(request.requestTitle || '-')}</Descriptions.Item>
-              <Descriptions.Item label="申请部门">{String(request.applicationDepartment || request.team || '-')}</Descriptions.Item>
+              <Descriptions.Item label="申请标题">{String(request.requestTitle || '-')}</Descriptions.Item>
+              <Descriptions.Item label="申请部门">{getDepartmentDisplayText(request) || '-'}</Descriptions.Item>
+              <Descriptions.Item label="所属类型">{getRequestTypeLabel(String(request.requestType || ''))}</Descriptions.Item>
               <Descriptions.Item label="技术平台">{getPlatformText(String(request.technicalPlatform || ''))}</Descriptions.Item>
               <Descriptions.Item label="建议级别">{getLevelText(String(request.proposedLevel || ''))}</Descriptions.Item>
               <Descriptions.Item label="补充人数">{String(request.supplementCount || '-')}</Descriptions.Item>
               <Descriptions.Item label="相关经验年限要求">{String(request.experienceYears || '-')}</Descriptions.Item>
               <Descriptions.Item label="任职要求">{String(request.skillRequirement || '-')}</Descriptions.Item>
               <Descriptions.Item label="岗位职责">{String(request.positionResponsibility || '-')}</Descriptions.Item>
+              <Descriptions.Item label="备注">{String(request.remark || '-')}</Descriptions.Item>
             </Descriptions>
+
+            <div style={{ marginTop: 16 }}>
+              <div style={{ marginBottom: 8, fontWeight: 600 }}>流程节点</div>
+              <Timeline
+                items={nodeConfigs.map((node) => ({
+                  children: `${String(node.nodeOrder || '-')}级 ${formatWorkflowNodeLabel(String(node.nodeName || '-'), submitterRoleType)}`,
+                }))}
+              />
+            </div>
 
             <div style={{ marginTop: 16 }}>
               <div style={{ marginBottom: 8, fontWeight: 600 }}>审批轨迹</div>
@@ -274,7 +305,7 @@ const WorkflowCenter: React.FC = () => {
               <div style={{ marginBottom: 8, fontWeight: 600 }}>流程日志</div>
               <Timeline
                 items={logs.map((l) => ({
-                  children: `${formatTime(String(l.actionTime || ''))} ${String(l.operatorName || '-')} ${String(l.actionType || '-')} ${String(l.actionResult || '-')}`,
+                  children: `${formatTime(String(l.actionTime || ''))} ${formatWorkflowNodeLabel(String(l.nodeName || '-'), submitterRoleType)} ${String(l.operatorName || '-')} ${String(l.actionType || '-')} ${String(l.actionResult || '-')}`,
                 }))}
               />
             </div>

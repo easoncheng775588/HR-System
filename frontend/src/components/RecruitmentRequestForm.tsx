@@ -1,9 +1,16 @@
 ﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, Form, Input, Radio, Select, Space, Spin, message } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Radio, Select, Space, Spin, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import { handleLoadError, handleSaveDraftError, handleSubmitError } from '../utils/errorHandler';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  buildRecruitmentRequestPayload,
+  getOrgUnitName,
+  normalizeRecruitmentRequestFormValues,
+  REQUEST_TYPE_OPTIONS,
+  TEXTAREA_MAX_LENGTH,
+} from './recruitmentRequestHelpers';
 
 type InterviewerOption = {
   value: string;
@@ -26,16 +33,16 @@ const RecruitmentRequestForm = () => {
   const [interviewerOptions, setInterviewerOptions] = useState<InterviewerOption[]>([]);
   const interviewerSearchTimer = useRef<number | null>(null);
 
-  const userDepartment = String(user?.department || '');
+  const userOrgUnitName = getOrgUnitName(user || {});
 
-  const fetchStaffingByDepartment = useCallback(async (department: string) => {
-    if (!department) {
+  const fetchStaffingByOrgUnit = useCallback(async (orgUnitName: string) => {
+    if (!orgUnitName) {
       form.setFieldsValue({ totalRecruitmentCount: 0, vacancyCount: 0 });
       return;
     }
 
     try {
-      const response = await api.get('/api/staffings/by-org-unit', { params: { orgUnitName: department } });
+      const response = await api.get('/api/staffings/by-org-unit', { params: { orgUnitName } });
       if (response.data?.returnCode === 'SUC0000' && response.data.body) {
         const staffing = response.data.body;
         form.setFieldsValue({
@@ -56,7 +63,7 @@ const RecruitmentRequestForm = () => {
       const response = await api.get(`/api/recruitment-request/${requestId}`);
       if (response.data?.returnCode === 'SUC0000') {
         const requestData = response.data.body || {};
-        form.setFieldsValue(requestData);
+        form.setFieldsValue(normalizeRecruitmentRequestFormValues(requestData, user || {}));
         if (requestData.interviewerId && requestData.interviewerName) {
           setInterviewerOptions((prev) => {
             const exists = prev.some((item) => item.value === requestData.interviewerId);
@@ -81,7 +88,7 @@ const RecruitmentRequestForm = () => {
     } finally {
       setLoading(false);
     }
-  }, [form, navigate]);
+  }, [form, navigate, user]);
 
   useEffect(() => {
     if (id) {
@@ -89,12 +96,15 @@ const RecruitmentRequestForm = () => {
       loadRequestData(id);
       return;
     }
-    form.setFieldsValue({ team: userDepartment });
-  }, [id, loadRequestData, form, userDepartment]);
+    form.setFieldsValue(normalizeRecruitmentRequestFormValues({}, user || {}));
+  }, [id, loadRequestData, form, user]);
 
   useEffect(() => {
-    fetchStaffingByDepartment(userDepartment);
-  }, [userDepartment, fetchStaffingByDepartment]);
+    if (id) {
+      return;
+    }
+    fetchStaffingByOrgUnit(userOrgUnitName);
+  }, [fetchStaffingByOrgUnit, id, userOrgUnitName]);
 
   const loadInterviewers = useCallback(async (keyword: string) => {
     try {
@@ -133,11 +143,6 @@ const RecruitmentRequestForm = () => {
     form.setFieldsValue({ interviewerName: name });
   };
 
-  const buildPayload = (values: Record<string, unknown>) => ({
-    ...values,
-    team: userDepartment || String(values.team || ''),
-  });
-
   useEffect(() => () => {
     if (interviewerSearchTimer.current) {
       window.clearTimeout(interviewerSearchTimer.current);
@@ -147,7 +152,7 @@ const RecruitmentRequestForm = () => {
   const handleSubmit = async (values: Record<string, unknown>) => {
     setIsSubmitting(true);
     try {
-      const payload = buildPayload(values);
+      const payload = buildRecruitmentRequestPayload(values);
       let response;
       if (isEditMode) {
         response = await api.put(`/api/recruitment-request/${id}`, { ...payload, recruitmentRequestId: id });
@@ -173,7 +178,7 @@ const RecruitmentRequestForm = () => {
     try {
       const values = form.getFieldsValue(true);
       setIsSubmitting(true);
-      const payload = buildPayload(values);
+      const payload = buildRecruitmentRequestPayload(values);
       const requestPayload = isEditMode ? { ...payload, recruitmentRequestId: id } : payload;
       const response = await api.post('/api/recruitment-request/save-draft', requestPayload);
 
@@ -202,22 +207,28 @@ const RecruitmentRequestForm = () => {
 
   return (
     <div className="app-page">
-      <Card title={isEditMode ? '编辑用人申请' : '新增用人申请'} className="form-card">
+      <Card title={isEditMode ? '编辑用人申请' : '发起用人申请'} className="form-card">
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="requestTitle" label="岗位标题" rules={[{ required: true, message: '请输入岗位标题' }]}>
-            <Input placeholder="请输入岗位标题" />
+          <Form.Item name="requestTitle" label="申请标题" rules={[{ required: true, message: '请输入申请标题' }]}>
+            <Input placeholder="请输入申请标题" />
           </Form.Item>
 
           <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item name="totalRecruitmentCount" label="总编制人数" rules={[{ required: true, message: '总编制人数缺失' }]} style={{ minWidth: 220, flex: 1 }}>
+            <Form.Item name="applicationDepartment" label="申请部门" style={{ minWidth: 220, flex: 1 }}>
+              <Input disabled placeholder="自动带出当前用户部门" />
+            </Form.Item>
+            <Form.Item name="totalRecruitmentCount" label="总编制数" rules={[{ required: true, message: '总编制数缺失' }]} style={{ minWidth: 220, flex: 1 }}>
               <Input type="number" placeholder="从编制管理自动带出" disabled />
             </Form.Item>
-            <Form.Item name="vacancyCount" label="空缺编制" rules={[{ required: true, message: '空缺编制缺失' }]} style={{ minWidth: 220, flex: 1 }}>
+            <Form.Item name="vacancyCount" label="空缺编制数" rules={[{ required: true, message: '空缺编制数缺失' }]} style={{ minWidth: 220, flex: 1 }}>
               <Input type="number" placeholder="从编制管理自动带出" disabled />
             </Form.Item>
           </Space>
 
           <Space style={{ width: '100%' }} size={12} wrap>
+            <Form.Item name="requestType" label="所属类型" rules={[{ required: true, message: '请选择所属类型' }]} style={{ minWidth: 220, flex: 1 }}>
+              <Select placeholder="请选择所属类型" options={REQUEST_TYPE_OPTIONS} />
+            </Form.Item>
             <Form.Item name="category" label="所属分类" rules={[{ required: true, message: '请选择所属分类' }]} style={{ minWidth: 220, flex: 1 }}>
               <Select placeholder="请选择所属分类">
                 {CATEGORY_OPTIONS.map((item) => (
@@ -239,8 +250,26 @@ const RecruitmentRequestForm = () => {
           </Space>
 
           <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item name="supplementCount" label="补充人数" rules={[{ required: true, message: '请输入补充人数' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Input type="number" placeholder="请输入补充人数" />
+            <Form.Item
+              name="supplementCount"
+              label="补充人数"
+              rules={[
+                { required: true, message: '请输入补充人数' },
+                {
+                  validator: async (_, value) => {
+                    if (value === undefined || value === null || value === '') {
+                      return;
+                    }
+                    if (Number(value) > 0) {
+                      return;
+                    }
+                    throw new Error('补充人数必须大于 0');
+                  },
+                },
+              ]}
+              style={{ minWidth: 220, flex: 1 }}
+            >
+              <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入补充人数" />
             </Form.Item>
             <Form.Item name="urgentRequirement" label="是否满足编制要求" rules={[{ required: true, message: '请选择是否满足编制要求' }]} style={{ minWidth: 220, flex: 1 }}>
               <Radio.Group>
@@ -262,10 +291,10 @@ const RecruitmentRequestForm = () => {
             </Form.Item>
             <Form.Item name="experienceYears" label="相关经验年限要求" rules={[{ required: true, message: '请选择相关经验年限要求' }]} style={{ minWidth: 220, flex: 1 }}>
               <Select placeholder="请选择相关经验年限要求">
-                <Select.Option value="0-1">0-1 年</Select.Option>
-                <Select.Option value="1-3">1-3 年</Select.Option>
-                <Select.Option value="3-5">3-5 年</Select.Option>
-                <Select.Option value="5+">5 年以上</Select.Option>
+                <Select.Option value="0-1年">0-1年</Select.Option>
+                <Select.Option value="1-3年">1-3年</Select.Option>
+                <Select.Option value="3-5年">3-5年</Select.Option>
+                <Select.Option value="5年以上">5年以上</Select.Option>
               </Select>
             </Form.Item>
           </Space>
@@ -287,27 +316,53 @@ const RecruitmentRequestForm = () => {
                 options={interviewerOptions}
               />
             </Form.Item>
-            <Form.Item name="team" label="申请部门" style={{ minWidth: 220, flex: 1 }}>
-              <Input disabled placeholder="自动带出当前用户部门" />
-            </Form.Item>
           </Space>
 
           <Form.Item name="interviewerName" hidden>
             <Input />
           </Form.Item>
 
-          <Form.Item name="skillRequirement" label="任职要求" rules={[{ required: true, message: '请填写任职要求' }]}>
-            <Input.TextArea rows={4} placeholder="请填写任职要求" />
+          <Form.Item
+            name="skillRequirement"
+            label="任职要求"
+            rules={[
+              { required: true, message: '请填写任职要求' },
+              { max: TEXTAREA_MAX_LENGTH, message: `任职要求不能超过 ${TEXTAREA_MAX_LENGTH} 个字符` },
+            ]}
+          >
+            <Input.TextArea rows={4} maxLength={TEXTAREA_MAX_LENGTH} showCount placeholder="请填写任职要求" />
           </Form.Item>
 
-          <Form.Item name="positionResponsibility" label="岗位职责" rules={[{ required: true, message: '请填写岗位职责' }]}>
-            <Input.TextArea rows={4} placeholder="请填写岗位职责" />
+          <Form.Item
+            name="positionResponsibility"
+            label="岗位职责"
+            rules={[
+              { required: true, message: '请填写岗位职责' },
+              { max: TEXTAREA_MAX_LENGTH, message: `岗位职责不能超过 ${TEXTAREA_MAX_LENGTH} 个字符` },
+            ]}
+          >
+            <Input.TextArea rows={4} maxLength={TEXTAREA_MAX_LENGTH} showCount placeholder="请填写岗位职责" />
+          </Form.Item>
+
+          <Form.Item
+            name="remark"
+            label="备注"
+            rules={[{ max: TEXTAREA_MAX_LENGTH, message: `备注不能超过 ${TEXTAREA_MAX_LENGTH} 个字符` }]}
+          >
+            <Input.TextArea
+              rows={4}
+              maxLength={TEXTAREA_MAX_LENGTH}
+              showCount
+              placeholder={'需说明的情况/可写"无"'}
+            />
           </Form.Item>
 
           <Space>
             <Button onClick={() => navigate('/recruitment-request')}>取消</Button>
             <Button onClick={handleSaveDraft} loading={isSubmitting}>保存草稿</Button>
-            <Button type="primary" htmlType="submit" loading={isSubmitting}>提交申请</Button>
+            <Button type="primary" htmlType="submit" loading={isSubmitting}>
+              {isEditMode ? '保存修改' : '发起用人申请'}
+            </Button>
           </Space>
         </Form>
       </Card>
