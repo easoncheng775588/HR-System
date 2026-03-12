@@ -42,6 +42,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "total_recruitment_count INT NOT NULL COMMENT '总编制人数', " +
                 "vacancy_count INT NOT NULL COMMENT '空缺编制', " +
                 "team VARCHAR(100) NOT NULL COMMENT '所属团队', " +
+                "application_department VARCHAR(200) DEFAULT NULL COMMENT '申请部门展示值', " +
+                "org_unit_name VARCHAR(100) DEFAULT NULL COMMENT '组织单元名称', " +
+                "request_type VARCHAR(20) DEFAULT NULL COMMENT '所属类型', " +
+                "remark VARCHAR(500) DEFAULT NULL COMMENT '备注', " +
+                "submitter_role_type VARCHAR(20) DEFAULT NULL COMMENT '提交人角色类型', " +
+                "final_approver_user_id VARCHAR(20) DEFAULT NULL COMMENT '最终审批人ID', " +
+                "final_approver_user_name VARCHAR(50) DEFAULT NULL COMMENT '最终审批人姓名', " +
                 "technical_platform VARCHAR(50) NOT NULL COMMENT '技术平台', " +
                 "category VARCHAR(50) DEFAULT '其他' COMMENT '所属分类', " +
                 "supplement_count INT NOT NULL COMMENT '补充人数', " +
@@ -257,6 +264,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             
             jdbcTemplate.execute(createApprovalHistoryTableSQL);
             logger.info("表 approval_history 创建成功");
+
+            ensureMessageTable();
             
             // 创建简历表
             String createResumeTableSQL = "CREATE TABLE IF NOT EXISTS resume (" +
@@ -523,6 +532,41 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.error("所属团队参数初始化失败: {}", e.getMessage(), e);
+        }
+    }
+
+    private void ensureMessageTable() {
+        String createMessageTableSQL = "CREATE TABLE IF NOT EXISTS message (" +
+            "message_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID', " +
+            "title VARCHAR(200) NOT NULL COMMENT '消息标题', " +
+            "content TEXT NOT NULL COMMENT '消息内容', " +
+            "type VARCHAR(50) NOT NULL COMMENT '消息类型', " +
+            "status VARCHAR(20) NOT NULL DEFAULT 'UNREAD' COMMENT '消息状态', " +
+            "priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL' COMMENT '优先级', " +
+            "target_user_id VARCHAR(20) DEFAULT NULL COMMENT '目标用户ID', " +
+            "target_user_role VARCHAR(50) DEFAULT NULL COMMENT '目标角色', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "read_time DATETIME DEFAULT NULL COMMENT '已读时间', " +
+            "is_deleted TINYINT NOT NULL DEFAULT 0 COMMENT '是否删除'" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息表'";
+
+        jdbcTemplate.execute(createMessageTableSQL);
+        logger.info("表 message 创建成功");
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_message_target_user_id ON message(target_user_id)");
+            logger.info("索引 idx_message_target_user_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_message_target_user_id 已存在或创建失败: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_message_status ON message(status)");
+            logger.info("索引 idx_message_status 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_message_status 已存在或创建失败: {}", e.getMessage());
         }
     }
 

@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 @RestController
@@ -26,13 +28,10 @@ public class RecruitmentRequestController {
             throw new BusinessException("ERR0001", "申请数据不能为空");
         }
         if (request.getRequestTitle() == null || request.getRequestTitle().trim().isEmpty()) {
-            throw new BusinessException("ERR0002", "岗位标题不能为空");
+            throw new BusinessException("ERR0002", "申请标题不能为空");
         }
-        if (request.getTotalRecruitmentCount() == null || request.getTotalRecruitmentCount() < 0) {
-            throw new BusinessException("ERR0003", "总编制人数不能为空");
-        }
-        if (request.getVacancyCount() == null || request.getVacancyCount() < 0) {
-            throw new BusinessException("ERR0004", "空缺编制不能为空");
+        if (request.getRequestType() == null || request.getRequestType().trim().isEmpty()) {
+            throw new BusinessException("ERR0002", "所属类型不能为空");
         }
         if (request.getSupplementCount() == null || request.getSupplementCount() <= 0) {
             throw new BusinessException("ERR0005", "补充人数必须大于0");
@@ -55,6 +54,15 @@ public class RecruitmentRequestController {
         if (request.getSkillRequirement() == null || request.getSkillRequirement().trim().isEmpty()) {
             throw new BusinessException("ERR0011", "任职要求不能为空");
         }
+        if (request.getSkillRequirement().length() > 500) {
+            throw new BusinessException("ERR0011", "任职要求长度不能超过500");
+        }
+        if (request.getPositionResponsibility().length() > 500) {
+            throw new BusinessException("ERR0010", "岗位职责长度不能超过500");
+        }
+        if (request.getRemark() != null && request.getRemark().length() > 500) {
+            throw new BusinessException("ERR0012", "备注长度不能超过500");
+        }
     }
 
     private void validateDraftRequest(RecruitmentRequest request) {
@@ -64,8 +72,10 @@ public class RecruitmentRequestController {
     }
 
     @PostMapping("/save-draft")
-    public Response<RecruitmentRequest> saveDraft(@RequestBody RecruitmentRequest request) {
+    public Response<RecruitmentRequest> saveDraft(@RequestBody RecruitmentRequest request,
+                                                  @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            applyOperatorFromAuthHeader(request, authHeader, false);
             validateDraftRequest(request);
             RecruitmentRequest savedRequest = recruitmentRequestService.saveDraft(request);
             return Response.success(savedRequest);
@@ -79,8 +89,10 @@ public class RecruitmentRequestController {
     }
 
     @PostMapping("/submit")
-    public Response<RecruitmentRequest> submitRequest(@RequestBody RecruitmentRequest request) {
+    public Response<RecruitmentRequest> submitRequest(@RequestBody RecruitmentRequest request,
+                                                      @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            applyOperatorFromAuthHeader(request, authHeader, false);
             validateRecruitmentRequest(request);
             RecruitmentRequest submittedRequest = recruitmentRequestService.submitRequest(request);
             return Response.success(submittedRequest);
@@ -94,9 +106,13 @@ public class RecruitmentRequestController {
     }
 
     @GetMapping("/list")
-    public Response<?> getAll() {
+    public Response<?> getAll(@RequestParam(value = "viewerId", required = false) String viewerId,
+                              @RequestParam(value = "viewerRole", required = false) String viewerRole) {
         try {
-            return Response.success(recruitmentRequestService.getAll());
+            if (viewerId == null || viewerId.trim().isEmpty()) {
+                return Response.success(recruitmentRequestService.getAll());
+            }
+            return Response.success(recruitmentRequestService.getAll(viewerId, viewerRole));
         } catch (BusinessException e) {
             return Response.fail(e.getErrorCode(), e.getMessage());
         } catch (Exception e) {
@@ -228,11 +244,14 @@ public class RecruitmentRequestController {
     }
 
     @PutMapping("/{id}")
-    public Response<RecruitmentRequest> update(@PathVariable Long id, @RequestBody RecruitmentRequest request) {
+    public Response<RecruitmentRequest> update(@PathVariable Long id,
+                                               @RequestBody RecruitmentRequest request,
+                                               @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (id == null || id <= 0) {
                 throw new BusinessException("ERR0008", "申请ID必须大于0");
             }
+            applyOperatorFromAuthHeader(request, authHeader, true);
             validateRecruitmentRequest(request);
             request.setRecruitmentRequestId(id);
             RecruitmentRequest updatedRequest = recruitmentRequestService.updateRequest(request);
@@ -277,6 +296,40 @@ public class RecruitmentRequestController {
         } catch (Exception e) {
             logger.error("get approval history failed: {}", recruitmentRequestId, e);
             return Response.fail("查询失败: " + e.getMessage());
+        }
+    }
+
+    private void applyOperatorFromAuthHeader(RecruitmentRequest request, String authHeader, boolean updateOnly) {
+        if (request == null) {
+            return;
+        }
+        String userId = resolveUserIdFromAuthHeader(authHeader);
+        if (userId == null || userId.trim().isEmpty()) {
+            return;
+        }
+        if (!updateOnly && (request.getCreateUserId() == null || request.getCreateUserId().trim().isEmpty())) {
+            request.setCreateUserId(userId);
+        }
+        if (request.getUpdateUserId() == null || request.getUpdateUserId().trim().isEmpty()) {
+            request.setUpdateUserId(userId);
+        }
+    }
+
+    private String resolveUserIdFromAuthHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+        try {
+            String token = authHeader.substring(7);
+            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length == 0 || parts[0].trim().isEmpty()) {
+                return null;
+            }
+            return parts[0].trim();
+        } catch (IllegalArgumentException e) {
+            logger.warn("invalid authorization token", e);
+            return null;
         }
     }
 }

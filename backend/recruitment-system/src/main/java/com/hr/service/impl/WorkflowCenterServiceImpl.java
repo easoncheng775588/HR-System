@@ -38,6 +38,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
     private static final String PROCESS_CODE = "RECRUITMENT_REQUEST";
     private static final String PROCESS_NAME = "用人申请流程";
+    private static final String DIRECT_TEAM_MANAGER_TYPE = "DIRECT_TEAM_MANAGER";
 
     @Autowired
     private RecruitmentRequestMapper recruitmentRequestMapper;
@@ -83,12 +84,12 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
                 continue;
             }
 
-            String approverRole = normalizeRole(nodeConfig.getApproverRole());
+            String approverRole = resolveApproverRole(req, nodeConfig);
             if (!admin && !roleMatch(normalizedRole, approverRole)) {
                 continue;
             }
 
-            if (level == 3 && "团队经理".equals(normalizedRole) && !canTeamManagerHandle(userId, req)) {
+            if (level == 3 && !canLevelThreeHandle(userId, normalizedRole, req)) {
                 continue;
             }
 
@@ -96,7 +97,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             item.setRequestId(req.getRecruitmentRequestId());
             item.setProcessName(PROCESS_NAME);
             item.setSummary(buildSummary(req));
-            item.setCurrentNode(nodeConfig.getNodeName());
+            item.setCurrentNode(resolveNodeName(req, nodeConfig));
             item.setApplicant(req.getCreateUserName());
             item.setApplicantDept(req.getTeam());
             item.setArriveTime(resolveArriveTime(req));
@@ -201,12 +202,12 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
 
         String operatorRole = normalizeRole(actionRequest.getApprovalUserRole());
-        String approverRole = normalizeRole(currentNode.getApproverRole());
+        String approverRole = resolveApproverRole(existing, currentNode);
         if (!isAdminRole(operatorRole) && !roleMatch(operatorRole, approverRole)) {
             throw new RuntimeException("当前用户无该节点审批权限");
         }
-        if (currentLevel == 3 && "团队经理".equals(operatorRole) && !canTeamManagerHandle(actionRequest.getApprovalUserId(), existing)) {
-            throw new RuntimeException("仅申请部门所属团队经理可审批该流程");
+        if (currentLevel == 3 && !canLevelThreeHandle(actionRequest.getApprovalUserId(), operatorRole, existing)) {
+            throw new RuntimeException("当前用户无该节点审批权限");
         }
 
         String action = actionRequest.getAction() == null ? "" : actionRequest.getAction().trim().toUpperCase(Locale.ROOT);
@@ -314,7 +315,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
         Integer currentLevel = req.getCurrentApprovalLevel();
         WorkflowNodeConfig cfg = currentLevel == null ? null : nodeMap.get(currentLevel);
-        return cfg == null ? "-" : cfg.getNodeName();
+        return cfg == null ? "-" : resolveNodeName(req, cfg);
     }
 
     private String resolveProcessStatus(String approvalStatus) {
@@ -360,8 +361,14 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         if (value.contains("编制管理")) {
             return "编制管理岗";
         }
+        if (value.contains("直属团队经理")) {
+            return "直属团队经理";
+        }
         if (value.contains("团队经理")) {
             return "团队经理";
+        }
+        if (value.contains("分管总")) {
+            return "分管总";
         }
         if (value.contains("管理员")) {
             return "管理员";
@@ -390,8 +397,38 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             return false;
         }
 
-        User manager = userMapper.getActiveTeamManagerByDepartment(teamName);
+        User manager = findTeamManager(teamName);
         return manager != null && userId.equals(manager.getUserId());
+    }
+
+    private boolean canLevelThreeHandle(String userId, String normalizedRole, RecruitmentRequest request) {
+        if (userId == null || request == null) {
+            return false;
+        }
+        if (DIRECT_TEAM_MANAGER_TYPE.equals(request.getSubmitterRoleType())) {
+            return "分管总".equals(normalizedRole) && userId.equals(request.getFinalApproverUserId());
+        }
+        return "团队经理".equals(normalizedRole) && canTeamManagerHandle(userId, request);
+    }
+
+    private String resolveApproverRole(RecruitmentRequest request, WorkflowNodeConfig nodeConfig) {
+        if (nodeConfig == null) {
+            return "";
+        }
+        if (nodeConfig.getNodeOrder() != null && nodeConfig.getNodeOrder() == 3 && DIRECT_TEAM_MANAGER_TYPE.equals(request.getSubmitterRoleType())) {
+            return "分管总";
+        }
+        return normalizeRole(nodeConfig.getApproverRole());
+    }
+
+    private String resolveNodeName(RecruitmentRequest request, WorkflowNodeConfig nodeConfig) {
+        if (nodeConfig == null) {
+            return "-";
+        }
+        if (nodeConfig.getNodeOrder() != null && nodeConfig.getNodeOrder() == 3 && DIRECT_TEAM_MANAGER_TYPE.equals(request.getSubmitterRoleType())) {
+            return "分管总审批";
+        }
+        return nodeConfig.getNodeName();
     }
 
     private String resolveTeamNameByDepartment(String department) {
@@ -406,6 +443,31 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             return unit.getUnitName();
         }
         return unit.getParentUnitName();
+    }
+
+    private User findTeamManager(String teamName) {
+        if (teamName == null || teamName.trim().isEmpty()) {
+            return null;
+        }
+
+        User manager = userMapper.getActiveTeamManagerByDepartment(teamName);
+        if (manager != null) {
+            return manager;
+        }
+
+        List<User> managers = userMapper.getActiveUsersByRoleName("团队经理");
+        for (User candidate : managers) {
+            if (candidate == null) {
+                continue;
+            }
+            if (teamName.equals(candidate.getTeamName())) {
+                return candidate;
+            }
+            if (teamName.equals(resolveTeamNameByDepartment(candidate.getDepartment()))) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private void logAction(Long requestId, Integer nodeOrder, String nodeName, String actionType, String actionResult,
