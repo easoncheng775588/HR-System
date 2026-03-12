@@ -33,6 +33,8 @@ public interface RecruitmentRequestService {
      */
     List<RecruitmentRequest> getAll();
 
+    List<RecruitmentRequest> getAll(String viewerId, String viewerRole);
+
     /**
      * 审批通过
      * @param id 申请ID

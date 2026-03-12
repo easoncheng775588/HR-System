@@ -28,4 +28,10 @@ public interface UserMapper {
     List<User> searchActiveUsers(@Param("keyword") String keyword);
 
     User getActiveTeamManagerByDepartment(@Param("department") String department);
+
+    List<String> getRoleNamesByUserId(@Param("userId") String userId);
+
+    List<User> getActiveUsersByRoleName(@Param("roleName") String roleName);
+
+    User getActiveUserByRealName(@Param("realName") String realName);
 }
