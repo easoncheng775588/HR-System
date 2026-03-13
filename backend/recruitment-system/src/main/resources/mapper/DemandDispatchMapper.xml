@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.DemandDispatchMapper">
+
+    <resultMap id="DemandDispatchResultMap" type="com.hr.entity.DemandDispatch">
+        <id property="dispatchId" column="dispatch_id"/>
+        <result property="demandId" column="demand_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="hrUserId" column="hr_user_id"/>
+        <result property="hrUserName" column="hr_user_name"/>
+        <result property="receiveStatus" column="receive_status"/>
+        <result property="dispatchTime" column="dispatch_time"/>
+        <result property="receiveTime" column="receive_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.DemandDispatch" useGeneratedKeys="true" keyProperty="dispatchId">
+        INSERT INTO demand_dispatch (
+            demand_id,
+            supplier_id,
+            supplier_name,
+            hr_user_id,
+            hr_user_name,
+            receive_status,
+            dispatch_time,
+            receive_time,
+            create_user_id,
+            create_user_name,
+            create_time,
+            update_user_id,
+            update_user_name,
+            update_time
+        ) VALUES (
+            #{demandId},
+            #{supplierId},
+            #{supplierName},
+            #{hrUserId},
+            #{hrUserName},
+            #{receiveStatus},
+            #{dispatchTime},
+            #{receiveTime},
+            #{createUserId},
+            #{createUserName},
+            #{createTime},
+            #{updateUserId},
+            #{updateUserName},
+            #{updateTime}
+        )
+    </insert>
+
+    <delete id="deleteByDemandIdAndSupplierId">
+        DELETE FROM demand_dispatch WHERE demand_id = #{demandId} AND supplier_id = #{supplierId}
+    </delete>
+
+    <update id="updateReceiveStatusByDemandIdAndHrUserId">
+        UPDATE demand_dispatch
+        SET receive_status = #{receiveStatus},
+            receive_time = NOW(),
+            update_user_id = #{operatorUserId},
+            update_user_name = #{operatorUserName},
+            update_time = NOW()
+        WHERE demand_id = #{demandId}
+          AND hr_user_id = #{hrUserId}
+          AND receive_status != 'ACCEPTED'
+    </update>
+
+    <select id="selectByDemandId" parameterType="long" resultMap="DemandDispatchResultMap">
+        SELECT * FROM demand_dispatch WHERE demand_id = #{demandId}
+    </select>
+
+    <select id="selectByDemandIdAndHrUserId" resultMap="DemandDispatchResultMap">
+        SELECT * FROM demand_dispatch WHERE demand_id = #{demandId} AND hr_user_id = #{hrUserId}
+    </select>
+
+</mapper>

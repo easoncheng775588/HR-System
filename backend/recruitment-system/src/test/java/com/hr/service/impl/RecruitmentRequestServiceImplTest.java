@@ -11,6 +11,7 @@ import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.StaffingMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.DemandManagementService;
 import com.hr.service.MessageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,6 +61,9 @@ class RecruitmentRequestServiceImplTest {
     @Mock
     private MessageService messageService;
 
+    @Mock
+    private DemandManagementService demandManagementService;
+
     @InjectMocks
     private RecruitmentRequestServiceImpl recruitmentRequestService;
 
@@ -88,7 +92,7 @@ class RecruitmentRequestServiceImplTest {
     }
 
     @Test
-    void submitRequestSetsDefaultPublishStatusBeforeInsert() {
+    void submitRequestSetsDefaultApprovalStatusBeforeInsert() {
         RecruitmentRequest request = new RecruitmentRequest();
         request.setRequestTitle("Java开发");
         request.setRequestType("LEAVE");
@@ -121,33 +125,12 @@ class RecruitmentRequestServiceImplTest {
         recruitmentRequestService.submitRequest(request);
 
         verify(recruitmentRequestMapper).insert(requestCaptor.capture());
-        assertEquals("NOT_PUBLISHED", requestCaptor.getValue().getPositionPublishStatus());
         assertEquals("PENDING", requestCaptor.getValue().getApprovalStatus());
         assertEquals("零售业务开发团队 / 零售平台开发室", requestCaptor.getValue().getApplicationDepartment());
         assertEquals("零售平台开发室", requestCaptor.getValue().getOrgUnitName());
         assertEquals(Integer.valueOf(8), requestCaptor.getValue().getTotalRecruitmentCount());
         assertEquals(Integer.valueOf(2), requestCaptor.getValue().getVacancyCount());
         assertEquals("ROOM_MANAGER", requestCaptor.getValue().getSubmitterRoleType());
-    }
-
-    @Test
-    void updatePublishStatusNormalizesLegacyUnpublishedValue() {
-        RecruitmentRequest existingRequest = new RecruitmentRequest();
-        existingRequest.setRecruitmentRequestId(2L);
-        existingRequest.setPositionPublishStatus("PUBLISHED");
-
-        RecruitmentRequest updatedRequest = new RecruitmentRequest();
-        updatedRequest.setRecruitmentRequestId(2L);
-        updatedRequest.setPositionPublishStatus("NOT_PUBLISHED");
-
-        when(recruitmentRequestMapper.selectByPrimaryKey(2L))
-            .thenReturn(existingRequest)
-            .thenReturn(updatedRequest);
-
-        recruitmentRequestService.updatePublishStatus(2L, "UNPUBLISHED");
-
-        verify(recruitmentRequestMapper).updateByPrimaryKey(requestCaptor.capture());
-        assertEquals("NOT_PUBLISHED", requestCaptor.getValue().getPositionPublishStatus());
     }
 
     @Test

@@ -29,9 +29,16 @@ public interface UserMapper {
 
     User getActiveTeamManagerByDepartment(@Param("department") String department);
 
+    User getActiveRoomManagerByDepartment(@Param("department") String department);
+
     List<String> getRoleNamesByUserId(@Param("userId") String userId);
 
     List<User> getActiveUsersByRoleName(@Param("roleName") String roleName);
+
+    List<User> getActiveUsersByRoleKeyword(@Param("roleKeyword") String roleKeyword);
+
+    User getActiveRoomManagerByDepartmentAndRoleKeyword(@Param("department") String department,
+                                                        @Param("roleKeyword") String roleKeyword);
 
     User getActiveUserByRealName(@Param("realName") String realName);
 }

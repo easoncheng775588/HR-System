@@ -144,7 +144,6 @@ public class ErrorMessage {
             ERROR_MESSAGES.put("request.update.failed", "更新用人申请失败：%s");
             ERROR_MESSAGES.put("request.delete.failed", "删除用人申请失败：%s");
             ERROR_MESSAGES.put("request.approve.failed", "审批用人申请失败：%s");
-            ERROR_MESSAGES.put("request.publish.failed", "发布岗位失败：%s");
         }
     }
 }

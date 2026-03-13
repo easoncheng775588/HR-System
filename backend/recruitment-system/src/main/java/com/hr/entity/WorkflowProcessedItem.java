@@ -3,6 +3,8 @@ package com.hr.entity;
 import java.util.Date;
 
 public class WorkflowProcessedItem {
+    private String processCode;
+    private Long businessId;
     private Long requestId;
     private String processName;
     private String summary;
@@ -10,6 +12,22 @@ public class WorkflowProcessedItem {
     private String applicantDept;
     private Date applyTime;
     private Date handleTime;
+
+    public String getProcessCode() {
+        return processCode;
+    }
+
+    public void setProcessCode(String processCode) {
+        this.processCode = processCode;
+    }
+
+    public Long getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
+    }
 
     public Long getRequestId() {
         return requestId;

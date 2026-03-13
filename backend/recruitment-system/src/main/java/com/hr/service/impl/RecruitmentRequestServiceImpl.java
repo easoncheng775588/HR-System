@@ -14,6 +14,7 @@ import com.hr.mapper.StaffingMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
 import com.hr.service.MessageService;
+import com.hr.service.DemandManagementService;
 import com.hr.service.RecruitmentRequestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,9 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
     @Autowired
     private MessageService messageService;
 
+    @Autowired
+    private DemandManagementService demandManagementService;
+
     @Override
     public RecruitmentRequest saveDraft(RecruitmentRequest request) {
         if (request.getCreateUserId() == null) {
@@ -91,9 +95,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         }
         if (request.getStatus() == null || request.getStatus().trim().isEmpty()) {
             request.setStatus("DRAFT");
-        }
-        if (request.getPositionPublishStatus() == null) {
-            request.setPositionPublishStatus("NOT_PUBLISHED");
         }
         if (request.getCurrentApprovalLevel() == null) {
             request.setCurrentApprovalLevel(0);
@@ -136,9 +137,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
 
         request.setApprovalStatus("PENDING");
         request.setStatus("SUBMITTED");
-        if (request.getPositionPublishStatus() == null || request.getPositionPublishStatus().trim().isEmpty()) {
-            request.setPositionPublishStatus("NOT_PUBLISHED");
-        }
         request.setCurrentApprovalLevel(1);
         request.setApprovalLevel1Status("PENDING");
         request.setApprovalLevel2Status("PENDING");
@@ -310,21 +308,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
     }
 
     @Override
-    public RecruitmentRequest updatePublishStatus(Long id, String publishStatus) {
-        RecruitmentRequest existingRequest = recruitmentRequestMapper.selectByPrimaryKey(id);
-        if (existingRequest == null) {
-            throw new RuntimeException("申请不存在");
-        }
-
-        existingRequest.setPositionPublishStatus(normalizePublishStatus(publishStatus));
-        existingRequest.setUpdateUserId("1001");
-        existingRequest.setUpdateUserName("系统用户");
-        existingRequest.setUpdateTime(new Date());
-        recruitmentRequestMapper.updateByPrimaryKey(existingRequest);
-        return recruitmentRequestMapper.selectByPrimaryKey(id);
-    }
-
-    @Override
     public RecruitmentRequest threeLevelApproveRequest(Long id, Map<String, Object> params) {
         RecruitmentRequest request = recruitmentRequestMapper.selectByPrimaryKey(id);
         if (request == null) {
@@ -402,6 +385,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             sendLevelThreePendingNotification(updatedRequest);
         }
         if (updatedRequest != null && isFinalApproved(updatedRequest)) {
+            demandManagementService.createFromApprovedRecruitment(updatedRequest);
             sendCompletionNotifications(updatedRequest);
         }
         return updatedRequest;
@@ -556,16 +540,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         if (request.getSkillRequirement() == null || request.getSkillRequirement().trim().isEmpty()) {
             request.setSkillRequirement("-");
         }
-    }
-
-    private String normalizePublishStatus(String publishStatus) {
-        if (publishStatus == null || publishStatus.trim().isEmpty()) {
-            return "NOT_PUBLISHED";
-        }
-        if ("UNPUBLISHED".equalsIgnoreCase(publishStatus) || "NOT_PUBLISHED".equalsIgnoreCase(publishStatus)) {
-            return "NOT_PUBLISHED";
-        }
-        return publishStatus.trim();
     }
 
     private String resolveTeamNameByDepartment(String department) {

@@ -56,6 +56,13 @@ public class Resume {
     private String updateUserId;
     private String updateUserName;
 
+    // runtime-only fields for resume management view
+    private Boolean canInterviewerConfirm;
+    private Boolean canInterviewerAbandon;
+    private String currentInterviewerChoiceStatus;
+    private String confirmedInterviewerId;
+    private String confirmedInterviewerName;
+
     // Getters and Setters
     public Long getResumeId() {
         return resumeId;
@@ -471,5 +478,45 @@ public class Resume {
 
     public void setUpdateUserName(String updateUserName) {
         this.updateUserName = updateUserName;
+    }
+
+    public Boolean getCanInterviewerConfirm() {
+        return canInterviewerConfirm;
+    }
+
+    public void setCanInterviewerConfirm(Boolean canInterviewerConfirm) {
+        this.canInterviewerConfirm = canInterviewerConfirm;
+    }
+
+    public Boolean getCanInterviewerAbandon() {
+        return canInterviewerAbandon;
+    }
+
+    public void setCanInterviewerAbandon(Boolean canInterviewerAbandon) {
+        this.canInterviewerAbandon = canInterviewerAbandon;
+    }
+
+    public String getCurrentInterviewerChoiceStatus() {
+        return currentInterviewerChoiceStatus;
+    }
+
+    public void setCurrentInterviewerChoiceStatus(String currentInterviewerChoiceStatus) {
+        this.currentInterviewerChoiceStatus = currentInterviewerChoiceStatus;
+    }
+
+    public String getConfirmedInterviewerId() {
+        return confirmedInterviewerId;
+    }
+
+    public void setConfirmedInterviewerId(String confirmedInterviewerId) {
+        this.confirmedInterviewerId = confirmedInterviewerId;
+    }
+
+    public String getConfirmedInterviewerName() {
+        return confirmedInterviewerName;
+    }
+
+    public void setConfirmedInterviewerName(String confirmedInterviewerName) {
+        this.confirmedInterviewerName = confirmedInterviewerName;
     }
 }

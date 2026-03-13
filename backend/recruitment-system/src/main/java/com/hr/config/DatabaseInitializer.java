@@ -60,7 +60,6 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "interviewer_id VARCHAR(20) DEFAULT NULL COMMENT '面试官ID', " +
                 "interviewer_name VARCHAR(50) DEFAULT NULL COMMENT '面试官姓名', " +
                 "approval_status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT '审批状态', " +
-                "position_publish_status VARCHAR(20) NOT NULL DEFAULT 'NOT_PUBLISHED' COMMENT '岗位发布状态', " +
                 "approval_user_id VARCHAR(20) DEFAULT NULL COMMENT '审批人ID', " +
                 "approval_user_name VARCHAR(50) DEFAULT NULL COMMENT '审批人姓名', " +
                 "approval_time DATETIME DEFAULT NULL COMMENT '审批时间', " +
@@ -266,6 +265,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             logger.info("表 approval_history 创建成功");
 
             ensureMessageTable();
+            ensureDemandManagementTables();
+            cleanupLegacyPositionPublishingArtifacts();
             
             // 创建简历表
             String createResumeTableSQL = "CREATE TABLE IF NOT EXISTS resume (" +
@@ -569,6 +570,108 @@ public class DatabaseInitializer implements CommandLineRunner {
             logger.info("索引 idx_message_status 创建成功");
         } catch (Exception e) {
             logger.info("索引 idx_message_status 已存在或创建失败: {}", e.getMessage());
+        }
+    }
+
+    private void ensureDemandManagementTables() {
+        String createDemandRequirementSQL = "CREATE TABLE IF NOT EXISTS demand_requirement (" +
+            "demand_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '需求ID', " +
+            "source_recruitment_request_id BIGINT NOT NULL COMMENT '来源用人申请ID', " +
+            "position_org_name VARCHAR(255) NOT NULL COMMENT '岗位/用人室组', " +
+            "vacancy_count INT NOT NULL DEFAULT 0 COMMENT '空缺岗位', " +
+            "technical_platform VARCHAR(50) NOT NULL COMMENT '技术平台', " +
+            "recruit_level VARCHAR(50) NOT NULL COMMENT '招聘级别', " +
+            "recruit_count INT NOT NULL COMMENT '招聘数量', " +
+            "position_responsibility TEXT NOT NULL COMMENT '岗位职责', " +
+            "recruit_requirement TEXT NOT NULL COMMENT '招聘要求', " +
+            "acceptance_status VARCHAR(30) NOT NULL DEFAULT '未接收' COMMENT '需求接收状态', " +
+            "dispatch_supplier_count INT NOT NULL DEFAULT 0 COMMENT '分发供应商数', " +
+            "received_supplier_count INT NOT NULL DEFAULT 0 COMMENT '已接收供应商数', " +
+            "demand_status VARCHAR(20) NOT NULL DEFAULT '待分发' COMMENT '需求状态', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
+            "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', " +
+            "update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID', " +
+            "update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名', " +
+            "UNIQUE KEY uk_source_recruitment_request_id (source_recruitment_request_id)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求管理主表'";
+        jdbcTemplate.execute(createDemandRequirementSQL);
+        logger.info("表 demand_requirement 创建成功");
+
+        String createDemandDispatchSQL = "CREATE TABLE IF NOT EXISTS demand_dispatch (" +
+            "dispatch_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '分发ID', " +
+            "demand_id BIGINT NOT NULL COMMENT '需求ID', " +
+            "supplier_id BIGINT NOT NULL COMMENT '供应商ID', " +
+            "supplier_name VARCHAR(100) NOT NULL COMMENT '供应商名称', " +
+            "hr_user_id VARCHAR(20) NOT NULL COMMENT '供应商HR用户ID', " +
+            "hr_user_name VARCHAR(50) NOT NULL COMMENT '供应商HR姓名', " +
+            "receive_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '接收状态', " +
+            "dispatch_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '分发时间', " +
+            "receive_time DATETIME DEFAULT NULL COMMENT '接收时间', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID', " +
+            "update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名', " +
+            "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', " +
+            "UNIQUE KEY uk_demand_supplier_hr (demand_id, supplier_id, hr_user_id)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求分发表'";
+        jdbcTemplate.execute(createDemandDispatchSQL);
+        logger.info("表 demand_dispatch 创建成功");
+
+        String createDemandOperationLogSQL = "CREATE TABLE IF NOT EXISTS demand_operation_log (" +
+            "log_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志ID', " +
+            "demand_id BIGINT NOT NULL COMMENT '需求ID', " +
+            "operation_type VARCHAR(30) NOT NULL COMMENT '操作类型', " +
+            "operation_detail VARCHAR(500) NOT NULL COMMENT '操作内容', " +
+            "operator_user_id VARCHAR(20) NOT NULL COMMENT '操作人ID', " +
+            "operator_user_name VARCHAR(50) NOT NULL COMMENT '操作人姓名', " +
+            "operation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间'" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求操作日志表'";
+        jdbcTemplate.execute(createDemandOperationLogSQL);
+        logger.info("表 demand_operation_log 创建成功");
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_demand_dispatch_demand_id ON demand_dispatch(demand_id)");
+            logger.info("索引 idx_demand_dispatch_demand_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_demand_dispatch_demand_id 已存在或创建失败: {}", e.getMessage());
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_demand_dispatch_hr_user_id ON demand_dispatch(hr_user_id)");
+            logger.info("索引 idx_demand_dispatch_hr_user_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_demand_dispatch_hr_user_id 已存在或创建失败: {}", e.getMessage());
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_demand_operation_log_demand_id ON demand_operation_log(demand_id)");
+            logger.info("索引 idx_demand_operation_log_demand_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_demand_operation_log_demand_id 已存在或创建失败: {}", e.getMessage());
+        }
+    }
+
+    private void cleanupLegacyPositionPublishingArtifacts() {
+        String[] legacyTables = {
+            "position_publishing",
+            "position_publish",
+            "position_publish_log"
+        };
+        for (String tableName : legacyTables) {
+            try {
+                jdbcTemplate.execute("DROP TABLE IF EXISTS " + tableName);
+                logger.info("已清理历史岗位发布表: {}", tableName);
+            } catch (Exception e) {
+                logger.warn("清理历史岗位发布表失败 {}: {}", tableName, e.getMessage());
+            }
+        }
+
+        try {
+            jdbcTemplate.update("DELETE FROM sys_permission WHERE path = '/position-publishing'");
+            logger.info("已清理历史岗位发布菜单权限");
+        } catch (Exception e) {
+            logger.warn("清理历史岗位发布菜单权限失败: {}", e.getMessage());
         }
     }
 

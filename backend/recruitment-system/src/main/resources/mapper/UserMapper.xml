@@ -99,5 +99,64 @@
         ORDER BY create_time DESC
         LIMIT 1
     </select>
+
+    <select id="getActiveRoomManagerByDepartment" parameterType="String" resultMap="UserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE status = 'ACTIVE'
+          AND position = '室经理'
+          AND department = #{department}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="getRoleNamesByUserId" parameterType="String" resultType="String">
+        SELECT r.role_name
+        FROM sys_role r
+        INNER JOIN sys_user_role ur ON ur.role_id = r.role_id
+        WHERE ur.user_id = #{userId}
+        ORDER BY r.role_id ASC
+    </select>
+
+    <select id="getActiveUsersByRoleName" parameterType="String" resultMap="UserResultMap">
+        SELECT DISTINCT u.*
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON ur.user_id = u.user_id
+        INNER JOIN sys_role r ON r.role_id = ur.role_id
+        WHERE u.status = 'ACTIVE'
+          AND r.role_name = #{roleName}
+        ORDER BY u.create_time DESC
+    </select>
+
+    <select id="getActiveUsersByRoleKeyword" parameterType="String" resultMap="UserResultMap">
+        SELECT DISTINCT u.*
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON ur.user_id = u.user_id
+        INNER JOIN sys_role r ON r.role_id = ur.role_id
+        WHERE u.status = 'ACTIVE'
+          AND r.role_name LIKE CONCAT('%', #{roleKeyword}, '%')
+        ORDER BY u.create_time DESC
+    </select>
+
+    <select id="getActiveRoomManagerByDepartmentAndRoleKeyword" resultMap="UserResultMap">
+        SELECT DISTINCT u.*
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON ur.user_id = u.user_id
+        INNER JOIN sys_role r ON r.role_id = ur.role_id
+        WHERE u.status = 'ACTIVE'
+          AND u.department = #{department}
+          AND r.role_name LIKE CONCAT('%', #{roleKeyword}, '%')
+        ORDER BY u.create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="getActiveUserByRealName" parameterType="String" resultMap="UserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE status = 'ACTIVE'
+          AND real_name = #{realName}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
     
 </mapper>

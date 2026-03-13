@@ -6,11 +6,14 @@ import com.hr.entity.User;
 import com.hr.entity.WorkflowNodeConfig;
 import com.hr.entity.WorkflowTodoItem;
 import com.hr.mapper.ApprovalHistoryMapper;
+import com.hr.mapper.InterviewEvaluationApprovalHistoryMapper;
+import com.hr.mapper.InterviewEvaluationMapper;
 import com.hr.mapper.OrgUnitMapper;
 import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowNodeConfigMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.InterviewEvaluationService;
 import com.hr.service.RecruitmentRequestService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +51,15 @@ class WorkflowCenterServiceImplTest {
     @Mock
     private RecruitmentRequestService recruitmentRequestService;
 
+    @Mock
+    private InterviewEvaluationMapper interviewEvaluationMapper;
+
+    @Mock
+    private InterviewEvaluationApprovalHistoryMapper interviewEvaluationApprovalHistoryMapper;
+
+    @Mock
+    private InterviewEvaluationService interviewEvaluationService;
+
     @InjectMocks
     private WorkflowCenterServiceImpl workflowCenterService;
 
@@ -77,6 +89,7 @@ class WorkflowCenterServiceImplTest {
         teamManager.setStatus("ACTIVE");
 
         when(recruitmentRequestMapper.selectAll()).thenReturn(Collections.singletonList(request));
+        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.emptyList());
         when(workflowNodeConfigMapper.selectByProcessCode("RECRUITMENT_REQUEST")).thenReturn(Collections.singletonList(node));
         when(orgUnitMapper.getByUnitName("办公系统开发室")).thenReturn(orgUnit("办公系统开发室", "GROUP", "基础业务开发团队"));
         when(userMapper.getActiveTeamManagerByDepartment("基础业务开发团队")).thenReturn(teamManager);

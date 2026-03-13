@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.ResumeDispatchMapper">
+
+    <resultMap id="ResumeDispatchResultMap" type="com.hr.entity.ResumeDispatch">
+        <id property="dispatchId" column="dispatch_id"/>
+        <result property="resumeId" column="resume_id"/>
+        <result property="recruitmentRequestId" column="recruitment_request_id"/>
+        <result property="interviewerId" column="interviewer_id"/>
+        <result property="interviewerName" column="interviewer_name"/>
+        <result property="dispatchStatus" column="dispatch_status"/>
+        <result property="dispatchTime" column="dispatch_time"/>
+        <result property="confirmTime" column="confirm_time"/>
+        <result property="interviewMethod" column="interview_method"/>
+        <result property="meetingNo" column="meeting_no"/>
+        <result property="availableStartTime" column="available_start_time"/>
+        <result property="availableEndTime" column="available_end_time"/>
+        <result property="confirmedInterviewTime" column="confirmed_interview_time"/>
+        <result property="interviewTimeConfirmUserId" column="interview_time_confirm_user_id"/>
+        <result property="interviewTimeConfirmUserName" column="interview_time_confirm_user_name"/>
+        <result property="interviewTimeConfirmTime" column="interview_time_confirm_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.ResumeDispatch" useGeneratedKeys="true" keyProperty="dispatchId">
+        INSERT INTO resume_dispatch (
+            resume_id,
+            recruitment_request_id,
+            interviewer_id,
+            interviewer_name,
+            dispatch_status,
+            dispatch_time,
+            confirm_time,
+            interview_method,
+            meeting_no,
+            available_start_time,
+            available_end_time,
+            confirmed_interview_time,
+            interview_time_confirm_user_id,
+            interview_time_confirm_user_name,
+            interview_time_confirm_time,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{resumeId},
+            #{recruitmentRequestId},
+            #{interviewerId},
+            #{interviewerName},
+            #{dispatchStatus},
+            #{dispatchTime},
+            #{confirmTime},
+            #{interviewMethod},
+            #{meetingNo},
+            #{availableStartTime},
+            #{availableEndTime},
+            #{confirmedInterviewTime},
+            #{interviewTimeConfirmUserId},
+            #{interviewTimeConfirmUserName},
+            #{interviewTimeConfirmTime},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <select id="selectByResumeId" resultMap="ResumeDispatchResultMap">
+        SELECT *
+        FROM resume_dispatch
+        WHERE resume_id = #{resumeId}
+        ORDER BY dispatch_id DESC
+    </select>
+
+    <select id="selectByResumeIds" resultMap="ResumeDispatchResultMap">
+        SELECT *
+        FROM resume_dispatch
+        WHERE resume_id IN
+        <foreach collection="resumeIds" item="resumeId" open="(" separator="," close=")">
+            #{resumeId}
+        </foreach>
+        ORDER BY dispatch_id DESC
+    </select>
+
+    <select id="selectByInterviewerId" resultMap="ResumeDispatchResultMap">
+        SELECT *
+        FROM resume_dispatch
+        WHERE interviewer_id = #{interviewerId}
+        ORDER BY dispatch_id DESC
+    </select>
+
+    <select id="selectConfirmed" resultMap="ResumeDispatchResultMap">
+        SELECT *
+        FROM resume_dispatch
+        WHERE dispatch_status = 'CONFIRMED'
+        ORDER BY dispatch_id DESC
+    </select>
+
+    <select id="selectConfirmedByResumeId" resultMap="ResumeDispatchResultMap">
+        SELECT *
+        FROM resume_dispatch
+        WHERE resume_id = #{resumeId}
+          AND dispatch_status = 'CONFIRMED'
+        ORDER BY dispatch_id DESC
+        LIMIT 1
+    </select>
+
+    <delete id="deleteByResumeId">
+        DELETE FROM resume_dispatch WHERE resume_id = #{resumeId}
+    </delete>
+
+    <update id="updateStatusByResumeAndInterviewer">
+        UPDATE resume_dispatch
+        SET dispatch_status = #{dispatchStatus},
+            confirm_time = #{confirmTime},
+            update_time = NOW(),
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE resume_id = #{resumeId}
+          AND interviewer_id = #{interviewerId}
+    </update>
+
+    <update id="confirmChoiceByResumeAndInterviewer">
+        UPDATE resume_dispatch
+        SET dispatch_status = 'CONFIRMED',
+            confirm_time = #{confirmTime},
+            interview_method = #{interviewMethod},
+            meeting_no = #{meetingNo},
+            available_start_time = #{availableStartTime},
+            available_end_time = #{availableEndTime},
+            update_time = NOW(),
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE resume_id = #{resumeId}
+          AND interviewer_id = #{interviewerId}
+    </update>
+
+    <update id="updateConfirmedInterviewTime">
+        UPDATE resume_dispatch
+        SET confirmed_interview_time = #{confirmedInterviewTime},
+            interview_time_confirm_user_id = #{confirmUserId},
+            interview_time_confirm_user_name = #{confirmUserName},
+            interview_time_confirm_time = #{confirmTime},
+            update_time = NOW(),
+            update_user_id = #{confirmUserId},
+            update_user_name = #{confirmUserName}
+        WHERE dispatch_id = #{dispatchId}
+    </update>
+
+</mapper>

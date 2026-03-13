@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.DemandRequirementMapper">
+
+    <resultMap id="DemandRequirementResultMap" type="com.hr.entity.DemandRequirement">
+        <id property="demandId" column="demand_id"/>
+        <result property="sourceRecruitmentRequestId" column="source_recruitment_request_id"/>
+        <result property="positionOrgName" column="position_org_name"/>
+        <result property="vacancyCount" column="vacancy_count"/>
+        <result property="technicalPlatform" column="technical_platform"/>
+        <result property="recruitLevel" column="recruit_level"/>
+        <result property="recruitCount" column="recruit_count"/>
+        <result property="positionResponsibility" column="position_responsibility"/>
+        <result property="recruitRequirement" column="recruit_requirement"/>
+        <result property="acceptanceStatus" column="acceptance_status"/>
+        <result property="dispatchSupplierCount" column="dispatch_supplier_count"/>
+        <result property="receivedSupplierCount" column="received_supplier_count"/>
+        <result property="demandStatus" column="demand_status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.DemandRequirement" useGeneratedKeys="true" keyProperty="demandId">
+        INSERT INTO demand_requirement (
+            source_recruitment_request_id,
+            position_org_name,
+            vacancy_count,
+            technical_platform,
+            recruit_level,
+            recruit_count,
+            position_responsibility,
+            recruit_requirement,
+            acceptance_status,
+            dispatch_supplier_count,
+            received_supplier_count,
+            demand_status,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{sourceRecruitmentRequestId},
+            #{positionOrgName},
+            #{vacancyCount},
+            #{technicalPlatform},
+            #{recruitLevel},
+            #{recruitCount},
+            #{positionResponsibility},
+            #{recruitRequirement},
+            #{acceptanceStatus},
+            #{dispatchSupplierCount},
+            #{receivedSupplierCount},
+            #{demandStatus},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.DemandRequirement">
+        UPDATE demand_requirement
+        SET position_org_name = #{positionOrgName},
+            vacancy_count = #{vacancyCount},
+            technical_platform = #{technicalPlatform},
+            recruit_level = #{recruitLevel},
+            recruit_count = #{recruitCount},
+            position_responsibility = #{positionResponsibility},
+            recruit_requirement = #{recruitRequirement},
+            acceptance_status = #{acceptanceStatus},
+            dispatch_supplier_count = #{dispatchSupplierCount},
+            received_supplier_count = #{receivedSupplierCount},
+            demand_status = #{demandStatus},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE demand_id = #{demandId}
+    </update>
+
+    <select id="selectByPrimaryKey" parameterType="long" resultMap="DemandRequirementResultMap">
+        SELECT * FROM demand_requirement WHERE demand_id = #{demandId}
+    </select>
+
+    <select id="selectBySourceRecruitmentRequestId" parameterType="long" resultMap="DemandRequirementResultMap">
+        SELECT * FROM demand_requirement WHERE source_recruitment_request_id = #{sourceRecruitmentRequestId} LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="DemandRequirementResultMap">
+        SELECT * FROM demand_requirement ORDER BY update_time DESC
+    </select>
+
+    <select id="selectByHrUserId" parameterType="string" resultMap="DemandRequirementResultMap">
+        SELECT DISTINCT dr.*
+        FROM demand_requirement dr
+        INNER JOIN demand_dispatch dd ON dd.demand_id = dr.demand_id
+        WHERE dd.hr_user_id = #{hrUserId}
+        ORDER BY dr.update_time DESC
+    </select>
+
+</mapper>

@@ -1,6 +1,7 @@
 package com.hr.service.impl;
 
 import com.hr.entity.ApprovalHistory;
+import com.hr.entity.InterviewEvaluation;
 import com.hr.entity.OrgUnit;
 import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.User;
@@ -8,15 +9,19 @@ import com.hr.entity.WorkflowApprovalActionRequest;
 import com.hr.entity.WorkflowDetail;
 import com.hr.entity.WorkflowInitiatedItem;
 import com.hr.entity.WorkflowNodeConfig;
+import com.hr.entity.WorkflowApproveRequest;
 import com.hr.entity.WorkflowProcessLog;
 import com.hr.entity.WorkflowProcessedItem;
 import com.hr.entity.WorkflowTodoItem;
 import com.hr.mapper.ApprovalHistoryMapper;
+import com.hr.mapper.InterviewEvaluationApprovalHistoryMapper;
+import com.hr.mapper.InterviewEvaluationMapper;
 import com.hr.mapper.OrgUnitMapper;
 import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowNodeConfigMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.InterviewEvaluationService;
 import com.hr.service.RecruitmentRequestService;
 import com.hr.service.WorkflowCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +43,8 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
     private static final String PROCESS_CODE = "RECRUITMENT_REQUEST";
     private static final String PROCESS_NAME = "用人申请流程";
+    private static final String INTERVIEW_PROCESS_CODE = "INTERVIEW_EVALUATION";
+    private static final String INTERVIEW_PROCESS_NAME = "面试评价流程";
     private static final String DIRECT_TEAM_MANAGER_TYPE = "DIRECT_TEAM_MANAGER";
 
     @Autowired
@@ -60,6 +67,15 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
     @Autowired
     private RecruitmentRequestService recruitmentRequestService;
+
+    @Autowired
+    private InterviewEvaluationMapper interviewEvaluationMapper;
+
+    @Autowired
+    private InterviewEvaluationApprovalHistoryMapper interviewEvaluationApprovalHistoryMapper;
+
+    @Autowired
+    private InterviewEvaluationService interviewEvaluationService;
 
     @Override
     public List<WorkflowTodoItem> getMyTodo(String userId, String userRole) {
@@ -94,6 +110,8 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             }
 
             WorkflowTodoItem item = new WorkflowTodoItem();
+            item.setProcessCode(PROCESS_CODE);
+            item.setBusinessId(req.getRecruitmentRequestId());
             item.setRequestId(req.getRecruitmentRequestId());
             item.setProcessName(PROCESS_NAME);
             item.setSummary(buildSummary(req));
@@ -104,6 +122,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             result.add(item);
         }
 
+        appendInterviewTodoItems(result, userId, normalizedRole);
         result.sort(Comparator.comparing(WorkflowTodoItem::getArriveTime, Comparator.nullsLast(Date::compareTo)).reversed());
         return result;
     }
@@ -112,11 +131,13 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
     public List<WorkflowInitiatedItem> getMyInitiated(String userId) {
         List<RecruitmentRequest> requests = recruitmentRequestMapper.selectAll();
         Map<Integer, WorkflowNodeConfig> nodeConfigMap = getNodeConfigMap();
-        return requests.stream()
+        List<WorkflowInitiatedItem> result = requests.stream()
             .filter(req -> Objects.equals(String.valueOf(req.getCreateUserId()), String.valueOf(userId)))
             .sorted(Comparator.comparing(RecruitmentRequest::getCreateTime, Comparator.nullsLast(Date::compareTo)).reversed())
             .map(req -> {
                 WorkflowInitiatedItem item = new WorkflowInitiatedItem();
+                item.setProcessCode(PROCESS_CODE);
+                item.setBusinessId(req.getRecruitmentRequestId());
                 item.setRequestId(req.getRecruitmentRequestId());
                 item.setProcessName(PROCESS_NAME);
                 item.setSummary(buildSummary(req));
@@ -127,6 +148,23 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
                 return item;
             })
             .collect(Collectors.toList());
+
+        for (InterviewEvaluation evaluation : interviewEvaluationMapper.selectByCreateUserId(userId)) {
+            WorkflowInitiatedItem item = new WorkflowInitiatedItem();
+            item.setProcessCode(INTERVIEW_PROCESS_CODE);
+            item.setBusinessId(evaluation.getEvaluationId());
+            item.setRequestId(evaluation.getEvaluationId());
+            item.setProcessName(INTERVIEW_PROCESS_NAME);
+            item.setSummary(buildInterviewSummary(evaluation));
+            item.setCurrentNode(resolveInterviewCurrentNode(evaluation));
+            item.setApplicantDept(nullSafe(evaluation.getInterviewerDepartment()));
+            item.setProcessStatus(resolveInterviewProcessStatus(evaluation.getApprovalStatus()));
+            item.setStartTime(evaluation.getCreateTime());
+            result.add(item);
+        }
+
+        result.sort(Comparator.comparing(WorkflowInitiatedItem::getStartTime, Comparator.nullsLast(Date::compareTo)).reversed());
+        return result;
     }
 
     @Override
@@ -140,6 +178,8 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             }
 
             WorkflowProcessedItem item = new WorkflowProcessedItem();
+            item.setProcessCode(PROCESS_CODE);
+            item.setBusinessId(req.getRecruitmentRequestId());
             item.setRequestId(req.getRecruitmentRequestId());
             item.setProcessName(PROCESS_NAME);
             item.setSummary(buildSummary(req));
@@ -150,12 +190,67 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             result.add(item);
         }
 
+        interviewEvaluationApprovalHistoryMapper.selectByApproverId(userId).forEach(history -> {
+            InterviewEvaluation evaluation = interviewEvaluationMapper.selectByPrimaryKey(history.getEvaluationId());
+            if (evaluation == null) {
+                return;
+            }
+            WorkflowProcessedItem item = new WorkflowProcessedItem();
+            item.setProcessCode(INTERVIEW_PROCESS_CODE);
+            item.setBusinessId(evaluation.getEvaluationId());
+            item.setRequestId(evaluation.getEvaluationId());
+            item.setProcessName(INTERVIEW_PROCESS_NAME);
+            item.setSummary(buildInterviewSummary(evaluation));
+            item.setApplicant(evaluation.getCreateUserName());
+            item.setApplicantDept(nullSafe(evaluation.getInterviewerDepartment()));
+            item.setApplyTime(evaluation.getCreateTime());
+            item.setHandleTime(history.getApprovalTime());
+            result.add(item);
+        });
+
         result.sort(Comparator.comparing(WorkflowProcessedItem::getHandleTime, Comparator.nullsLast(Date::compareTo)).reversed());
         return result;
     }
 
     @Override
     public WorkflowDetail getWorkflowDetail(Long requestId, String viewerId, String viewerName, String viewerRole) {
+        return getWorkflowDetail(PROCESS_CODE, requestId, viewerId, viewerName, viewerRole);
+    }
+
+    @Override
+    public WorkflowDetail getWorkflowDetail(String processCode, Long businessId, String viewerId, String viewerName, String viewerRole) {
+        if (INTERVIEW_PROCESS_CODE.equalsIgnoreCase(processCode)) {
+            InterviewEvaluation evaluation = interviewEvaluationMapper.selectByPrimaryKey(businessId);
+            if (evaluation == null) {
+                throw new RuntimeException("流程不存在");
+            }
+
+            if (viewerId != null && !viewerId.trim().isEmpty()) {
+                logAction(
+                    INTERVIEW_PROCESS_CODE,
+                    businessId,
+                    evaluation.getCurrentApprovalLevel(),
+                    resolveInterviewCurrentNode(evaluation),
+                    "VIEW",
+                    "SUCCESS",
+                    viewerId,
+                    viewerName,
+                    viewerRole,
+                    "查看流程详情"
+                );
+            }
+
+            WorkflowDetail detail = new WorkflowDetail();
+            detail.setProcessCode(INTERVIEW_PROCESS_CODE);
+            detail.setInterviewEvaluation(evaluation);
+            detail.setInterviewEvaluationApprovalHistory(interviewEvaluationApprovalHistoryMapper.selectByEvaluationId(businessId));
+            detail.setProcessLogs(workflowProcessLogMapper.selectByBusinessId(INTERVIEW_PROCESS_CODE, businessId));
+            detail.setNodeConfigs(new ArrayList<>());
+            detail.setApprovalHistory(new ArrayList<>());
+            return detail;
+        }
+
+        Long requestId = businessId;
         RecruitmentRequest request = recruitmentRequestMapper.selectByPrimaryKey(requestId);
         if (request == null) {
             throw new RuntimeException("流程不存在");
@@ -163,6 +258,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
         if (viewerId != null && !viewerId.trim().isEmpty()) {
             logAction(
+                PROCESS_CODE,
                 requestId,
                 request.getCurrentApprovalLevel(),
                 resolveCurrentNode(request, getNodeConfigMap()),
@@ -176,6 +272,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
 
         WorkflowDetail detail = new WorkflowDetail();
+        detail.setProcessCode(PROCESS_CODE);
         detail.setRequest(request);
         detail.setApprovalHistory(approvalHistoryMapper.selectByRecruitmentRequestId(requestId));
         detail.setNodeConfigs(workflowNodeConfigMapper.selectByProcessCode(PROCESS_CODE));
@@ -186,6 +283,24 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
     @Override
     @Transactional
     public void approve(Long requestId, WorkflowApprovalActionRequest actionRequest) {
+        WorkflowApproveRequest request = new WorkflowApproveRequest();
+        request.setAction(actionRequest.getAction());
+        request.setApprovalUserId(actionRequest.getApprovalUserId());
+        request.setApprovalUserName(actionRequest.getApprovalUserName());
+        request.setApprovalUserRole(actionRequest.getApprovalUserRole());
+        request.setApprovalComment(actionRequest.getApprovalComment());
+        approve(PROCESS_CODE, requestId, request);
+    }
+
+    @Override
+    @Transactional
+    public void approve(String processCode, Long businessId, WorkflowApproveRequest actionRequest) {
+        if (INTERVIEW_PROCESS_CODE.equalsIgnoreCase(processCode)) {
+            interviewEvaluationService.approve(businessId, actionRequest);
+            return;
+        }
+
+        Long requestId = businessId;
         RecruitmentRequest existing = recruitmentRequestMapper.selectByPrimaryKey(requestId);
         if (existing == null) {
             throw new RuntimeException("流程不存在");
@@ -221,6 +336,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             RecruitmentRequest updated = recruitmentRequestMapper.selectByPrimaryKey(requestId);
 
             logAction(
+                PROCESS_CODE,
                 requestId,
                 currentLevel,
                 currentNode.getNodeName(),
@@ -234,6 +350,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
             if (isFinished(updated)) {
                 logAction(
+                    PROCESS_CODE,
                     requestId,
                     updated.getCurrentApprovalLevel(),
                     "流程结束",
@@ -246,6 +363,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
                 );
             } else {
                 logAction(
+                    PROCESS_CODE,
                     requestId,
                     updated.getCurrentApprovalLevel(),
                     resolveCurrentNode(updated, nodeMap),
@@ -263,6 +381,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         if ("REJECT".equals(action)) {
             recruitmentRequestService.threeLevelRejectRequest(requestId, params);
             logAction(
+                PROCESS_CODE,
                 requestId,
                 currentLevel,
                 currentNode.getNodeName(),
@@ -274,6 +393,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
                 actionRequest.getApprovalComment()
             );
             logAction(
+                PROCESS_CODE,
                 requestId,
                 currentLevel,
                 "流程结束",
@@ -376,6 +496,12 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
         if (value.contains("团队经理")) {
             return "团队经理";
+        }
+        if (value.contains("室经理")) {
+            return "室经理";
+        }
+        if (value.contains("面试官")) {
+            return "面试官";
         }
         if (value.contains("分管总")) {
             return "分管总";
@@ -493,10 +619,107 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         return null;
     }
 
-    private void logAction(Long requestId, Integer nodeOrder, String nodeName, String actionType, String actionResult,
+    private void appendInterviewTodoItems(List<WorkflowTodoItem> result, String userId, String normalizedRole) {
+        boolean admin = isAdminRole(normalizedRole);
+        List<InterviewEvaluation> evaluations = interviewEvaluationMapper.selectAll();
+        for (InterviewEvaluation evaluation : evaluations) {
+            if (evaluation == null || !isInterviewPending(evaluation)) {
+                continue;
+            }
+            String approverRole = resolveInterviewApproverRole(evaluation);
+            if (!admin && !roleMatch(normalizedRole, approverRole)) {
+                continue;
+            }
+            if ("室经理".equals(approverRole) && !admin && !canRoomManagerHandle(userId, evaluation)) {
+                continue;
+            }
+
+            WorkflowTodoItem item = new WorkflowTodoItem();
+            item.setProcessCode(INTERVIEW_PROCESS_CODE);
+            item.setBusinessId(evaluation.getEvaluationId());
+            item.setRequestId(evaluation.getEvaluationId());
+            item.setProcessName(INTERVIEW_PROCESS_NAME);
+            item.setSummary(buildInterviewSummary(evaluation));
+            item.setCurrentNode(resolveInterviewCurrentNode(evaluation));
+            item.setApplicant(evaluation.getCreateUserName());
+            item.setApplicantDept(nullSafe(evaluation.getInterviewerDepartment()));
+            item.setArriveTime(evaluation.getUpdateTime());
+            result.add(item);
+        }
+    }
+
+    private boolean isInterviewPending(InterviewEvaluation evaluation) {
+        String status = evaluation.getApprovalStatus();
+        return "PENDING_OUTSOURCING".equals(status) || "PENDING_ROOM_MANAGER".equals(status);
+    }
+
+    private String resolveInterviewApproverRole(InterviewEvaluation evaluation) {
+        if (evaluation == null) {
+            return "";
+        }
+        if ("PENDING_ROOM_MANAGER".equals(evaluation.getApprovalStatus())) {
+            return "室经理";
+        }
+        if ("PENDING_OUTSOURCING".equals(evaluation.getApprovalStatus())) {
+            return "外包招聘管理岗";
+        }
+        return "";
+    }
+
+    private boolean canRoomManagerHandle(String userId, InterviewEvaluation evaluation) {
+        if (userId == null || userId.trim().isEmpty() || evaluation == null) {
+            return false;
+        }
+        if ("1001".equals(userId)) {
+            return true;
+        }
+        if (evaluation.getInterviewerDepartment() == null || evaluation.getInterviewerDepartment().trim().isEmpty()) {
+            return false;
+        }
+        User roomManager = userMapper.getActiveRoomManagerByDepartment(evaluation.getInterviewerDepartment());
+        return roomManager != null && userId.equals(roomManager.getUserId());
+    }
+
+    private String buildInterviewSummary(InterviewEvaluation evaluation) {
+        return "候选人:" + nullSafe(evaluation.getCandidateName())
+            + " | 面试官:" + nullSafe(evaluation.getInterviewerName())
+            + " | 建议职级:" + nullSafe(evaluation.getEntryLevelSuggestion());
+    }
+
+    private String resolveInterviewCurrentNode(InterviewEvaluation evaluation) {
+        if (evaluation == null) {
+            return "-";
+        }
+        String status = evaluation.getApprovalStatus();
+        if ("PENDING_OUTSOURCING".equals(status)) {
+            return "外包招聘管理岗审批";
+        }
+        if ("PENDING_ROOM_MANAGER".equals(status)) {
+            return "室经理审批";
+        }
+        if ("REJECTED".equals(status)) {
+            return "已驳回";
+        }
+        if ("APPROVED".equals(status)) {
+            return "流程结束";
+        }
+        return "-";
+    }
+
+    private String resolveInterviewProcessStatus(String approvalStatus) {
+        if ("REJECTED".equals(approvalStatus)) {
+            return "已拒绝";
+        }
+        if ("APPROVED".equals(approvalStatus)) {
+            return "已通过";
+        }
+        return "处理中";
+    }
+
+    private void logAction(String processCode, Long requestId, Integer nodeOrder, String nodeName, String actionType, String actionResult,
                            String operatorId, String operatorName, String operatorRole, String comment) {
         WorkflowProcessLog log = new WorkflowProcessLog();
-        log.setProcessCode(PROCESS_CODE);
+        log.setProcessCode(processCode);
         log.setBusinessId(requestId);
         log.setNodeOrder(nodeOrder);
         log.setNodeName(nodeName);

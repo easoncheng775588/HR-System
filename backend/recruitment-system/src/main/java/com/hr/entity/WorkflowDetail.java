@@ -3,10 +3,21 @@ package com.hr.entity;
 import java.util.List;
 
 public class WorkflowDetail {
+    private String processCode;
     private RecruitmentRequest request;
+    private InterviewEvaluation interviewEvaluation;
+    private List<InterviewEvaluationApprovalHistory> interviewEvaluationApprovalHistory;
     private List<ApprovalHistory> approvalHistory;
     private List<WorkflowNodeConfig> nodeConfigs;
     private List<WorkflowProcessLog> processLogs;
+
+    public String getProcessCode() {
+        return processCode;
+    }
+
+    public void setProcessCode(String processCode) {
+        this.processCode = processCode;
+    }
 
     public RecruitmentRequest getRequest() {
         return request;
@@ -14,6 +25,22 @@ public class WorkflowDetail {
 
     public void setRequest(RecruitmentRequest request) {
         this.request = request;
+    }
+
+    public InterviewEvaluation getInterviewEvaluation() {
+        return interviewEvaluation;
+    }
+
+    public void setInterviewEvaluation(InterviewEvaluation interviewEvaluation) {
+        this.interviewEvaluation = interviewEvaluation;
+    }
+
+    public List<InterviewEvaluationApprovalHistory> getInterviewEvaluationApprovalHistory() {
+        return interviewEvaluationApprovalHistory;
+    }
+
+    public void setInterviewEvaluationApprovalHistory(List<InterviewEvaluationApprovalHistory> interviewEvaluationApprovalHistory) {
+        this.interviewEvaluationApprovalHistory = interviewEvaluationApprovalHistory;
     }
 
     public List<ApprovalHistory> getApprovalHistory() {

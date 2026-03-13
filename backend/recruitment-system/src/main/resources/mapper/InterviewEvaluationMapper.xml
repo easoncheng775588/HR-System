@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.InterviewEvaluationMapper">
+
+    <resultMap id="InterviewEvaluationResultMap" type="com.hr.entity.InterviewEvaluation">
+        <id property="evaluationId" column="evaluation_id"/>
+        <result property="resumeId" column="resume_id"/>
+        <result property="dispatchId" column="dispatch_id"/>
+        <result property="candidateName" column="candidate_name"/>
+        <result property="candidateGender" column="candidate_gender"/>
+        <result property="workYears" column="work_years"/>
+        <result property="appliedLevel" column="applied_level"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="interviewerId" column="interviewer_id"/>
+        <result property="interviewerName" column="interviewer_name"/>
+        <result property="interviewerDepartment" column="interviewer_department"/>
+        <result property="platform" column="platform"/>
+        <result property="entryLevelSuggestion" column="entry_level_suggestion"/>
+        <result property="score" column="score"/>
+        <result property="interviewMethod" column="interview_method"/>
+        <result property="interviewDate" column="interview_date"/>
+        <result property="hireSuggestion" column="hire_suggestion"/>
+        <result property="attachmentName" column="attachment_name"/>
+        <result property="attachmentUrl" column="attachment_url"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="currentApprovalLevel" column="current_approval_level"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.InterviewEvaluation" useGeneratedKeys="true" keyProperty="evaluationId">
+        INSERT INTO interview_evaluation (
+            resume_id,
+            dispatch_id,
+            candidate_name,
+            candidate_gender,
+            work_years,
+            applied_level,
+            supplier_name,
+            interviewer_id,
+            interviewer_name,
+            interviewer_department,
+            platform,
+            entry_level_suggestion,
+            score,
+            interview_method,
+            interview_date,
+            hire_suggestion,
+            attachment_name,
+            attachment_url,
+            approval_status,
+            current_approval_level,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{resumeId},
+            #{dispatchId},
+            #{candidateName},
+            #{candidateGender},
+            #{workYears},
+            #{appliedLevel},
+            #{supplierName},
+            #{interviewerId},
+            #{interviewerName},
+            #{interviewerDepartment},
+            #{platform},
+            #{entryLevelSuggestion},
+            #{score},
+            #{interviewMethod},
+            #{interviewDate},
+            #{hireSuggestion},
+            #{attachmentName},
+            #{attachmentUrl},
+            #{approvalStatus},
+            #{currentApprovalLevel},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.InterviewEvaluation">
+        UPDATE interview_evaluation
+        SET resume_id = #{resumeId},
+            dispatch_id = #{dispatchId},
+            candidate_name = #{candidateName},
+            candidate_gender = #{candidateGender},
+            work_years = #{workYears},
+            applied_level = #{appliedLevel},
+            supplier_name = #{supplierName},
+            interviewer_id = #{interviewerId},
+            interviewer_name = #{interviewerName},
+            interviewer_department = #{interviewerDepartment},
+            platform = #{platform},
+            entry_level_suggestion = #{entryLevelSuggestion},
+            score = #{score},
+            interview_method = #{interviewMethod},
+            interview_date = #{interviewDate},
+            hire_suggestion = #{hireSuggestion},
+            attachment_name = #{attachmentName},
+            attachment_url = #{attachmentUrl},
+            approval_status = #{approvalStatus},
+            current_approval_level = #{currentApprovalLevel},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE evaluation_id = #{evaluationId}
+    </update>
+
+    <select id="selectByPrimaryKey" resultMap="InterviewEvaluationResultMap">
+        SELECT *
+        FROM interview_evaluation
+        WHERE evaluation_id = #{evaluationId}
+    </select>
+
+    <select id="selectLatestByResumeId" resultMap="InterviewEvaluationResultMap">
+        SELECT *
+        FROM interview_evaluation
+        WHERE resume_id = #{resumeId}
+        ORDER BY update_time DESC, evaluation_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="InterviewEvaluationResultMap">
+        SELECT *
+        FROM interview_evaluation
+        ORDER BY update_time DESC, evaluation_id DESC
+    </select>
+
+    <select id="selectByCreateUserId" resultMap="InterviewEvaluationResultMap">
+        SELECT *
+        FROM interview_evaluation
+        WHERE create_user_id = #{createUserId}
+        ORDER BY update_time DESC, evaluation_id DESC
+    </select>
+
+    <select id="selectByApproverId" resultMap="InterviewEvaluationResultMap">
+        SELECT DISTINCT ie.*
+        FROM interview_evaluation ie
+        INNER JOIN interview_evaluation_approval_history h ON h.evaluation_id = ie.evaluation_id
+        WHERE h.approver_id = #{approverId}
+        ORDER BY ie.update_time DESC, ie.evaluation_id DESC
+    </select>
+
+</mapper>

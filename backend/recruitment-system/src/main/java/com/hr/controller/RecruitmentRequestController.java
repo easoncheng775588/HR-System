@@ -264,26 +264,6 @@ public class RecruitmentRequestController {
         }
     }
 
-    @PutMapping("/{id}/publish-status")
-    public Response<RecruitmentRequest> updatePublishStatus(@PathVariable Long id, @RequestBody Map<String, Object> params) {
-        try {
-            if (id == null || id <= 0) {
-                throw new BusinessException("ERR0008", "申请ID必须大于0");
-            }
-            String publishStatus = (String) params.get("publishStatus");
-            if (publishStatus == null || publishStatus.trim().isEmpty()) {
-                throw new BusinessException("ERR0011", "发布状态不能为空");
-            }
-            RecruitmentRequest updatedRequest = recruitmentRequestService.updatePublishStatus(id, publishStatus);
-            return Response.success(updatedRequest);
-        } catch (BusinessException e) {
-            return Response.fail(e.getErrorCode(), e.getMessage());
-        } catch (Exception e) {
-            logger.error("update publish status failed: {}", id, e);
-            return Response.fail("更新发布状态失败: " + e.getMessage());
-        }
-    }
-
     @GetMapping("/approval-history/{recruitmentRequestId}")
     public Response<?> getApprovalHistory(@PathVariable Long recruitmentRequestId) {
         try {

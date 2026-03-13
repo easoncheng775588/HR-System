@@ -25,7 +25,6 @@
         <result column="interviewer_id" property="interviewerId" />
         <result column="interviewer_name" property="interviewerName" />
         <result column="approval_status" property="approvalStatus" />
-        <result column="position_publish_status" property="positionPublishStatus" />
         <result column="approval_user_id" property="approvalUserId" />
         <result column="approval_user_name" property="approvalUserName" />
         <result column="approval_time" property="approvalTime" />
@@ -79,7 +78,6 @@
             interviewer_id,
             interviewer_name,
             approval_status,
-            position_publish_status,
             current_approval_level,
             approval_level1_status,
             approval_level2_status,
@@ -112,7 +110,6 @@
             #{interviewerId},
             #{interviewerName},
             #{approvalStatus},
-            #{positionPublishStatus},
             #{currentApprovalLevel},
             #{approvalLevel1Status},
             #{approvalLevel2Status},
@@ -149,7 +146,6 @@
             interviewer_id = #{interviewerId},
             interviewer_name = #{interviewerName},
             approval_status = #{approvalStatus},
-            position_publish_status = #{positionPublishStatus},
             current_approval_level = #{currentApprovalLevel},
             approval_level1_status = #{approvalLevel1Status},
             approval_level1_user_id = #{approvalLevel1UserId},

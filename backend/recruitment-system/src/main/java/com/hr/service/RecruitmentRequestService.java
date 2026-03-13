@@ -92,14 +92,6 @@ public interface RecruitmentRequestService {
     RecruitmentRequest updateRequest(RecruitmentRequest request);
 
     /**
-     * 更新岗位发布状态
-     * @param id 申请ID
-     * @param publishStatus 发布状态
-     * @return 更新后的用人申请
-     */
-    RecruitmentRequest updatePublishStatus(Long id, String publishStatus);
-
-    /**
      * 获取申请的审批历史
      * @param recruitmentRequestId 申请ID
      * @return 审批历史列表

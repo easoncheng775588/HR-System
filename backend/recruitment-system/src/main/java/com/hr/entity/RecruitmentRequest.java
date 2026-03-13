@@ -31,7 +31,6 @@ public class RecruitmentRequest {
     private String interviewerId;
     private String interviewerName;
     private String approvalStatus;
-    private String positionPublishStatus;
     private String approvalUserId;
     private String approvalUserName;
     private Date approvalTime;
@@ -323,14 +322,6 @@ public class RecruitmentRequest {
 
     public void setUpdateUserName(String updateUserName) {
         this.updateUserName = updateUserName;
-    }
-
-    public String getPositionPublishStatus() {
-        return positionPublishStatus;
-    }
-
-    public void setPositionPublishStatus(String positionPublishStatus) {
-        this.positionPublishStatus = positionPublishStatus;
     }
 
     public Integer getCurrentApprovalLevel() {

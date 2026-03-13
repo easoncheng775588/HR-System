@@ -1,6 +1,7 @@
 package com.hr.service;
 
 import com.hr.entity.Resume;
+import com.hr.entity.InterviewerChoiceRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +22,11 @@ public interface ResumeService {
 
     /**
      * 查询所有简历
+     * @param viewerId 视角用户ID
+     * @param viewerRole 视角角色
      * @return 简历列表
      */
-    List<Resume> getAll();
+    List<Resume> getAll(String viewerId, String viewerRole);
 
     /**
      * 根据招聘申请ID查询简历
@@ -47,7 +50,15 @@ public interface ResumeService {
      */
     Resume updateStatus(Long id, String status);
 
-    int deleteById(Long id);
+    int deleteById(Long id, String operatorUserId, String operatorRole);
 
     List<Map<String, Object>> getRequirementOptions();
+
+    List<Map<String, Object>> getDispatchDemandOptions(String operatorUserId, String operatorRole);
+
+    void screenResume(Long id, String action, String operatorUserId, String operatorUserName, String operatorRole);
+
+    void dispatchResume(Long id, List<Long> demandIds, String operatorUserId, String operatorUserName, String operatorRole);
+
+    void interviewerChoice(Long id, InterviewerChoiceRequest request);
 }

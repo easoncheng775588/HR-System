@@ -3,6 +3,7 @@ package com.hr.service;
 import com.hr.entity.WorkflowApprovalActionRequest;
 import com.hr.entity.WorkflowDetail;
 import com.hr.entity.WorkflowInitiatedItem;
+import com.hr.entity.WorkflowApproveRequest;
 import com.hr.entity.WorkflowProcessedItem;
 import com.hr.entity.WorkflowTodoItem;
 
@@ -17,5 +18,9 @@ public interface WorkflowCenterService {
 
     WorkflowDetail getWorkflowDetail(Long requestId, String viewerId, String viewerName, String viewerRole);
 
+    WorkflowDetail getWorkflowDetail(String processCode, Long businessId, String viewerId, String viewerName, String viewerRole);
+
     void approve(Long requestId, WorkflowApprovalActionRequest actionRequest);
+
+    void approve(String processCode, Long businessId, WorkflowApproveRequest request);
 }

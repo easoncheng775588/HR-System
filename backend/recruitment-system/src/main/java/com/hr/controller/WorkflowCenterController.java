@@ -3,6 +3,7 @@ package com.hr.controller;
 import com.hr.entity.WorkflowApprovalActionRequest;
 import com.hr.entity.WorkflowDetail;
 import com.hr.entity.WorkflowInitiatedItem;
+import com.hr.entity.WorkflowApproveRequest;
 import com.hr.entity.WorkflowProcessedItem;
 import com.hr.entity.WorkflowTodoItem;
 import com.hr.service.WorkflowCenterService;
@@ -83,7 +84,27 @@ public class WorkflowCenterController {
                                          @RequestParam(required = false) String viewerRole) {
         Map<String, Object> result = new HashMap<>();
         try {
-            WorkflowDetail detail = workflowCenterService.getWorkflowDetail(requestId, viewerId, viewerName, viewerRole);
+            WorkflowDetail detail = workflowCenterService.getWorkflowDetail("RECRUITMENT_REQUEST", requestId, viewerId, viewerName, viewerRole);
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", detail);
+        } catch (Exception e) {
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "Failed to load workflow detail: " + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
+
+    @GetMapping("/detail/{processCode}/{businessId}")
+    public Map<String, Object> getDetail(@PathVariable String processCode,
+                                         @PathVariable Long businessId,
+                                         @RequestParam(required = false) String viewerId,
+                                         @RequestParam(required = false) String viewerName,
+                                         @RequestParam(required = false) String viewerRole) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WorkflowDetail detail = workflowCenterService.getWorkflowDetail(processCode, businessId, viewerId, viewerName, viewerRole);
             result.put("returnCode", "SUC0000");
             result.put("errorMsg", "");
             result.put("body", detail);
@@ -100,6 +121,24 @@ public class WorkflowCenterController {
         Map<String, Object> result = new HashMap<>();
         try {
             workflowCenterService.approve(requestId, request);
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", "OK");
+        } catch (Exception e) {
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "Failed to approve workflow: " + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
+
+    @PostMapping("/{processCode}/{businessId}/approve")
+    public Map<String, Object> approve(@PathVariable String processCode,
+                                       @PathVariable Long businessId,
+                                       @RequestBody WorkflowApproveRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            workflowCenterService.approve(processCode, businessId, request);
             result.put("returnCode", "SUC0000");
             result.put("errorMsg", "");
             result.put("body", "OK");
