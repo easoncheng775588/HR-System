@@ -1,6 +1,7 @@
 package com.hr.service.impl;
 
 import com.hr.entity.DemandRequirement;
+import com.hr.entity.InterviewerChoiceRequest;
 import com.hr.entity.Resume;
 import com.hr.entity.ResumeDispatch;
 import com.hr.entity.User;
@@ -87,9 +88,55 @@ class ResumeServiceImplTest {
 
         Resume saved = resumeService.saveResume(resume);
 
-        assertEquals("待简历初筛", saved.getStatus());
+        assertEquals("待审核", saved.getStatus());
         assertEquals("供应商A", saved.getSupplierName());
         assertEquals("候选人A", saved.getApplicantName());
+    }
+
+    @Test
+    void saveResumeSupplierUpdateResetsStatusToPendingReview() {
+        Resume existing = new Resume();
+        existing.setResumeId(9L);
+        existing.setCandidateName("候选人B");
+        existing.setRelatedRequestIds("15");
+        existing.setCreateUserId("9001");
+        existing.setCreateUserName("供应商HR");
+        existing.setStatus("需修改简历材料");
+
+        Resume updatePayload = new Resume();
+        updatePayload.setResumeId(9L);
+        updatePayload.setCandidateName("候选人B-更新");
+        updatePayload.setRelatedRequestIds("15");
+        updatePayload.setUpdateUserId("9001");
+        updatePayload.setUpdateUserName("供应商HR");
+
+        User supplierHr = user("9001", "供应商HR", "供应商HR");
+        when(userMapper.getUserById("9001")).thenReturn(supplierHr);
+        when(userMapper.getRoleNamesByUserId("9001")).thenReturn(Collections.singletonList("供应商HR"));
+        when(resumeMapper.selectByPrimaryKey(9L)).thenReturn(existing);
+
+        AtomicReference<Resume> updatedRef = new AtomicReference<>();
+        when(resumeMapper.updateByPrimaryKey(any(Resume.class))).thenAnswer(invocation -> {
+            updatedRef.set(invocation.getArgument(0));
+            return 1;
+        });
+        when(resumeMapper.selectByPrimaryKey(9L)).thenAnswer(invocation -> {
+            Resume updated = updatedRef.get();
+            if (updated == null) {
+                return existing;
+            }
+            Resume result = new Resume();
+            result.setResumeId(updated.getResumeId());
+            result.setStatus(updated.getStatus());
+            result.setCreateUserId(updated.getCreateUserId());
+            result.setCreateUserName(updated.getCreateUserName());
+            result.setUpdateUserId(updated.getUpdateUserId());
+            result.setUpdateUserName(updated.getUpdateUserName());
+            return result;
+        });
+
+        Resume saved = resumeService.saveResume(updatePayload);
+        assertEquals("待审核", saved.getStatus());
     }
 
     @Test
@@ -146,7 +193,7 @@ class ResumeServiceImplTest {
 
         RuntimeException exception = assertThrows(
             RuntimeException.class,
-            () -> resumeService.interviewerChoice(10L, "CONFIRM", "7001", "面试官A", "面试官")
+            () -> resumeService.interviewerChoice(10L, confirmRequest("7001", "面试官A", "面试官"))
         );
 
         assertEquals("该简历已被其他面试官确认", exception.getMessage());
@@ -171,6 +218,25 @@ class ResumeServiceImplTest {
         assertEquals(2, options.size());
         assertEquals(1L, options.get(0).get("demandId"));
         assertEquals(2L, options.get(1).get("demandId"));
+    }
+
+    @Test
+    void screenResumeRejectsWhenStatusIsNotPendingReview() {
+        User outsourcing = user("1002", "外包招聘管理岗", "外包招聘管理岗");
+        when(userMapper.getUserById("1002")).thenReturn(outsourcing);
+        when(userMapper.getRoleNamesByUserId("1002")).thenReturn(Collections.singletonList("外包招聘管理岗"));
+
+        Resume resume = new Resume();
+        resume.setResumeId(30L);
+        resume.setStatus("已通过简历初筛");
+        when(resumeMapper.selectByPrimaryKey(30L)).thenReturn(resume);
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> resumeService.screenResume(30L, "PASS", "1002", "外包岗", "外包招聘管理岗")
+        );
+
+        assertEquals("仅待审核简历可执行初筛", exception.getMessage());
     }
 
     @Test
@@ -222,6 +288,30 @@ class ResumeServiceImplTest {
         assertTrue(Boolean.TRUE.equals(result.get(0).getCanInterviewerAbandon()));
     }
 
+    @Test
+    void getAllUsesDispatchAssignmentAsInterviewerRoleFallback() {
+        User interviewerWithoutRoleText = user("7009", "面试官缺省角色", null);
+        when(userMapper.getUserById("7009")).thenReturn(interviewerWithoutRoleText);
+        when(userMapper.getRoleNamesByUserId("7009")).thenReturn(Collections.emptyList());
+
+        Resume resume = new Resume();
+        resume.setResumeId(31L);
+        resume.setCreateUserId("9001");
+        resume.setStatus("已通过简历初筛");
+        when(resumeMapper.selectAll()).thenReturn(Collections.singletonList(resume));
+
+        ResumeDispatch minePending = dispatch(31L, "7009", "PENDING");
+        when(resumeDispatchMapper.selectByInterviewerId("7009")).thenReturn(Collections.singletonList(minePending));
+        when(resumeDispatchMapper.selectByResumeIds(Collections.singletonList(31L)))
+            .thenReturn(Collections.singletonList(minePending));
+
+        List<Resume> result = resumeService.getAll("7009", "");
+
+        assertEquals(1, result.size());
+        assertEquals(Long.valueOf(31L), result.get(0).getResumeId());
+        assertTrue(Boolean.TRUE.equals(result.get(0).getCanInterviewerConfirm()));
+    }
+
     private User user(String userId, String realName, String position) {
         User user = new User();
         user.setUserId(userId);
@@ -247,5 +337,18 @@ class ResumeServiceImplTest {
         demand.setPositionOrgName(label);
         demand.setDemandStatus(demandStatus);
         return demand;
+    }
+
+    private InterviewerChoiceRequest confirmRequest(String userId, String userName, String role) {
+        InterviewerChoiceRequest request = new InterviewerChoiceRequest();
+        request.setChoice("CONFIRM");
+        request.setOperatorUserId(userId);
+        request.setOperatorUserName(userName);
+        request.setOperatorRole(role);
+        request.setInterviewMethod("ONLINE");
+        request.setMeetingNo("test-1001");
+        request.setAvailableStartTime("2026-03-13 10:00:00");
+        request.setAvailableEndTime("2026-03-13 11:00:00");
+        return request;
     }
 }

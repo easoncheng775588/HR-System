@@ -1,6 +1,7 @@
 package com.hr.service.impl;
 
 import com.hr.entity.DemandRequirement;
+import com.hr.entity.InterviewerChoiceRequest;
 import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.Resume;
 import com.hr.entity.ResumeDispatch;
@@ -10,10 +11,13 @@ import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.ResumeDispatchMapper;
 import com.hr.mapper.ResumeMapper;
 import com.hr.mapper.UserMapper;
+import com.hr.service.InterviewMessageService;
 import com.hr.service.ResumeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -36,7 +40,7 @@ public class ResumeServiceImpl implements ResumeService {
     private static final String ROLE_TEAM_MANAGER = "团队经理";
     private static final String ROLE_SUPER_ADMIN = "超级管理员";
 
-    private static final String STATUS_PENDING_SCREEN = "待简历初筛";
+    private static final String STATUS_PENDING_SCREEN = "待审核";
     private static final String STATUS_SCREEN_PASS = "已通过简历初筛";
     private static final String STATUS_SCREEN_EDIT = "需修改简历材料";
     private static final String STATUS_SCREEN_REJECT = "未通过简历初筛";
@@ -55,6 +59,9 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private InterviewMessageService interviewMessageService;
 
     @Override
     public Resume saveResume(Resume resume) {
@@ -93,8 +100,14 @@ public class ResumeServiceImpl implements ResumeService {
             }
         }
 
-        if (trimToNull(resume.getStatus()) == null) {
+        if (isCreate) {
+            // Supplier submit and re-submit both start from pending review.
             resume.setStatus(STATUS_PENDING_SCREEN);
+        } else if (roles.contains(ROLE_SUPPLIER_HR) && operatorUserId.equals(existing.getCreateUserId())) {
+            // Supplier HR editing his/her resume should go back to pending review.
+            resume.setStatus(STATUS_PENDING_SCREEN);
+        } else if (trimToNull(resume.getStatus()) == null) {
+            resume.setStatus(existing.getStatus());
         }
         resume.setStatus(normalizeStatus(resume.getStatus()));
 
@@ -156,7 +169,7 @@ public class ResumeServiceImpl implements ResumeService {
         if (viewer == null) {
             throw new RuntimeException("无权限访问简历管理");
         }
-        Set<String> roles = normalizeRoles(viewer, viewerRole);
+        Set<String> roles = enrichInterviewerRoleByDispatch(viewerId, normalizeRoles(viewer, viewerRole));
         ensureListAccess(viewerId, roles);
 
         List<Resume> resumes = resumeMapper.selectAll();
@@ -303,6 +316,9 @@ public class ResumeServiceImpl implements ResumeService {
         if (resume == null) {
             throw new RuntimeException("简历不存在");
         }
+        if (!STATUS_PENDING_SCREEN.equals(normalizeStatus(resume.getStatus()))) {
+            throw new RuntimeException("仅待审核简历可执行初筛");
+        }
 
         String upper = trimToNull(action) == null ? "" : action.trim().toUpperCase();
         if ("PASS".equals(upper)) {
@@ -396,7 +412,11 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
-    public void interviewerChoice(Long id, String choice, String operatorUserId, String operatorUserName, String operatorRole) {
+    public void interviewerChoice(Long id, InterviewerChoiceRequest request) {
+        if (request == null) {
+            throw new RuntimeException("面试官操作不支持");
+        }
+        String operatorUserId = trimToNull(request.getOperatorUserId());
         if (trimToNull(operatorUserId) == null) {
             throw new RuntimeException("操作人不能为空");
         }
@@ -404,7 +424,7 @@ public class ResumeServiceImpl implements ResumeService {
         if (operator == null) {
             throw new RuntimeException("操作人不存在");
         }
-        Set<String> roles = normalizeRoles(operator, operatorRole);
+        Set<String> roles = enrichInterviewerRoleByDispatch(operatorUserId, normalizeRoles(operator, request.getOperatorRole()));
         ensureInterviewerChoiceAccess(operatorUserId, roles);
 
         Resume resume = resumeMapper.selectByPrimaryKey(id);
@@ -420,7 +440,7 @@ public class ResumeServiceImpl implements ResumeService {
             throw new RuntimeException("当前面试官无可操作分发");
         }
 
-        String normalizedChoice = trimToNull(choice) == null ? "" : choice.trim().toUpperCase();
+        String normalizedChoice = trimToNull(request.getChoice()) == null ? "" : request.getChoice().trim().toUpperCase();
         boolean confirmedByOther = allDispatches.stream().anyMatch(item ->
             "CONFIRMED".equals(item.getDispatchStatus()) && !operatorUserId.equals(item.getInterviewerId()));
 
@@ -428,13 +448,45 @@ public class ResumeServiceImpl implements ResumeService {
             if (confirmedByOther) {
                 throw new RuntimeException("该简历已被其他面试官确认");
             }
-            resumeDispatchMapper.updateStatusByResumeAndInterviewer(
+
+            String interviewMethod = trimToNull(request.getInterviewMethod());
+            if (interviewMethod == null) {
+                throw new RuntimeException("面试方式不能为空");
+            }
+            String upperMethod = interviewMethod.toUpperCase();
+            if (!"ONLINE".equals(upperMethod) && !"OFFLINE".equals(upperMethod)) {
+                throw new RuntimeException("面试方式不能为空");
+            }
+            if ("ONLINE".equals(upperMethod) && trimToNull(request.getMeetingNo()) == null) {
+                throw new RuntimeException("线上面试会议号不能为空");
+            }
+            Date availableStart = parseDateTimeOrThrow(request.getAvailableStartTime(), "面试官可面试时间段不能为空");
+            Date availableEnd = parseDateTimeOrThrow(request.getAvailableEndTime(), "面试官可面试时间段不能为空");
+            if (availableStart.after(availableEnd)) {
+                throw new RuntimeException("面试开始时间不能晚于结束时间");
+            }
+
+            String operatorName = defaultValue(request.getOperatorUserName(), operator.getRealName(), SYSTEM_USER_NAME);
+            resumeDispatchMapper.confirmChoiceByResumeAndInterviewer(
                 id,
                 operatorUserId,
-                "CONFIRMED",
                 new Date(),
+                upperMethod,
+                trimToNull(request.getMeetingNo()),
+                availableStart,
+                availableEnd,
                 defaultValue(operatorUserId, SYSTEM_USER_ID),
-                defaultValue(operatorUserName, SYSTEM_USER_NAME)
+                operatorName
+            );
+
+            interviewMessageService.sendInterviewerConfirmedMessage(
+                defaultValue(resume.getCandidateName(), "候选人"),
+                defaultValue(mine.get(0).getInterviewerName(), operatorName),
+                resume.getCreateUserId()
+            );
+            interviewMessageService.sendInterviewerConfirmedMessageToOutsourcingManagers(
+                defaultValue(resume.getCandidateName(), "候选人"),
+                defaultValue(mine.get(0).getInterviewerName(), operatorName)
             );
             return;
         }
@@ -446,7 +498,7 @@ public class ResumeServiceImpl implements ResumeService {
                 "ABANDONED",
                 null,
                 defaultValue(operatorUserId, SYSTEM_USER_ID),
-                defaultValue(operatorUserName, SYSTEM_USER_NAME)
+                defaultValue(request.getOperatorUserName(), SYSTEM_USER_NAME)
             );
             return;
         }
@@ -602,6 +654,21 @@ public class ResumeServiceImpl implements ResumeService {
         return roles;
     }
 
+    private Set<String> enrichInterviewerRoleByDispatch(String userId, Set<String> roles) {
+        Set<String> effectiveRoles = new LinkedHashSet<>();
+        if (roles != null) {
+            effectiveRoles.addAll(roles);
+        }
+        if (trimToNull(userId) == null || effectiveRoles.contains(ROLE_INTERVIEWER)) {
+            return effectiveRoles;
+        }
+        List<ResumeDispatch> assignedDispatches = resumeDispatchMapper.selectByInterviewerId(userId);
+        if (assignedDispatches != null && !assignedDispatches.isEmpty()) {
+            effectiveRoles.add(ROLE_INTERVIEWER);
+        }
+        return effectiveRoles;
+    }
+
     private String normalizeRole(String roleName) {
         String value = trimToNull(roleName);
         if (value == null) {
@@ -661,6 +728,9 @@ public class ResumeServiceImpl implements ResumeService {
         if (isPassedStatus(resume.getStatus())) {
             throw new RuntimeException("已通过简历初筛的简历不允许编辑");
         }
+        if (STATUS_SCREEN_REJECT.equals(normalizeStatus(resume.getStatus()))) {
+            throw new RuntimeException("未通过简历初筛的简历不允许编辑");
+        }
     }
 
     private void ensureDeleteAccess(Resume resume, String operatorUserId, Set<String> roles) {
@@ -672,6 +742,9 @@ public class ResumeServiceImpl implements ResumeService {
         }
         if (isPassedStatus(resume.getStatus())) {
             throw new RuntimeException("已通过简历初筛的简历不允许删除");
+        }
+        if (STATUS_SCREEN_REJECT.equals(normalizeStatus(resume.getStatus()))) {
+            throw new RuntimeException("未通过简历初筛的简历不允许删除");
         }
     }
 
@@ -707,7 +780,7 @@ public class ResumeServiceImpl implements ResumeService {
             || STATUS_SCREEN_REJECT.equals(value)) {
             return value;
         }
-        if ("PENDING_SCREENING".equalsIgnoreCase(value)) {
+        if ("PENDING_SCREENING".equalsIgnoreCase(value) || "待简历初筛".equals(value)) {
             return STATUS_PENDING_SCREEN;
         }
         if ("SCREENED".equalsIgnoreCase(value) || "INTERVIEW".equalsIgnoreCase(value) || "HIRED".equalsIgnoreCase(value)) {
@@ -737,5 +810,29 @@ public class ResumeServiceImpl implements ResumeService {
             return value;
         }
         return fallback;
+    }
+
+    private String defaultValue(String first, String second, String fallback) {
+        String firstValue = trimToNull(first);
+        if (firstValue != null) {
+            return firstValue;
+        }
+        String secondValue = trimToNull(second);
+        if (secondValue != null) {
+            return secondValue;
+        }
+        return fallback;
+    }
+
+    private Date parseDateTimeOrThrow(String dateTimeText, String errorMessage) {
+        String normalized = trimToNull(dateTimeText);
+        if (normalized == null) {
+            throw new RuntimeException(errorMessage);
+        }
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(normalized);
+        } catch (ParseException e) {
+            throw new RuntimeException(errorMessage);
+        }
     }
 }

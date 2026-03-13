@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Card,
@@ -13,17 +13,41 @@ import {
   Select,
   Space,
   Table,
-  Upload,
+  Tabs,
 } from 'antd';
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { UploadFile } from 'antd/es/upload/interface';
 import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
+import AttachmentUploader, { AttachmentItem } from './AttachmentUploader';
+import ResumeConfirmDialog from './ResumeConfirmDialog';
+import { submitInterviewerChoice } from '../services/interviewApi';
+import { canAbandonInterviewChoice, canOpenResumeConfirmDialog } from '../utils/interviewPermission';
+import {
+  buildOperatorPayload,
+  buildResumeListQuery,
+  canCreateResume,
+  canDispatchResume,
+  canEditOrDeleteResume,
+  canShowResumeTabs,
+  canShowScreenActions,
+  filterResumesByTab,
+  INTERVIEWER_CHOICE,
+  normalizeResumeRecord,
+  RESUME_TAB,
+  SCREEN_ACTION,
+} from './resumeManagementHelpers';
 
 const ATTACHMENT_SPLITTER = '||';
-const ALLOWED_EXTENSIONS = ['zip', 'xls', 'xlsx', 'doc', 'docx', 'pdf', 'ppt', 'pptx'];
 const DEGREE_OPTIONS = [
   { value: '大专', label: '大专' },
   { value: '本科', label: '本科' },
@@ -37,6 +61,14 @@ const DEFAULT_REQUIREMENT_OPTIONS = [
   { value: 'INIT_4', label: '行政' },
   { value: 'INIT_5', label: '人力' },
 ];
+const RECRUITMENT_PLATFORM_OPTIONS = ['开放', '主机', '测试', 'T24', '其他'];
+const RECRUITMENT_CATEGORY_OPTIONS = ['系统研发岗', '产品助理', '测试', '项目助理', '其他'];
+const RECRUITMENT_LEVEL_OPTIONS = ['PT', 'PG', 'AP', 'ASA', 'SA', 'SSA', '初级行政', '中级行政', '高级行政'];
+const ENGLISH_LEVEL_LABEL_MAP = {
+  CET4: '四级',
+  CET6: '六级',
+  OTHER: '其他同等水平',
+};
 
 const ResumeSubmission = () => {
   const { user } = useAuth();
@@ -52,13 +84,30 @@ const ResumeSubmission = () => {
   const [viewVisible, setViewVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
-  const [attachmentFiles, setAttachmentFiles] = useState<UploadFile[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<AttachmentItem[]>([]);
+  const [dispatchVisible, setDispatchVisible] = useState(false);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchDemandOptions, setDispatchDemandOptions] = useState([]);
+  const [dispatchResumeId, setDispatchResumeId] = useState<number | null>(null);
+  const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
+  const [confirmSubmitting, setConfirmSubmitting] = useState(false);
+  const [confirmRecord, setConfirmRecord] = useState(null);
 
   const [form] = Form.useForm();
+  const [dispatchForm] = Form.useForm();
 
-  const platformOptions = getParamOptions('PLATFORM');
-  const categoryOptions = getParamOptions('CATEGORY');
-  const levelOptions = getParamOptions('LEVEL');
+  const toFallbackOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
+  const withFallbackOptions = (primaryOptions, fallbackValues: string[]) => {
+    const normalized = (primaryOptions || []).filter((item) => item?.value && item?.label);
+    return normalized.length > 0 ? normalized : toFallbackOptions(fallbackValues);
+  };
+
+  const platformOptions = withFallbackOptions(getParamOptions('PLATFORM'), RECRUITMENT_PLATFORM_OPTIONS);
+  const categoryOptions = withFallbackOptions(getParamOptions('CATEGORY'), RECRUITMENT_CATEGORY_OPTIONS);
+  const levelOptions = withFallbackOptions(getParamOptions('LEVEL'), RECRUITMENT_LEVEL_OPTIONS);
+  const isSupplierHr = canCreateResume(user);
+  const showStatusTabs = canShowResumeTabs(user);
+  const [activeTab, setActiveTab] = useState(RESUME_TAB.ALL);
 
   const requirementMap = useMemo(() => {
     const map = new Map();
@@ -66,21 +115,14 @@ const ResumeSubmission = () => {
     return map;
   }, [requirementOptions]);
 
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    onResize();
-    window.addEventListener('resize', onResize);
-    fetchResumes();
-    fetchRequirementOptions();
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const fetchResumes = async () => {
+  const fetchResumes = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/resume/list');
+      const response = await api.get('/api/resume/list', {
+        params: buildResumeListQuery(user),
+      });
       if (response.data?.returnCode === 'SUC0000') {
-        setResumes(response.data.body || []);
+        setResumes((response.data.body || []).map((item) => normalizeResumeRecord(item)));
       } else {
         message.error(response.data?.errorMsg || '获取简历列表失败');
       }
@@ -89,14 +131,28 @@ const ResumeSubmission = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    fetchResumes();
+    fetchRequirementOptions();
+    return () => window.removeEventListener('resize', onResize);
+  }, [fetchResumes]);
 
   const fetchRequirementOptions = async () => {
     try {
       const response = await api.get('/api/resume/requirement-options');
       if (response.data?.returnCode === 'SUC0000') {
-        const list = response.data.body || [];
-        const labelSet = new Set(list.map((item) => String(item.label)));
+        const list = (response.data.body || [])
+          .map((item) => ({
+            value: String(item?.value ?? ''),
+            label: String(item?.label ?? ''),
+          }))
+          .filter((item) => item.value && item.label);
+        const labelSet = new Set(list.map((item) => item.label));
         const merged = [
           ...list,
           ...DEFAULT_REQUIREMENT_OPTIONS.filter((item) => !labelSet.has(item.label)),
@@ -121,20 +177,46 @@ const ResumeSubmission = () => {
     };
 
     const normalizeUrl = (url) => {
-      if (!url) return '';
-      if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      if (url.startsWith('/uploads/')) return `http://localhost:8080/api${url}`;
-      return `http://localhost:8080/api/uploads/${url}`;
+      const raw = String(url || '').trim();
+      if (!raw) return '';
+      if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+      if (raw.startsWith('/api/uploads/')) return raw;
+      if (raw.startsWith('/uploads/')) return `/api${raw}`;
+      if (raw.startsWith('uploads/')) return `/api/${raw}`;
+      return `/api/uploads/${raw}`;
     };
 
     const names = splitValues(record?.attachmentNames);
     const urls = splitValues(record?.attachmentUrls);
-    return names.map((name, index) => ({
-      uid: `local-${index}`,
-      name,
-      status: 'done',
-      url: normalizeUrl(urls[index] || ''),
-    }));
+    const size = Math.max(names.length, urls.length);
+    return Array.from({ length: size }, (_, index) => {
+      const resolvedUrl = normalizeUrl(urls[index] || '');
+      const fallbackName = resolvedUrl ? decodeURIComponent(resolvedUrl.split('/').pop() || '') : '';
+      return {
+        uid: `local-${index}`,
+        fileName: names[index] || fallbackName || `附件${index + 1}`,
+        status: 'done',
+        fileUrl: resolvedUrl,
+        fileKey: '',
+      };
+    }).filter((item) => item.fileUrl || item.fileName);
+  };
+
+  const resolveRelatedRequestNames = (record) => {
+    const text = String(record?.relatedRequestNames || '').trim();
+    if (text && !/^\d+(,\d+)*$/.test(text)) {
+      return text;
+    }
+
+    const ids = String(record?.relatedRequestIds || text)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!ids.length) {
+      return '-';
+    }
+    const labels = ids.map((id) => requirementMap.get(String(id)) || id);
+    return labels.join(', ');
   };
 
   const openCreateModal = () => {
@@ -149,17 +231,18 @@ const ResumeSubmission = () => {
       const response = await api.get(`/api/resume/${record.resumeId}`);
       const fullRecord =
         response.data?.returnCode === 'SUC0000' && response.data?.body ? response.data.body : record;
+      const normalizedRecord = normalizeResumeRecord(fullRecord);
 
-      setEditingRecord(fullRecord);
-      setAttachmentFiles(parseAttachments(fullRecord));
+      setEditingRecord(normalizedRecord);
+      setAttachmentFiles(parseAttachments(normalizedRecord));
       form.setFieldsValue({
-        ...fullRecord,
-        relatedRequestIds: (fullRecord.relatedRequestIds || '').split(',').filter(Boolean),
+        ...normalizedRecord,
+        relatedRequestIds: (normalizedRecord.relatedRequestIds || '').split(',').filter(Boolean),
         interviewAvailableTime:
-          fullRecord.interviewAvailableStartTime && fullRecord.interviewAvailableEndTime
-            ? [dayjs(fullRecord.interviewAvailableStartTime), dayjs(fullRecord.interviewAvailableEndTime)]
+          normalizedRecord.interviewAvailableStartTime && normalizedRecord.interviewAvailableEndTime
+            ? [dayjs(normalizedRecord.interviewAvailableStartTime), dayjs(normalizedRecord.interviewAvailableEndTime)]
             : undefined,
-        onboardDate: fullRecord.onboardDate ? dayjs(fullRecord.onboardDate) : undefined,
+        onboardDate: normalizedRecord.onboardDate ? dayjs(normalizedRecord.onboardDate) : undefined,
       });
       setModalVisible(true);
     } catch (error) {
@@ -172,7 +255,7 @@ const ResumeSubmission = () => {
       const response = await api.get(`/api/resume/${record.resumeId}`);
       const fullRecord =
         response.data?.returnCode === 'SUC0000' && response.data?.body ? response.data.body : record;
-      setViewRecord(fullRecord);
+      setViewRecord(normalizeResumeRecord(fullRecord));
       setViewVisible(true);
     } catch (error) {
       message.error(`获取简历详情失败: ${error?.message || '未知错误'}`);
@@ -181,7 +264,12 @@ const ResumeSubmission = () => {
 
   const handleDelete = async (resumeId) => {
     try {
-      const response = await api.delete(`/api/resume/${resumeId}`);
+      const response = await api.delete(`/api/resume/${resumeId}`, {
+        params: {
+          operatorUserId: String(user?.userId || ''),
+          operatorRole: String(user?.position || user?.positionName || user?.role || ''),
+        },
+      });
       if (response.data?.returnCode === 'SUC0000') {
         message.success('删除成功');
         fetchResumes();
@@ -193,42 +281,154 @@ const ResumeSubmission = () => {
     }
   };
 
-  const customUpload = async ({ file, onSuccess, onError }) => {
-    const fileName = String(file?.name || '');
-    const extension = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
-    if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      message.error('附件格式仅支持 zip/excel/word/pdf/ppt');
-      onError?.(new Error('invalid_file_type'));
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('resume', file);
+  const handleScreen = async (record, action) => {
     try {
-      const response = await api.post('/api/upload', formData);
-      const result = response.data;
-      if (result?.returnCode === 'SUC0000') {
-        const body = result.body || {};
-        onSuccess?.({ url: body.url, name: body.name || fileName }, file);
+      const response = await api.post(`/api/resume/${record.resumeId}/screen`, {
+        action,
+        ...buildOperatorPayload(user),
+      });
+      if (response.data?.returnCode === 'SUC0000') {
+        message.success('操作成功');
+        await fetchResumes();
       } else {
-        onError?.(new Error(result?.errorMsg || 'upload_failed'));
+        message.error(response.data?.errorMsg || '操作失败');
       }
     } catch (error) {
-      const errMsg = error?.response?.data?.errorMsg || error?.message || 'upload_failed';
-      message.error(`上传失败: ${errMsg}`);
-      onError?.(new Error(errMsg));
+      message.error(`操作失败: ${error?.message || '未知错误'}`);
+    }
+  };
+
+  const loadDispatchDemandOptions = async () => {
+    try {
+      const response = await api.get('/api/resume/dispatch-demand-options', {
+        params: {
+          operatorUserId: String(user?.userId || ''),
+          operatorRole: String(user?.position || user?.positionName || user?.role || ''),
+        },
+      });
+      if (response.data?.returnCode === 'SUC0000') {
+        setDispatchDemandOptions(response.data.body || []);
+      } else {
+        message.error(response.data?.errorMsg || '获取关联需求失败');
+      }
+    } catch (error) {
+      message.error(`获取关联需求失败: ${error?.message || '未知错误'}`);
+    }
+  };
+
+  const openDispatchModal = async (record) => {
+    setDispatchResumeId(record.resumeId);
+    dispatchForm.resetFields();
+    setDispatchVisible(true);
+    await loadDispatchDemandOptions();
+  };
+
+  const submitDispatch = async () => {
+    try {
+      const values = await dispatchForm.validateFields();
+      setDispatching(true);
+      const response = await api.post(`/api/resume/${dispatchResumeId}/dispatch`, {
+        demandIds: values.demandIds || [],
+        ...buildOperatorPayload(user),
+      });
+      if (response.data?.returnCode === 'SUC0000') {
+        message.success('分发成功');
+        setDispatchVisible(false);
+        dispatchForm.resetFields();
+        await fetchResumes();
+      } else {
+        message.error(response.data?.errorMsg || '分发失败');
+      }
+    } catch (error) {
+      if (!error?.errorFields) {
+        message.error(`分发失败: ${error?.message || '未知错误'}`);
+      }
+    } finally {
+      setDispatching(false);
+    }
+  };
+
+  const openResumeConfirmDialog = (record) => {
+    setConfirmRecord(record);
+    setConfirmDialogVisible(true);
+  };
+
+  const submitResumeConfirm = async (payload) => {
+    if (!confirmRecord?.resumeId) return;
+    try {
+      setConfirmSubmitting(true);
+      const response = await submitInterviewerChoice(confirmRecord.resumeId, {
+        choice: INTERVIEWER_CHOICE.CONFIRM,
+        ...buildOperatorPayload(user),
+        ...payload,
+      });
+      if (response.data?.returnCode === 'SUC0000') {
+        message.success('操作成功');
+        setConfirmDialogVisible(false);
+        setConfirmRecord(null);
+        await fetchResumes();
+      } else {
+        message.error(response.data?.errorMsg || '操作失败');
+      }
+    } catch (error) {
+      message.error(`操作失败: ${error?.message || '未知错误'}`);
+    } finally {
+      setConfirmSubmitting(false);
+    }
+  };
+
+  const handleAbandonChoice = async (record) => {
+    try {
+      const response = await submitInterviewerChoice(record.resumeId, {
+        choice: INTERVIEWER_CHOICE.ABANDON,
+        ...buildOperatorPayload(user),
+      });
+      if (response.data?.returnCode === 'SUC0000') {
+        message.success('操作成功');
+        await fetchResumes();
+      } else {
+        message.error(response.data?.errorMsg || '操作失败');
+      }
+    } catch (error) {
+      message.error(`操作失败: ${error?.message || '未知错误'}`);
     }
   };
 
   const handleSubmit = async () => {
+    if (!editingRecord && !isSupplierHr) {
+      message.error('仅供应商HR可提交简历');
+      return;
+    }
     try {
       const values = await form.validateFields();
+      const uploadingFiles = attachmentFiles.filter((file) => file.status === 'uploading');
+      if (uploadingFiles.length > 0) {
+        message.warning('附件正在上传，请稍后再提交');
+        return;
+      }
+
       const relatedIds = values.relatedRequestIds || [];
       const relatedNames = relatedIds.map((id) => requirementMap.get(String(id))).filter(Boolean);
 
-      const doneFiles = attachmentFiles.filter((f) => f.status === 'done');
-      const attachmentNames = doneFiles.map((f) => f.name).join(ATTACHMENT_SPLITTER);
-      const attachmentUrls = doneFiles.map((f) => String(f.url || f.response?.url || '')).join(ATTACHMENT_SPLITTER);
+      const doneFiles = attachmentFiles.filter((f) => f.status === 'done' || !f.status);
+      const normalizeSubmitUrl = (file) => {
+        const rawUrl = String(file.fileUrl || '').trim();
+        if (!rawUrl) return '';
+        if (rawUrl.startsWith('/api/uploads/')) return rawUrl.replace('/api', '');
+        if (rawUrl.startsWith('/uploads/')) return rawUrl;
+        if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+          const marker = '/uploads/';
+          const markerIndex = rawUrl.indexOf(marker);
+          return markerIndex >= 0 ? rawUrl.substring(markerIndex) : rawUrl;
+        }
+        if (rawUrl.startsWith('uploads/')) return `/${rawUrl}`;
+        return `/uploads/${rawUrl}`;
+      };
+      const normalizedFiles = doneFiles
+        .map((file) => ({ name: String(file.fileName || '').trim(), url: normalizeSubmitUrl(file) }))
+        .filter((file) => file.name || file.url);
+      const attachmentNames = normalizedFiles.map((f) => f.name).join(ATTACHMENT_SPLITTER);
+      const attachmentUrls = normalizedFiles.map((f) => f.url).join(ATTACHMENT_SPLITTER);
 
       const payload = {
         ...values,
@@ -285,7 +485,7 @@ const ResumeSubmission = () => {
       key: 'relatedRequestNames',
       width: 220,
       ellipsis: true,
-      render: (v) => v || '-',
+      render: (_, record) => resolveRelatedRequestNames(record),
     },
     {
       title: '候选人',
@@ -339,44 +539,130 @@ const ResumeSubmission = () => {
       render: (v) => (v ? dayjs(v).format('YYYY-MM-DD HH:mm:ss') : '-'),
     },
     {
+      title: '简历状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 160,
+      render: (value) => value || '-',
+    },
+    {
+      title: '面试官选择状态',
+      dataIndex: 'currentInterviewerChoiceStatus',
+      key: 'currentInterviewerChoiceStatus',
+      width: 140,
+      render: (value) => value || '-',
+    },
+    {
+      title: '已确认面试官',
+      dataIndex: 'confirmedInterviewerName',
+      key: 'confirmedInterviewerName',
+      width: 140,
+      render: (value) => value || '-',
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 220,
+      width: 260,
       fixed: 'right',
       render: (_, record) => (
-        <Space size="small">
-          <Button type="link" icon={<EyeOutlined />} onClick={() => openViewDrawer(record)}>
+        <Space size={4} wrap>
+          <Button size="small" type="link" icon={<EyeOutlined />} onClick={() => openViewDrawer(record)}>
             查看
           </Button>
-          <Button type="link" icon={<EditOutlined />} onClick={() => openEditModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确认删除该简历吗？" onConfirm={() => handleDelete(record.resumeId)}>
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
+          {canEditOrDeleteResume(user, record) && (
+            <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEditModal(record)}>
+              编辑
             </Button>
-          </Popconfirm>
+          )}
+          {canEditOrDeleteResume(user, record) && (
+            <Popconfirm title="确认删除该简历吗？" onConfirm={() => handleDelete(record.resumeId)}>
+              <Button size="small" type="link" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
+          {canShowScreenActions(user, record) && (
+            <>
+              <Button size="small" type="link" onClick={() => handleScreen(record, SCREEN_ACTION.PASS)}>
+                通过
+              </Button>
+              <Button size="small" type="link" onClick={() => handleScreen(record, SCREEN_ACTION.MATERIAL_EDIT)}>
+                材料需修改
+              </Button>
+              <Button size="small" type="link" danger onClick={() => handleScreen(record, SCREEN_ACTION.REJECT)}>
+                不通过
+              </Button>
+            </>
+          )}
+          {canDispatchResume(user, record) && (
+            <Button size="small" type="link" icon={<SendOutlined />} onClick={() => openDispatchModal(record)}>
+              分发
+            </Button>
+          )}
+          {canOpenResumeConfirmDialog(user, record) && (
+            <Button
+              size="small"
+              type="link"
+              icon={<CheckCircleOutlined />}
+              onClick={() => openResumeConfirmDialog(record)}
+            >
+              确认选择
+            </Button>
+          )}
+          {canAbandonInterviewChoice(user, record) && (
+            <Button
+              size="small"
+              type="link"
+              icon={<CloseCircleOutlined />}
+              onClick={() => handleAbandonChoice(record)}
+            >
+              放弃选择
+            </Button>
+          )}
         </Space>
       ),
     },
   ];
 
+  const filteredResumes = useMemo(
+    () => filterResumesByTab(resumes, activeTab),
+    [resumes, activeTab],
+  );
+
+  const statusTabItems = [
+    { key: RESUME_TAB.ALL, label: '全部' },
+    { key: RESUME_TAB.PENDING_REVIEW, label: '待审核' },
+    { key: RESUME_TAB.PASSED, label: '通过' },
+    { key: RESUME_TAB.NEED_MATERIAL_EDIT, label: '需修改材料' },
+    { key: RESUME_TAB.REJECTED, label: '未通过' },
+  ];
+
   return (
     <div className="app-page">
-      <div style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-          新增简历
-        </Button>
-      </div>
+      {isSupplierHr && (
+        <div style={{ marginBottom: 16 }}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            新增简历
+          </Button>
+        </div>
+      )}
 
-      <Card title="简历提交">
+      <Card title="简历管理">
+        {showStatusTabs && (
+          <Tabs
+            activeKey={activeTab}
+            items={statusTabItems}
+            onChange={setActiveTab}
+            style={{ marginBottom: 12 }}
+          />
+        )}
         <div className="app-table-wrap">
           <Table
             rowKey="resumeId"
             loading={loading}
-            dataSource={resumes}
+            dataSource={filteredResumes}
             columns={columns}
-            scroll={{ x: isMobile ? 1200 : 1700 }}
+            scroll={{ x: isMobile ? 1400 : 2400 }}
             pagination={{
               defaultPageSize: 10,
               showSizeChanger: true,
@@ -467,14 +753,7 @@ const ResumeSubmission = () => {
           <Form.Item label="供应商初面意见" name="supplierInterviewComment"><Input.TextArea rows={3} /></Form.Item>
 
           <Form.Item label="附件">
-            <Upload
-              multiple
-              customRequest={customUpload}
-              fileList={attachmentFiles}
-              onChange={({ fileList }) => setAttachmentFiles(fileList)}
-            >
-              <Button icon={<UploadOutlined />}>上传附件</Button>
-            </Upload>
+            <AttachmentUploader businessType="resume" value={attachmentFiles} onChange={setAttachmentFiles} />
             <div style={{ marginTop: 8, color: '#666' }}>支持 zip、Excel、Word、PDF、PPT</div>
           </Form.Item>
 
@@ -482,10 +761,44 @@ const ResumeSubmission = () => {
         </Form>
       </Modal>
 
+      <Modal
+        title="分发简历"
+        open={dispatchVisible}
+        onCancel={() => {
+          setDispatchVisible(false);
+          dispatchForm.resetFields();
+        }}
+        onOk={submitDispatch}
+        confirmLoading={dispatching}
+      >
+        <Form form={dispatchForm} layout="vertical">
+          <Form.Item name="demandIds" label="关联需求" rules={[{ required: true, message: '请选择关联需求' }]}>
+            <Select
+              mode="multiple"
+              placeholder="请选择关联需求"
+              options={dispatchDemandOptions.map((item) => ({
+                label: item.label,
+                value: item.demandId,
+              }))}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <ResumeConfirmDialog
+        open={confirmDialogVisible}
+        submitting={confirmSubmitting}
+        onCancel={() => {
+          setConfirmDialogVisible(false);
+          setConfirmRecord(null);
+        }}
+        onSubmit={submitResumeConfirm}
+      />
+
       <Drawer title="简历详情" width={isMobile ? '100%' : 680} open={viewVisible} onClose={() => setViewVisible(false)}>
         {viewRecord && (
           <Descriptions column={1} size="small">
-            <Descriptions.Item label="关联需求">{viewRecord.relatedRequestNames || '-'}</Descriptions.Item>
+            <Descriptions.Item label="关联需求">{resolveRelatedRequestNames(viewRecord)}</Descriptions.Item>
             <Descriptions.Item label="候选人">{viewRecord.candidateName || '-'}</Descriptions.Item>
             <Descriptions.Item label="性别">{viewRecord.gender === 'MALE' ? '男' : viewRecord.gender === 'FEMALE' ? '女' : '-'}</Descriptions.Item>
             <Descriptions.Item label="出生年月日">{viewRecord.birthDate || '-'}</Descriptions.Item>
@@ -499,7 +812,9 @@ const ResumeSubmission = () => {
             <Descriptions.Item label="最高学历毕业年份">{viewRecord.highestDegreeGraduateYear || '-'}</Descriptions.Item>
             <Descriptions.Item label="最高学历毕业院校">{viewRecord.highestDegreeSchool || '-'}</Descriptions.Item>
             <Descriptions.Item label="最高学历是否全日制">{viewRecord.highestDegreeFullTime === 'YES' ? '是' : viewRecord.highestDegreeFullTime === 'NO' ? '否' : '-'}</Descriptions.Item>
-            <Descriptions.Item label="英语水平">{viewRecord.englishLevel || '-'}</Descriptions.Item>
+            <Descriptions.Item label="英语水平">
+              {ENGLISH_LEVEL_LABEL_MAP[viewRecord.englishLevel] || viewRecord.englishLevel || '-'}
+            </Descriptions.Item>
             <Descriptions.Item label="候选人技术平台">{viewRecord.candidatePlatform || '-'}</Descriptions.Item>
             <Descriptions.Item label="申请岗位">{viewRecord.appliedCategory || '-'}</Descriptions.Item>
             <Descriptions.Item label="申请职级">{viewRecord.appliedLevel || '-'}</Descriptions.Item>
@@ -518,8 +833,8 @@ const ResumeSubmission = () => {
               {parseAttachments(viewRecord).length > 0 ? (
                 <Space direction="vertical" size={4}>
                   {parseAttachments(viewRecord).map((file) => (
-                    <a key={file.uid} href={file.url} target="_blank" rel="noreferrer">
-                      {file.name}
+                    <a key={file.uid} href={file.fileUrl} target="_blank" rel="noreferrer">
+                      {file.fileName}
                     </a>
                   ))}
                 </Space>
