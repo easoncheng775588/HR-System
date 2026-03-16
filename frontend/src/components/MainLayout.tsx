@@ -14,14 +14,15 @@ import {
   SolutionOutlined,
   FormOutlined,
   TableOutlined,
-  StarOutlined,
   MessageOutlined,
   ApartmentOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useMessage } from '../contexts/MessageContext';
 import api from '../utils/api';
+import { getPendingInterviewArrangement } from '../services/interviewApi';
 import './MainLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -55,16 +56,19 @@ const MainLayout = ({ children }) => {
           : 0;
       }
 
-      const interviewResponse = await api.get('/api/interview/pending/count');
+      const interviewResponse = await getPendingInterviewArrangement({
+        viewerId: String(user?.userId || ''),
+        viewerRole: String(user?.position || user?.positionName || user?.role || ''),
+      });
       const pendingInterviewCount = interviewResponse.data?.returnCode === 'SUC0000'
-        ? (interviewResponse.data.body || 0)
+        ? (interviewResponse.data.body?.length || 0)
         : 0;
 
       const items = [];
       if (hasApprovalPermission) {
-        items.push({ id: 1, title: '流程中心待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
+        items.push({ id: 1, title: '流程待办', time: '10分钟前', status: 'pending', count: pendingApprovalCount });
       }
-      items.push({ id: 2, title: '待面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount });
+      items.push({ id: 2, title: '待安排面试', time: '10分钟前', status: 'pending', count: pendingInterviewCount });
 
       setTodoItems(items);
     } catch (error) {
@@ -96,12 +100,19 @@ const MainLayout = ({ children }) => {
     };
   }, [fetchPendingTasks]);
 
+  const demandManagementVisible = useMemo(() => {
+    if (!user) return false;
+    const roleText = `${user.position || ''} ${user.role || ''}`;
+    return user.userId === '1001'
+      || roleText.includes('外包招聘管理')
+      || roleText.includes('供应商HR');
+  }, [user]);
+
   const allMenuItems = useMemo(() => ([
     { key: 'dashboard', icon: <HomeOutlined />, label: '欢迎页面' },
     { key: 'recruitment-request', icon: <FormOutlined />, label: '用人申请' },
-    { key: 'position-publishing', icon: <TableOutlined />, label: '岗位发布' },
-    { key: 'resume-submission', icon: <FileTextOutlined />, label: '简历提交' },
-    { key: 'resume-screening', icon: <StarOutlined />, label: '简历筛选' },
+    ...(demandManagementVisible ? [{ key: 'demand-management', icon: <TableOutlined />, label: '需求管理' }] : []),
+    { key: 'resume-submission', icon: <FileTextOutlined />, label: '简历管理' },
     { key: 'interview-scheduling', icon: <CalendarOutlined />, label: '面试安排' },
     { key: 'offer-management', icon: <CheckCircleOutlined />, label: '录用管理' },
     { key: 'user-management', icon: <UserOutlined />, label: '用户管理' },
@@ -110,7 +121,7 @@ const MainLayout = ({ children }) => {
     { key: 'staffing-management', icon: <TableOutlined />, label: '编制管理' },
     { key: 'workflow-center', icon: <ApartmentOutlined />, label: '流程中心' },
     { key: 'message-management', icon: <MessageOutlined />, label: '消息管理' },
-  ]), []);
+  ]), [demandManagementVisible]);
 
   const menuItems = useMemo(
     () => allMenuItems.filter((item) => hasMenuAccess('/' + item.key)),

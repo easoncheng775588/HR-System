@@ -15,9 +15,8 @@ const Login = lazy(() => import('./components/Login'))
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const RecruitmentRequestList = lazy(() => import('./components/RecruitmentRequestList'))
 const RecruitmentRequestForm = lazy(() => import('./components/RecruitmentRequestForm'))
-const PositionPublishing = lazy(() => import('./components/PositionPublishing'))
+const DemandManagement = lazy(() => import('./components/DemandManagement'))
 const ResumeSubmission = lazy(() => import('./components/ResumeSubmission'))
-const ResumeScreening = lazy(() => import('./components/ResumeScreening'))
 const InterviewScheduling = lazy(() => import('./components/InterviewScheduling'))
 const OfferManagement = lazy(() => import('./components/OfferManagement'))
 const UserManagement = lazy(() => import('./components/UserManagement'))
@@ -51,9 +50,9 @@ function AppContent() {
             <Route path="/recruitment-request/new" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/recruitment-request/edit/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/approval-management" element={<ProtectedRoute><Navigate to="/workflow-center" replace /></ProtectedRoute>} />
-            <Route path="/position-publishing" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><PositionPublishing /></Suspense></MainLayout></ProtectedRoute>} />
+            <Route path="/demand-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><DemandManagement /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-submission" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeSubmission /></Suspense></MainLayout></ProtectedRoute>} />
-            <Route path="/resume-screening" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeScreening /></Suspense></MainLayout></ProtectedRoute>} />
+            <Route path="/resume-screening" element={<ProtectedRoute><Navigate to="/resume-submission" replace /></ProtectedRoute>} />
             <Route path="/interview-scheduling" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><InterviewScheduling /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/offer-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><OfferManagement /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><UserManagement /></Suspense></MainLayout></ProtectedRoute>} />
