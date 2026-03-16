@@ -50,6 +50,7 @@ function AppContent() {
             <Route path="/recruitment-request/new" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/recruitment-request/edit/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RecruitmentRequestForm /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/approval-management" element={<ProtectedRoute><Navigate to="/workflow-center" replace /></ProtectedRoute>} />
+            <Route path="/position-publishing" element={<ProtectedRoute><Navigate to="/demand-management" replace /></ProtectedRoute>} />
             <Route path="/demand-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><DemandManagement /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-submission" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeSubmission /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-screening" element={<ProtectedRoute><Navigate to="/resume-submission" replace /></ProtectedRoute>} />
