@@ -9,6 +9,9 @@ public class PendingInterviewResumeVO {
     private String supplierName;
     private String status;
     private String dispatchStatus;
+    private String workYears;
+    private String appliedLevel;
+    private String candidatePlatform;
     private String confirmedInterviewerId;
     private String confirmedInterviewerName;
     private String interviewMethod;
@@ -66,6 +69,30 @@ public class PendingInterviewResumeVO {
 
     public void setDispatchStatus(String dispatchStatus) {
         this.dispatchStatus = dispatchStatus;
+    }
+
+    public String getWorkYears() {
+        return workYears;
+    }
+
+    public void setWorkYears(String workYears) {
+        this.workYears = workYears;
+    }
+
+    public String getAppliedLevel() {
+        return appliedLevel;
+    }
+
+    public void setAppliedLevel(String appliedLevel) {
+        this.appliedLevel = appliedLevel;
+    }
+
+    public String getCandidatePlatform() {
+        return candidatePlatform;
+    }
+
+    public void setCandidatePlatform(String candidatePlatform) {
+        this.candidatePlatform = candidatePlatform;
     }
 
     public String getConfirmedInterviewerId() {

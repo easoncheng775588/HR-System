@@ -30,6 +30,7 @@ import java.util.Set;
 @Service
 public class InterviewArrangementServiceImpl implements InterviewArrangementService {
 
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     @Autowired
@@ -107,6 +108,9 @@ public class InterviewArrangementServiceImpl implements InterviewArrangementServ
             row.setSupplierName(resume.getSupplierName());
             row.setStatus(resume.getStatus());
             row.setDispatchStatus(trimToEmpty(activeDispatch.getDispatchStatus()));
+            row.setWorkYears(trimToEmpty(resume.getItWorkYears()));
+            row.setAppliedLevel(trimToEmpty(resume.getAppliedLevel()));
+            row.setCandidatePlatform(trimToEmpty(resume.getCandidatePlatform()));
             row.setConfirmedInterviewerId(activeDispatch.getInterviewerId());
             row.setConfirmedInterviewerName(activeDispatch.getInterviewerName());
             row.setInterviewMethod(activeDispatch.getInterviewMethod());
@@ -279,7 +283,11 @@ public class InterviewArrangementServiceImpl implements InterviewArrangementServ
         try {
             return new SimpleDateFormat(DATE_TIME_PATTERN).parse(value);
         } catch (ParseException e) {
-            throw new RuntimeException(errorMessage);
+            try {
+                return new SimpleDateFormat(DATE_PATTERN).parse(value);
+            } catch (ParseException ignored) {
+                throw new RuntimeException(errorMessage);
+            }
         }
     }
 

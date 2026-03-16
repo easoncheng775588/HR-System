@@ -4,6 +4,7 @@ import com.hr.entity.OrgUnit;
 import com.hr.entity.User;
 import com.hr.mapper.OrgUnitMapper;
 import com.hr.mapper.UserMapper;
+import org.apache.ibatis.binding.BindingException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -144,6 +145,26 @@ class UserServiceImplTest {
 
         assertEquals("编制管理岗", result.getPosition());
         assertEquals("TEAM_ONLY", result.getDepartmentType());
+    }
+
+    @Test
+    void getAllUsersDoesNotFailWhenRoleMapperStatementIsMissing() {
+        User storedUser = new User();
+        storedUser.setUserId("1001");
+        storedUser.setUsername("admin");
+        storedUser.setRealName("超级管理员");
+        storedUser.setDepartment("人事部");
+
+        when(userMapper.getAllUsers()).thenReturn(Collections.singletonList(storedUser));
+        when(userMapper.getRoleNamesByUserId("1001"))
+            .thenThrow(new BindingException("Invalid bound statement (not found): com.hr.mapper.UserMapper.getRoleNamesByUserId"));
+        when(orgUnitMapper.getActiveOrgUnits()).thenReturn(Collections.emptyList());
+
+        java.util.List<User> result = userService.getAllUsers();
+
+        assertEquals(1, result.size());
+        assertEquals("1001", result.get(0).getUserId());
+        assertNull(result.get(0).getPosition());
     }
 
     @Test

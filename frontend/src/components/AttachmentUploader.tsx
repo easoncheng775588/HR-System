@@ -1,6 +1,7 @@
 import React from 'react'
 import { Button, Upload, message } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
+import { buildAcceptAttribute, getAllowedAttachmentExts } from './attachmentUploadRules'
 
 export interface AttachmentItem {
   uid: string
@@ -19,8 +20,6 @@ interface AttachmentUploaderProps {
   maxCount?: number
 }
 
-const DEFAULT_EXTS = ['zip', 'xls', 'xlsx', 'doc', 'docx', 'pdf', 'ppt', 'pptx']
-
 const normalizeFileUrl = (rawUrl: string) => {
   const text = String(rawUrl || '').trim()
   if (!text) return ''
@@ -35,15 +34,17 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   value = [],
   onChange,
   businessType,
-  acceptExts = DEFAULT_EXTS,
+  acceptExts,
   multiple = true,
   maxCount = 10,
 }) => {
+  const allowedExts = getAllowedAttachmentExts(businessType, acceptExts)
+
   const upload = async ({ file, onSuccess, onError }) => {
     const name = String(file?.name || '')
     const ext = name.includes('.') ? name.split('.').pop()?.toLowerCase() : ''
-    if (!ext || !acceptExts.includes(ext)) {
-      message.error(`附件格式仅支持：${acceptExts.join('/')}`)
+    if (!ext || !allowedExts.includes(ext)) {
+      message.error(`附件格式仅支持：${allowedExts.join('/')}`)
       onError?.(new Error('invalid_file_type'))
       return
     }
@@ -90,6 +91,7 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
 
   return (
     <Upload
+      accept={buildAcceptAttribute(allowedExts)}
       multiple={multiple}
       maxCount={maxCount}
       customRequest={upload}

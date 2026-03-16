@@ -297,6 +297,59 @@ class InterviewEvaluationServiceImplTest {
         assertEquals("面试时间未确认，不能发起面试评价", ex.getMessage());
     }
 
+    @Test
+    void submitAcceptsDateOnlyInterviewDatePayload() {
+        User interviewer = user("2001", "面试官A", "面试官", "基础业务开发团队 / 办公系统开发室");
+        Set<String> roles = Set.of(InterviewPermissionService.ROLE_INTERVIEWER);
+        when(userMapper.getUserById("2001")).thenReturn(interviewer);
+        when(interviewPermissionService.normalizeRoles(interviewer, "面试官")).thenReturn(roles);
+        when(interviewPermissionService.hasRole(roles, InterviewPermissionService.ROLE_INTERVIEWER)).thenReturn(true);
+
+        Resume resume = new Resume();
+        resume.setResumeId(1L);
+        resume.setCandidateName("候选人甲");
+        resume.setItWorkYears("5年");
+        resume.setAppliedLevel("P6");
+        resume.setCandidatePlatform("Java");
+        when(resumeMapper.selectByPrimaryKey(1L)).thenReturn(resume);
+
+        ResumeDispatch confirmed = new ResumeDispatch();
+        confirmed.setDispatchId(9L);
+        confirmed.setInterviewerId("2001");
+        confirmed.setInterviewerName("面试官A");
+        confirmed.setInterviewMethod("线上");
+        confirmed.setConfirmedInterviewTime(new Date());
+        when(resumeDispatchMapper.selectConfirmedByResumeId(1L)).thenReturn(confirmed);
+
+        when(interviewEvaluationMapper.selectLatestByResumeId(1L)).thenReturn(null);
+        when(interviewEvaluationMapper.insert(any(InterviewEvaluation.class))).thenAnswer(invocation -> {
+            InterviewEvaluation entity = invocation.getArgument(0);
+            entity.setEvaluationId(89L);
+            return 1;
+        });
+        when(interviewEvaluationMapper.selectByPrimaryKey(89L)).thenAnswer(invocation -> {
+            InterviewEvaluation entity = new InterviewEvaluation();
+            entity.setEvaluationId(89L);
+            entity.setApprovalStatus(InterviewEvaluationStatusEnum.PENDING_OUTSOURCING.name());
+            return entity;
+        });
+
+        SubmitInterviewEvaluationRequest request = new SubmitInterviewEvaluationRequest();
+        request.setResumeId(1L);
+        request.setOperatorUserId("2001");
+        request.setOperatorUserName("面试官A");
+        request.setOperatorRole("面试官");
+        request.setEntryLevelSuggestion("P6");
+        request.setScore("90");
+        request.setInterviewMethod("线上");
+        request.setInterviewDate("2026-03-20");
+        request.setHireSuggestion("良好");
+
+        interviewEvaluationService.submit(request);
+
+        verify(interviewEvaluationMapper).insert(any(InterviewEvaluation.class));
+    }
+
     private User user(String userId, String realName, String position, String department) {
         User user = new User();
         user.setUserId(userId);

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { DatePicker, Form, Modal } from 'antd'
 import dayjs from 'dayjs'
+import { formatInterviewDatePayload } from './interviewTimeHelpers'
 
 interface InterviewTimeConfirmDialogProps {
   open: boolean
@@ -32,7 +33,7 @@ const InterviewTimeConfirmDialog: React.FC<InterviewTimeConfirmDialogProps> = ({
   const submit = async () => {
     const values = await form.validateFields()
     await onSubmit({
-      interviewTime: dayjs(values.interviewTime).format('YYYY-MM-DD HH:mm:ss'),
+      interviewTime: formatInterviewDatePayload(values.interviewTime),
     })
   }
 
@@ -40,7 +41,7 @@ const InterviewTimeConfirmDialog: React.FC<InterviewTimeConfirmDialogProps> = ({
     <Modal title="确认面试时间" open={open} onCancel={onCancel} onOk={submit} confirmLoading={submitting}>
       <Form form={form} layout="vertical">
         <Form.Item name="interviewTime" label="面试时间" rules={[{ required: true, message: '面试时间不能为空' }]}>
-          <DatePicker showTime style={{ width: '100%' }} />
+          <DatePicker style={{ width: '100%' }} />
         </Form.Item>
       </Form>
     </Modal>

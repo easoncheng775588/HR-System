@@ -5,6 +5,9 @@ import com.hr.entity.User;
 import com.hr.mapper.OrgUnitMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.service.UserService;
+import org.apache.ibatis.binding.BindingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private static final String COMPANY_NAME = "永隆信息有限公司";
     private static final String DIRECT_CATEGORY = "直属人员";
@@ -199,7 +204,13 @@ public class UserServiceImpl implements UserService {
         if (user == null || (user.getPosition() != null && !user.getPosition().trim().isEmpty())) {
             return;
         }
-        List<String> roleNames = userMapper.getRoleNamesByUserId(user.getUserId());
+        List<String> roleNames;
+        try {
+            roleNames = userMapper.getRoleNamesByUserId(user.getUserId());
+        } catch (BindingException exception) {
+            logger.warn("Skip role enrichment for user {} because getRoleNamesByUserId mapper statement is unavailable", user.getUserId(), exception);
+            return;
+        }
         if (roleNames == null || roleNames.isEmpty()) {
             return;
         }

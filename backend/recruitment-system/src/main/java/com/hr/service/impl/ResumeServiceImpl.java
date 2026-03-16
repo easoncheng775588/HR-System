@@ -287,7 +287,7 @@ public class ResumeServiceImpl implements ResumeService {
 
         List<Map<String, Object>> options = new ArrayList<>();
         for (DemandRequirement demand : demandRequirementMapper.selectAll()) {
-            if (trimToNull(demand.getDemandStatus()) != null) {
+            if (!isDemandAvailableForResumeDispatch(demand)) {
                 continue;
             }
             Map<String, Object> row = new LinkedHashMap<>();
@@ -371,7 +371,7 @@ public class ResumeServiceImpl implements ResumeService {
             if (demand == null) {
                 throw new RuntimeException("分发需求不存在");
             }
-            if (trimToNull(demand.getDemandStatus()) != null) {
+            if (!isDemandAvailableForResumeDispatch(demand)) {
                 throw new RuntimeException("分发需求状态不允许分发");
             }
 
@@ -794,6 +794,17 @@ public class ResumeServiceImpl implements ResumeService {
 
     private boolean isPassedStatus(String status) {
         return STATUS_SCREEN_PASS.equals(normalizeStatus(status));
+    }
+
+    private boolean isDemandAvailableForResumeDispatch(DemandRequirement demand) {
+        if (demand == null) {
+            return false;
+        }
+        String demandStatus = trimToNull(demand.getDemandStatus());
+        return demandStatus == null
+            || "待分发".equals(demandStatus)
+            || "已分发".equals(demandStatus)
+            || "接收完成".equals(demandStatus);
     }
 
     private String trimToNull(String value) {

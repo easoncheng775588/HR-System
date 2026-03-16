@@ -203,21 +203,26 @@ class ResumeServiceImplTest {
     }
 
     @Test
-    void dispatchDemandOptionsOnlyReturnsEmptyDemandStatus() {
+    void dispatchDemandOptionsReturnsUsableDemandStatuses() {
         User outsourcing = user("1002", "外包招聘管理岗", "外包招聘管理岗");
         when(userMapper.getUserById("1002")).thenReturn(outsourcing);
         when(userMapper.getRoleNamesByUserId("1002")).thenReturn(Collections.singletonList("外包招聘管理岗"));
 
         DemandRequirement emptyStatus = demand(1L, 11L, "系统研发岗 / A室", null);
         DemandRequirement blankStatus = demand(2L, 12L, "系统研发岗 / B室", " ");
-        DemandRequirement dispatched = demand(3L, 13L, "系统研发岗 / C室", "已分发");
-        when(demandRequirementMapper.selectAll()).thenReturn(Arrays.asList(emptyStatus, blankStatus, dispatched));
+        DemandRequirement pending = demand(3L, 13L, "系统研发岗 / C室", "待分发");
+        DemandRequirement dispatched = demand(4L, 14L, "系统研发岗 / D室", "已分发");
+        DemandRequirement accepted = demand(5L, 15L, "系统研发岗 / E室", "接收完成");
+        when(demandRequirementMapper.selectAll()).thenReturn(Arrays.asList(emptyStatus, blankStatus, pending, dispatched, accepted));
 
         List<Map<String, Object>> options = resumeService.getDispatchDemandOptions("1002", "外包招聘管理岗");
 
-        assertEquals(2, options.size());
+        assertEquals(5, options.size());
         assertEquals(1L, options.get(0).get("demandId"));
         assertEquals(2L, options.get(1).get("demandId"));
+        assertEquals(3L, options.get(2).get("demandId"));
+        assertEquals(4L, options.get(3).get("demandId"));
+        assertEquals(5L, options.get(4).get("demandId"));
     }
 
     @Test

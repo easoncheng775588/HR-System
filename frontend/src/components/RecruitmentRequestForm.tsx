@@ -11,6 +11,7 @@ import {
   REQUEST_TYPE_OPTIONS,
   TEXTAREA_MAX_LENGTH,
 } from './recruitmentRequestHelpers';
+import { RECRUITMENT_LEVEL_OPTIONS } from './interviewEvaluationHelpers';
 
 type InterviewerOption = {
   value: string;
@@ -19,8 +20,6 @@ type InterviewerOption = {
 
 const CATEGORY_OPTIONS = ['系统研发岗', '产品助理', '测试', '项目助理', '其他'];
 const PLATFORM_OPTIONS = ['开放', '主机', '测试', 'T24', '其他'];
-const LEVEL_OPTIONS = ['PT', 'PG', 'AP', 'ASA', 'SA', 'SSA', '初级行政', '中级行政', '高级行政'];
-
 const RecruitmentRequestForm = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -282,7 +281,7 @@ const RecruitmentRequestForm = () => {
           <Space style={{ width: '100%' }} size={12} wrap>
             <Form.Item name="proposedLevel" label="建议级别" rules={[{ required: true, message: '请选择建议级别' }]} style={{ minWidth: 220, flex: 1 }}>
               <Select placeholder="请选择建议级别">
-                {LEVEL_OPTIONS.map((item) => (
+                {RECRUITMENT_LEVEL_OPTIONS.map((item) => (
                   <Select.Option key={item} value={item}>
                     {item}
                   </Select.Option>

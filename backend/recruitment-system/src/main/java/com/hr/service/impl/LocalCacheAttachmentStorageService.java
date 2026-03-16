@@ -6,12 +6,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class LocalCacheAttachmentStorageService implements AttachmentStorageService {
 
     private static final String LOCAL_UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
+    private static final String BUSINESS_TYPE_INTERVIEW_EVALUATION = "interview_evaluation";
+    private static final Set<String> INTERVIEW_EVALUATION_ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("xls", "xlsx"));
 
     @Override
     public StoredAttachment store(String businessType, MultipartFile file) {
@@ -25,6 +31,7 @@ public class LocalCacheAttachmentStorageService implements AttachmentStorageServ
         }
 
         String safeBusinessType = normalizeBusinessType(businessType);
+        validateFileType(safeBusinessType, originalFilename);
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         String generatedName = UUID.randomUUID().toString().replace("-", "") + extension;
         String relativeDir = safeBusinessType + "/";
@@ -55,5 +62,15 @@ public class LocalCacheAttachmentStorageService implements AttachmentStorageServ
             return "common";
         }
         return businessType.trim().toLowerCase().replaceAll("[^a-z0-9_-]", "_");
+    }
+
+    private void validateFileType(String businessType, String originalFilename) {
+        if (!BUSINESS_TYPE_INTERVIEW_EVALUATION.equals(businessType)) {
+            return;
+        }
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
+        if (!INTERVIEW_EVALUATION_ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new RuntimeException("面试评价附件仅支持 Excel 格式");
+        }
     }
 }

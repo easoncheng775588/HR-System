@@ -673,11 +673,38 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         if ("1001".equals(userId)) {
             return true;
         }
-        if (evaluation.getInterviewerDepartment() == null || evaluation.getInterviewerDepartment().trim().isEmpty()) {
-            return false;
-        }
-        User roomManager = userMapper.getActiveRoomManagerByDepartment(evaluation.getInterviewerDepartment());
+        User roomManager = resolveRoomManagerForInterview(evaluation.getInterviewerDepartment());
         return roomManager != null && userId.equals(roomManager.getUserId());
+    }
+
+    private User resolveRoomManagerForInterview(String department) {
+        String normalizedDepartment = normalizeDepartment(department);
+        if (normalizedDepartment == null) {
+            return null;
+        }
+        User byRole = userMapper.getActiveRoomManagerByDepartmentAndRoleKeyword(normalizedDepartment, "室经理");
+        if (byRole != null) {
+            return byRole;
+        }
+        return userMapper.getActiveRoomManagerByDepartment(normalizedDepartment);
+    }
+
+    private String normalizeDepartment(String department) {
+        if (department == null) {
+            return null;
+        }
+        String value = department.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        int slashIndex = value.lastIndexOf('/');
+        if (slashIndex >= 0 && slashIndex < value.length() - 1) {
+            String leaf = value.substring(slashIndex + 1).trim();
+            if (!leaf.isEmpty()) {
+                return leaf;
+            }
+        }
+        return value;
     }
 
     private String buildInterviewSummary(InterviewEvaluation evaluation) {

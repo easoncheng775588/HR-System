@@ -1,5 +1,6 @@
 package com.hr.service.impl;
 
+import com.hr.entity.InterviewEvaluation;
 import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.OrgUnit;
 import com.hr.entity.User;
@@ -99,6 +100,33 @@ class WorkflowCenterServiceImplTest {
         assertEquals(1, items.size());
         assertEquals(Long.valueOf(7L), items.get(0).getRequestId());
         assertEquals("基础业务开发团队 / 办公系统开发室", items.get(0).getApplicantDept());
+    }
+
+    @Test
+    void getMyTodoReturnsInterviewEvaluationForRoomManagerMatchedByRoleAndLeafDepartment() {
+        when(recruitmentRequestMapper.selectAll()).thenReturn(Collections.emptyList());
+
+        InterviewEvaluation evaluation = new InterviewEvaluation();
+        evaluation.setEvaluationId(11L);
+        evaluation.setCandidateName("候选人甲");
+        evaluation.setInterviewerName("陈秀芳");
+        evaluation.setEntryLevelSuggestion("P6");
+        evaluation.setInterviewerDepartment("基础业务开发团队 / 办公系统开发室");
+        evaluation.setApprovalStatus("PENDING_ROOM_MANAGER");
+        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.singletonList(evaluation));
+
+        User roomManager = new User();
+        roomManager.setUserId("1007");
+        roomManager.setRealName("胡俊峰");
+        roomManager.setDepartment("办公系统开发室");
+        roomManager.setStatus("ACTIVE");
+        when(userMapper.getActiveRoomManagerByDepartmentAndRoleKeyword("办公系统开发室", "室经理")).thenReturn(roomManager);
+
+        List<WorkflowTodoItem> items = workflowCenterService.getMyTodo("1007", "室经理");
+
+        assertEquals(1, items.size());
+        assertEquals(Long.valueOf(11L), items.get(0).getBusinessId());
+        assertEquals("室经理审批", items.get(0).getCurrentNode());
     }
 
     private OrgUnit orgUnit(String unitName, String unitType, String parentUnitName) {

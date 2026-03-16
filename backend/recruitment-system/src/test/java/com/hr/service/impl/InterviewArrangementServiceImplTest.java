@@ -68,6 +68,9 @@ class InterviewArrangementServiceImplTest {
         when(interviewPermissionService.hasRole(roles, InterviewPermissionService.ROLE_INTERVIEWER)).thenReturn(true);
 
         Resume mine = resume(1L, "候选人甲", "3001");
+        mine.setItWorkYears("5年");
+        mine.setAppliedLevel("P6");
+        mine.setCandidatePlatform("Java");
         Resume other = resume(2L, "候选人乙", "3002");
         when(resumeMapper.selectAll()).thenReturn(Arrays.asList(mine, other));
 
@@ -85,6 +88,9 @@ class InterviewArrangementServiceImplTest {
 
         assertEquals(1, rows.size());
         assertEquals(Long.valueOf(1L), rows.get(0).getResumeId());
+        assertEquals("5年", rows.get(0).getWorkYears());
+        assertEquals("P6", rows.get(0).getAppliedLevel());
+        assertEquals("Java", rows.get(0).getCandidatePlatform());
         assertTrue(Boolean.TRUE.equals(rows.get(0).getCanLaunchEvaluation()));
         assertEquals("PENDING_OUTSOURCING", rows.get(0).getEvaluationStatus());
     }
@@ -140,6 +146,31 @@ class InterviewArrangementServiceImplTest {
         verify(resumeDispatchMapper).updateConfirmedInterviewTime(eq(9L), timeCaptor.capture(), eq("1002"), eq("外包岗A"), any(Date.class));
         verify(interviewMessageService).sendInterviewTimeConfirmedMessage("王小明", "7001", "3001");
         assertTrue(timeCaptor.getValue() != null);
+    }
+
+    @Test
+    void confirmInterviewTimeAcceptsDateOnlyPayload() {
+        User outsourcingManager = user("1002", "外包岗A", "外包招聘管理岗");
+        Set<String> roles = Set.of(InterviewPermissionService.ROLE_OUTSOURCING_MANAGER);
+        when(userMapper.getUserById("1002")).thenReturn(outsourcingManager);
+        when(interviewPermissionService.normalizeRoles(outsourcingManager, "外包招聘管理岗")).thenReturn(roles);
+        when(interviewPermissionService.hasRole(roles, InterviewPermissionService.ROLE_OUTSOURCING_MANAGER)).thenReturn(true);
+
+        ResumeDispatch confirmedDispatch = dispatch(1L, 9L, "7001", "CONFIRMED");
+        when(resumeDispatchMapper.selectConfirmedByResumeId(1L)).thenReturn(confirmedDispatch);
+
+        Resume resume = resume(1L, "王小明", "3001");
+        when(resumeMapper.selectByPrimaryKey(1L)).thenReturn(resume);
+
+        ConfirmInterviewTimeRequest request = new ConfirmInterviewTimeRequest();
+        request.setInterviewTime("2026-03-20");
+        request.setOperatorUserId("1002");
+        request.setOperatorUserName("外包岗A");
+        request.setOperatorRole("外包招聘管理岗");
+
+        interviewArrangementService.confirmInterviewTime(1L, request);
+
+        verify(resumeDispatchMapper).updateConfirmedInterviewTime(eq(9L), any(Date.class), eq("1002"), eq("外包岗A"), any(Date.class));
     }
 
     @Test

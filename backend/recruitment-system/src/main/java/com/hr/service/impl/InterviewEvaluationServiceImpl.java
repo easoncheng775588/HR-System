@@ -33,6 +33,7 @@ import java.util.Set;
 @Service
 public class InterviewEvaluationServiceImpl implements InterviewEvaluationService {
 
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final String PROCESS_CODE = "INTERVIEW_EVALUATION";
     private static final String SYSTEM_USER_ID = "1001";
@@ -360,7 +361,11 @@ public class InterviewEvaluationServiceImpl implements InterviewEvaluationServic
         try {
             return new SimpleDateFormat(DATE_TIME_PATTERN).parse(text);
         } catch (ParseException e) {
-            throw new RuntimeException("面试日期格式不正确");
+            try {
+                return new SimpleDateFormat(DATE_PATTERN).parse(text);
+            } catch (ParseException ignored) {
+                throw new RuntimeException("面试日期格式不正确");
+            }
         }
     }
 

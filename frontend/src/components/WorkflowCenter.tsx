@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
 import { approveWorkflowProcess } from '../services/interviewApi';
 import { PROCESS_CODE } from '../utils/interviewStatus';
+import { getWorkflowApprovalHistory, getWorkflowEvaluationDetail } from './workflowDetailHelpers';
 
 type TabKey = 'todo' | 'initiated' | 'processed';
 
@@ -28,7 +29,9 @@ interface WorkflowItem {
 interface WorkflowDetailBody {
   request?: Record<string, unknown>;
   evaluation?: Record<string, unknown>;
+  interviewEvaluation?: Record<string, unknown>;
   approvalHistory?: Array<Record<string, unknown>>;
+  interviewEvaluationApprovalHistory?: Array<Record<string, unknown>>;
   nodeConfigs?: Array<Record<string, unknown>>;
   processLogs?: Array<Record<string, unknown>>;
 }
@@ -205,8 +208,8 @@ const WorkflowCenter: React.FC = () => {
   );
 
   const request = (detail?.request || {}) as Record<string, unknown>;
-  const evaluation = (detail?.evaluation || {}) as Record<string, unknown>;
-  const history = (detail?.approvalHistory || []) as Array<Record<string, unknown>>;
+  const evaluation = getWorkflowEvaluationDetail(detail || {}) as Record<string, unknown>;
+  const history = getWorkflowApprovalHistory(detail || {}) as Array<Record<string, unknown>>;
   const logs = (detail?.processLogs || []) as Array<Record<string, unknown>>;
 
   return (
