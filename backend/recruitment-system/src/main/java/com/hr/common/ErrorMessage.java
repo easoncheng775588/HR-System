@@ -16,7 +16,6 @@ public class ErrorMessage {
         UserControllerMessages.init();
         ResumeControllerMessages.init();
         InterviewRecordControllerMessages.init();
-        OfferRecordControllerMessages.init();
         FileUploadControllerMessages.init();
         SysParamControllerMessages.init();
         EmailTemplateControllerMessages.init();
@@ -89,20 +88,6 @@ public class ErrorMessage {
             ERROR_MESSAGES.put("interview.update.result.failed", "更新面试结果失败：%s");
             ERROR_MESSAGES.put("interview.get.pending.count.failed", "获取待面试数量失败：%s");
             ERROR_MESSAGES.put("interview.delete.failed", "删除面试记录失败：%s");
-        }
-    }
-    
-    public static class OfferRecordControllerMessages {
-        private static void init() {
-            ERROR_MESSAGES.put("offer.save.failed", "保存录用记录失败: %s");
-            ERROR_MESSAGES.put("offer.get.failed", "查询录用记录失败: %s");
-            ERROR_MESSAGES.put("offer.get.by.id.failed", "查询录用记录失败: %s");
-            ERROR_MESSAGES.put("offer.get.by.resume.failed", "查询录用记录失败: %s");
-            ERROR_MESSAGES.put("offer.get.by.request.failed", "查询录用记录失败: %s");
-            ERROR_MESSAGES.put("offer.get.eligible.failed", "获取可录用的候选人失败: %s");
-            ERROR_MESSAGES.put("offer.send.email.failed", "发送录用邮件失败: %s");
-            ERROR_MESSAGES.put("offer.not.exist", "录用记录不存在");
-            ERROR_MESSAGES.put("offer.update.status.failed", "更新录用状态失败: %s");
         }
     }
     

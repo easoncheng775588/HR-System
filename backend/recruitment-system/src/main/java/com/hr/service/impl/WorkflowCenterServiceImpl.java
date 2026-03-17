@@ -1,6 +1,8 @@
 package com.hr.service.impl;
 
 import com.hr.entity.ApprovalHistory;
+import com.hr.entity.ArrivalConfirmation;
+import com.hr.entity.ArrivalConfirmationStatusEnum;
 import com.hr.entity.InterviewEvaluation;
 import com.hr.entity.OrgUnit;
 import com.hr.entity.RecruitmentRequest;
@@ -14,6 +16,8 @@ import com.hr.entity.WorkflowProcessLog;
 import com.hr.entity.WorkflowProcessedItem;
 import com.hr.entity.WorkflowTodoItem;
 import com.hr.mapper.ApprovalHistoryMapper;
+import com.hr.mapper.ArrivalConfirmationApprovalHistoryMapper;
+import com.hr.mapper.ArrivalConfirmationMapper;
 import com.hr.mapper.InterviewEvaluationApprovalHistoryMapper;
 import com.hr.mapper.InterviewEvaluationMapper;
 import com.hr.mapper.OrgUnitMapper;
@@ -21,6 +25,7 @@ import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowNodeConfigMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.ArrivalConfirmationService;
 import com.hr.service.InterviewEvaluationService;
 import com.hr.service.RecruitmentRequestService;
 import com.hr.service.WorkflowCenterService;
@@ -45,6 +50,8 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
     private static final String PROCESS_NAME = "用人申请流程";
     private static final String INTERVIEW_PROCESS_CODE = "INTERVIEW_EVALUATION";
     private static final String INTERVIEW_PROCESS_NAME = "面试评价流程";
+    private static final String ARRIVAL_PROCESS_CODE = "ARRIVAL_CONFIRMATION";
+    private static final String ARRIVAL_PROCESS_NAME = "到岗确认流程";
     private static final String DIRECT_TEAM_MANAGER_TYPE = "DIRECT_TEAM_MANAGER";
 
     @Autowired
@@ -76,6 +83,15 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
     @Autowired
     private InterviewEvaluationService interviewEvaluationService;
+
+    @Autowired
+    private ArrivalConfirmationMapper arrivalConfirmationMapper;
+
+    @Autowired
+    private ArrivalConfirmationApprovalHistoryMapper arrivalConfirmationApprovalHistoryMapper;
+
+    @Autowired
+    private ArrivalConfirmationService arrivalConfirmationService;
 
     @Override
     public List<WorkflowTodoItem> getMyTodo(String userId, String userRole) {
@@ -123,6 +139,7 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
 
         appendInterviewTodoItems(result, userId, normalizedRole);
+        appendArrivalTodoItems(result, userId, normalizedRole);
         result.sort(Comparator.comparing(WorkflowTodoItem::getArriveTime, Comparator.nullsLast(Date::compareTo)).reversed());
         return result;
     }
@@ -160,6 +177,20 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             item.setApplicantDept(nullSafe(evaluation.getInterviewerDepartment()));
             item.setProcessStatus(resolveInterviewProcessStatus(evaluation.getApprovalStatus()));
             item.setStartTime(evaluation.getCreateTime());
+            result.add(item);
+        }
+
+        for (ArrivalConfirmation confirmation : arrivalConfirmationMapper.selectByCreateUserId(userId)) {
+            WorkflowInitiatedItem item = new WorkflowInitiatedItem();
+            item.setProcessCode(ARRIVAL_PROCESS_CODE);
+            item.setBusinessId(confirmation.getArrivalConfirmationId());
+            item.setRequestId(confirmation.getArrivalConfirmationId());
+            item.setProcessName(ARRIVAL_PROCESS_NAME);
+            item.setSummary(buildArrivalSummary(confirmation));
+            item.setCurrentNode(resolveArrivalCurrentNode(confirmation));
+            item.setApplicantDept(nullSafe(confirmation.getTargetOrgUnitName()));
+            item.setProcessStatus(resolveArrivalProcessStatus(confirmation.getApprovalStatus()));
+            item.setStartTime(confirmation.getCreateTime());
             result.add(item);
         }
 
@@ -208,6 +239,24 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             result.add(item);
         });
 
+        arrivalConfirmationApprovalHistoryMapper.selectByApproverId(userId).forEach(history -> {
+            ArrivalConfirmation confirmation = arrivalConfirmationMapper.selectByPrimaryKey(history.getArrivalConfirmationId());
+            if (confirmation == null) {
+                return;
+            }
+            WorkflowProcessedItem item = new WorkflowProcessedItem();
+            item.setProcessCode(ARRIVAL_PROCESS_CODE);
+            item.setBusinessId(confirmation.getArrivalConfirmationId());
+            item.setRequestId(confirmation.getArrivalConfirmationId());
+            item.setProcessName(ARRIVAL_PROCESS_NAME);
+            item.setSummary(buildArrivalSummary(confirmation));
+            item.setApplicant(confirmation.getCreateUserName());
+            item.setApplicantDept(nullSafe(confirmation.getTargetOrgUnitName()));
+            item.setApplyTime(confirmation.getCreateTime());
+            item.setHandleTime(history.getApprovalTime());
+            result.add(item);
+        });
+
         result.sort(Comparator.comparing(WorkflowProcessedItem::getHandleTime, Comparator.nullsLast(Date::compareTo)).reversed());
         return result;
     }
@@ -219,6 +268,38 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
 
     @Override
     public WorkflowDetail getWorkflowDetail(String processCode, Long businessId, String viewerId, String viewerName, String viewerRole) {
+        if (ARRIVAL_PROCESS_CODE.equalsIgnoreCase(processCode)) {
+            ArrivalConfirmation confirmation = arrivalConfirmationMapper.selectByPrimaryKey(businessId);
+            if (confirmation == null) {
+                throw new RuntimeException("流程不存在");
+            }
+
+            if (viewerId != null && !viewerId.trim().isEmpty()) {
+                logAction(
+                    ARRIVAL_PROCESS_CODE,
+                    businessId,
+                    confirmation.getCurrentApprovalLevel(),
+                    resolveArrivalCurrentNode(confirmation),
+                    "VIEW",
+                    "SUCCESS",
+                    viewerId,
+                    viewerName,
+                    viewerRole,
+                    "查看流程详情"
+                );
+            }
+
+            WorkflowDetail detail = new WorkflowDetail();
+            detail.setProcessCode(ARRIVAL_PROCESS_CODE);
+            detail.setArrivalConfirmation(confirmation);
+            detail.setArrivalConfirmationApprovalHistory(arrivalConfirmationApprovalHistoryMapper.selectByArrivalConfirmationId(businessId));
+            detail.setProcessLogs(workflowProcessLogMapper.selectByBusinessId(ARRIVAL_PROCESS_CODE, businessId));
+            detail.setNodeConfigs(new ArrayList<>());
+            detail.setApprovalHistory(new ArrayList<>());
+            detail.setInterviewEvaluationApprovalHistory(new ArrayList<>());
+            return detail;
+        }
+
         if (INTERVIEW_PROCESS_CODE.equalsIgnoreCase(processCode)) {
             InterviewEvaluation evaluation = interviewEvaluationMapper.selectByPrimaryKey(businessId);
             if (evaluation == null) {
@@ -295,6 +376,10 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
     @Override
     @Transactional
     public void approve(String processCode, Long businessId, WorkflowApproveRequest actionRequest) {
+        if (ARRIVAL_PROCESS_CODE.equalsIgnoreCase(processCode)) {
+            arrivalConfirmationService.approve(businessId, actionRequest);
+            return;
+        }
         if (INTERVIEW_PROCESS_CODE.equalsIgnoreCase(processCode)) {
             interviewEvaluationService.approve(businessId, actionRequest);
             return;
@@ -503,6 +588,9 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         if (value.contains("面试官")) {
             return "面试官";
         }
+        if (value.contains("供应商HR")) {
+            return "供应商HR";
+        }
         if (value.contains("分管总")) {
             return "分管总";
         }
@@ -648,9 +736,44 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
         }
     }
 
+    private void appendArrivalTodoItems(List<WorkflowTodoItem> result, String userId, String normalizedRole) {
+        boolean admin = isAdminRole(normalizedRole);
+        List<ArrivalConfirmation> confirmations = arrivalConfirmationMapper.selectAll();
+        if (confirmations == null) {
+            return;
+        }
+        for (ArrivalConfirmation confirmation : confirmations) {
+            if (confirmation == null || !isArrivalPending(confirmation)) {
+                continue;
+            }
+            if (!admin && !canArrivalApprove(userId, normalizedRole, confirmation)) {
+                continue;
+            }
+
+            WorkflowTodoItem item = new WorkflowTodoItem();
+            item.setProcessCode(ARRIVAL_PROCESS_CODE);
+            item.setBusinessId(confirmation.getArrivalConfirmationId());
+            item.setRequestId(confirmation.getArrivalConfirmationId());
+            item.setProcessName(ARRIVAL_PROCESS_NAME);
+            item.setSummary(buildArrivalSummary(confirmation));
+            item.setCurrentNode(resolveArrivalCurrentNode(confirmation));
+            item.setApplicant(confirmation.getCreateUserName());
+            item.setApplicantDept(nullSafe(confirmation.getTargetOrgUnitName()));
+            item.setArriveTime(confirmation.getUpdateTime());
+            result.add(item);
+        }
+    }
+
     private boolean isInterviewPending(InterviewEvaluation evaluation) {
         String status = evaluation.getApprovalStatus();
         return "PENDING_OUTSOURCING".equals(status) || "PENDING_ROOM_MANAGER".equals(status);
+    }
+
+    private boolean isArrivalPending(ArrivalConfirmation confirmation) {
+        String status = confirmation.getApprovalStatus();
+        return ArrivalConfirmationStatusEnum.PENDING_SUPPLIER_HR.name().equals(status)
+            || ArrivalConfirmationStatusEnum.PENDING_HR_TEAM_MANAGER.name().equals(status)
+            || ArrivalConfirmationStatusEnum.PENDING_ROOM_MANAGER.name().equals(status);
     }
 
     private String resolveInterviewApproverRole(InterviewEvaluation evaluation) {
@@ -664,6 +787,62 @@ public class WorkflowCenterServiceImpl implements WorkflowCenterService {
             return "外包招聘管理岗";
         }
         return "";
+    }
+
+    private boolean canArrivalApprove(String userId, String normalizedRole, ArrivalConfirmation confirmation) {
+        if (confirmation == null || userId == null || userId.trim().isEmpty()) {
+            return false;
+        }
+        String status = confirmation.getApprovalStatus();
+        if (ArrivalConfirmationStatusEnum.PENDING_SUPPLIER_HR.name().equals(status)) {
+            return "供应商HR".equals(normalizedRole) && userId.equals(confirmation.getSupplierHrUserId());
+        }
+        if (ArrivalConfirmationStatusEnum.PENDING_HR_TEAM_MANAGER.name().equals(status)) {
+            return "团队经理".equals(normalizedRole) && userId.equals(confirmation.getHrTeamManagerUserId());
+        }
+        if (ArrivalConfirmationStatusEnum.PENDING_ROOM_MANAGER.name().equals(status)) {
+            return "室经理".equals(normalizedRole) && userId.equals(confirmation.getRoomManagerUserId());
+        }
+        return false;
+    }
+
+    private String buildArrivalSummary(ArrivalConfirmation confirmation) {
+        return "到岗人员:" + nullSafe(confirmation.getCandidateName())
+            + " | 用人团队/部室:" + nullSafe(confirmation.getTargetOrgUnitName())
+            + " | 供应商:" + nullSafe(confirmation.getSupplierName());
+    }
+
+    private String resolveArrivalCurrentNode(ArrivalConfirmation confirmation) {
+        if (confirmation == null) {
+            return "-";
+        }
+        String status = confirmation.getApprovalStatus();
+        if (ArrivalConfirmationStatusEnum.PENDING_SUPPLIER_HR.name().equals(status)) {
+            return "供应商HR审批";
+        }
+        if (ArrivalConfirmationStatusEnum.PENDING_HR_TEAM_MANAGER.name().equals(status)) {
+            return "人力资源团队经理审批";
+        }
+        if (ArrivalConfirmationStatusEnum.PENDING_ROOM_MANAGER.name().equals(status)) {
+            return "用人室经理审批";
+        }
+        if (ArrivalConfirmationStatusEnum.REJECTED.name().equals(status)) {
+            return "已驳回";
+        }
+        if (ArrivalConfirmationStatusEnum.APPROVED.name().equals(status)) {
+            return "流程结束";
+        }
+        return "-";
+    }
+
+    private String resolveArrivalProcessStatus(String approvalStatus) {
+        if (ArrivalConfirmationStatusEnum.REJECTED.name().equals(approvalStatus)) {
+            return "已拒绝";
+        }
+        if (ArrivalConfirmationStatusEnum.APPROVED.name().equals(approvalStatus)) {
+            return "已通过";
+        }
+        return "处理中";
     }
 
     private boolean canRoomManagerHandle(String userId, InterviewEvaluation evaluation) {

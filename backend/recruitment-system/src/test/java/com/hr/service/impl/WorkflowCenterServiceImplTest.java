@@ -1,12 +1,16 @@
 package com.hr.service.impl;
 
 import com.hr.entity.InterviewEvaluation;
+import com.hr.entity.ArrivalConfirmation;
+import com.hr.entity.ArrivalConfirmationStatusEnum;
 import com.hr.entity.RecruitmentRequest;
 import com.hr.entity.OrgUnit;
 import com.hr.entity.User;
 import com.hr.entity.WorkflowNodeConfig;
 import com.hr.entity.WorkflowTodoItem;
 import com.hr.mapper.ApprovalHistoryMapper;
+import com.hr.mapper.ArrivalConfirmationApprovalHistoryMapper;
+import com.hr.mapper.ArrivalConfirmationMapper;
 import com.hr.mapper.InterviewEvaluationApprovalHistoryMapper;
 import com.hr.mapper.InterviewEvaluationMapper;
 import com.hr.mapper.OrgUnitMapper;
@@ -14,6 +18,7 @@ import com.hr.mapper.RecruitmentRequestMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowNodeConfigMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.ArrivalConfirmationService;
 import com.hr.service.InterviewEvaluationService;
 import com.hr.service.RecruitmentRequestService;
 import org.junit.jupiter.api.Test;
@@ -61,6 +66,15 @@ class WorkflowCenterServiceImplTest {
     @Mock
     private InterviewEvaluationService interviewEvaluationService;
 
+    @Mock
+    private ArrivalConfirmationMapper arrivalConfirmationMapper;
+
+    @Mock
+    private ArrivalConfirmationApprovalHistoryMapper arrivalConfirmationApprovalHistoryMapper;
+
+    @Mock
+    private ArrivalConfirmationService arrivalConfirmationService;
+
     @InjectMocks
     private WorkflowCenterServiceImpl workflowCenterService;
 
@@ -105,6 +119,7 @@ class WorkflowCenterServiceImplTest {
     @Test
     void getMyTodoReturnsInterviewEvaluationForRoomManagerMatchedByRoleAndLeafDepartment() {
         when(recruitmentRequestMapper.selectAll()).thenReturn(Collections.emptyList());
+        when(arrivalConfirmationMapper.selectAll()).thenReturn(Collections.emptyList());
 
         InterviewEvaluation evaluation = new InterviewEvaluation();
         evaluation.setEvaluationId(11L);
@@ -127,6 +142,27 @@ class WorkflowCenterServiceImplTest {
         assertEquals(1, items.size());
         assertEquals(Long.valueOf(11L), items.get(0).getBusinessId());
         assertEquals("室经理审批", items.get(0).getCurrentNode());
+    }
+
+    @Test
+    void getMyTodoReturnsArrivalConfirmationForSupplierHr() {
+        when(recruitmentRequestMapper.selectAll()).thenReturn(Collections.emptyList());
+        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.emptyList());
+
+        ArrivalConfirmation confirmation = new ArrivalConfirmation();
+        confirmation.setArrivalConfirmationId(31L);
+        confirmation.setCandidateName("候选人到岗");
+        confirmation.setTargetOrgUnitName("办公系统开发室");
+        confirmation.setSupplierName("供应商A");
+        confirmation.setSupplierHrUserId("1003");
+        confirmation.setApprovalStatus(ArrivalConfirmationStatusEnum.PENDING_SUPPLIER_HR.name());
+        when(arrivalConfirmationMapper.selectAll()).thenReturn(Collections.singletonList(confirmation));
+
+        List<WorkflowTodoItem> items = workflowCenterService.getMyTodo("1003", "供应商HR");
+
+        assertEquals(1, items.size());
+        assertEquals(Long.valueOf(31L), items.get(0).getBusinessId());
+        assertEquals("供应商HR审批", items.get(0).getCurrentNode());
     }
 
     private OrgUnit orgUnit(String unitName, String unitType, String parentUnitName) {

@@ -41,10 +41,4 @@ public interface EmailTemplateService {
      * @return 邮件模板列表
      */
     List<EmailTemplate> getByStatus(String status);
-
-    /**
-     * 获取默认的录用邮件模板
-     * @return 邮件模板对象
-     */
-    EmailTemplate getDefaultOfferTemplate();
 }

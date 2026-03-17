@@ -18,7 +18,8 @@ const RecruitmentRequestForm = lazy(() => import('./components/RecruitmentReques
 const DemandManagement = lazy(() => import('./components/DemandManagement'))
 const ResumeSubmission = lazy(() => import('./components/ResumeSubmission'))
 const InterviewScheduling = lazy(() => import('./components/InterviewScheduling'))
-const OfferManagement = lazy(() => import('./components/OfferManagement'))
+const EntryManagement = lazy(() => import('./components/EntryManagement'))
+const ArrivalConfirmation = lazy(() => import('./components/ArrivalConfirmation'))
 const UserManagement = lazy(() => import('./components/UserManagement'))
 const MessageManagement = lazy(() => import('./components/MessageManagement'))
 const RoleManagement = lazy(() => import('./components/RoleManagement'))
@@ -55,7 +56,9 @@ function AppContent() {
             <Route path="/resume-submission" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ResumeSubmission /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/resume-screening" element={<ProtectedRoute><Navigate to="/resume-submission" replace /></ProtectedRoute>} />
             <Route path="/interview-scheduling" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><InterviewScheduling /></Suspense></MainLayout></ProtectedRoute>} />
-            <Route path="/offer-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><OfferManagement /></Suspense></MainLayout></ProtectedRoute>} />
+            <Route path="/offer-management" element={<ProtectedRoute><Navigate to="/entry-management" replace /></ProtectedRoute>} />
+            <Route path="/entry-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><EntryManagement /></Suspense></MainLayout></ProtectedRoute>} />
+            <Route path="/arrival-confirmation" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><ArrivalConfirmation /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><UserManagement /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/role-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><RoleManagement /></Suspense></MainLayout></ProtectedRoute>} />
             <Route path="/supplier-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<PageFallback />}><SupplierManagement /></Suspense></MainLayout></ProtectedRoute>} />

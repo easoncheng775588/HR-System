@@ -205,30 +205,6 @@ public class DatabaseInitializer implements CommandLineRunner {
             jdbcTemplate.execute(createRolePermissionTableSQL);
             logger.info("表 sys_role_permission 创建成功");
             
-            // 创建录用记录表
-            String createOfferRecordTableSQL = "CREATE TABLE IF NOT EXISTS offer_record (" +
-                "offer_record_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '录用记录ID', " +
-                "resume_id BIGINT NOT NULL COMMENT '简历ID', " +
-                "recruitment_request_id BIGINT NOT NULL COMMENT '招聘申请ID', " +
-                "candidate_name VARCHAR(100) NOT NULL COMMENT '候选人姓名', " +
-                "contact_phone VARCHAR(20) NOT NULL COMMENT '联系电话', " +
-                "email VARCHAR(100) NOT NULL COMMENT '邮箱', " +
-                "position VARCHAR(255) NOT NULL COMMENT '录用岗位', " +
-                "status VARCHAR(20) NOT NULL COMMENT '录用状态', " +
-                "offer_time DATETIME COMMENT '录用时间', " +
-                "entry_time DATETIME COMMENT '入职时间', " +
-                "email_status VARCHAR(20) COMMENT '邮件发送状态', " +
-                "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
-                "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
-                "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
-                "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', " +
-                "update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID', " +
-                "update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名'" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='录用记录表'";
-            
-            jdbcTemplate.execute(createOfferRecordTableSQL);
-            logger.info("表 offer_record 创建成功");
-            
             // 创建邮件模板表
             String createEmailTemplateTableSQL = "CREATE TABLE IF NOT EXISTS email_template (" +
                 "template_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '模板ID', " +
@@ -266,7 +242,12 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             ensureMessageTable();
             ensureDemandManagementTables();
+            ensureEntryManagementTables();
+            ensureArrivalConfirmationTables();
             cleanupLegacyPositionPublishingArtifacts();
+            cleanupLegacyOfferManagementArtifacts();
+            ensureEntryManagementPermission();
+            ensureArrivalConfirmationPermission();
             
             // 创建简历表
             String createResumeTableSQL = "CREATE TABLE IF NOT EXISTS resume (" +
@@ -322,28 +303,6 @@ public class DatabaseInitializer implements CommandLineRunner {
                 logger.info("索引 idx_recruitment_request_id 创建成功");
             } catch (Exception e) {
                 logger.info("索引 idx_recruitment_request_id 已存在或创建失败: {}", e.getMessage());
-            }
-            
-            // 创建索引
-            try {
-                jdbcTemplate.execute("CREATE INDEX idx_resume_id ON offer_record(resume_id)");
-                logger.info("索引 idx_resume_id 创建成功");
-            } catch (Exception e) {
-                logger.info("索引 idx_resume_id 已存在或创建失败: {}", e.getMessage());
-            }
-            
-            try {
-                jdbcTemplate.execute("CREATE INDEX idx_status ON offer_record(status)");
-                logger.info("索引 idx_status 创建成功");
-            } catch (Exception e) {
-                logger.info("索引 idx_status 已存在或创建失败: {}", e.getMessage());
-            }
-            
-            try {
-                jdbcTemplate.execute("CREATE INDEX idx_email_status ON offer_record(email_status)");
-                logger.info("索引 idx_email_status 创建成功");
-            } catch (Exception e) {
-                logger.info("索引 idx_email_status 已存在或创建失败: {}", e.getMessage());
             }
             
             try {
@@ -652,6 +611,110 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
     }
 
+    private void ensureEntryManagementTables() {
+        String createEntryRecordSQL = "CREATE TABLE IF NOT EXISTS entry_record (" +
+            "entry_record_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '入场记录ID', " +
+            "evaluation_id BIGINT NOT NULL COMMENT '面试评价ID', " +
+            "resume_id BIGINT NOT NULL COMMENT '简历ID', " +
+            "source_recruitment_request_id BIGINT NOT NULL COMMENT '来源用人申请ID', " +
+            "candidate_name VARCHAR(100) NOT NULL COMMENT '候选人', " +
+            "interview_time DATETIME DEFAULT NULL COMMENT '面试时间', " +
+            "hired_department VARCHAR(200) NOT NULL COMMENT '录用室组', " +
+            "position_level VARCHAR(50) NOT NULL COMMENT '职位级别', " +
+            "technical_platform VARCHAR(50) NOT NULL COMMENT '技术平台', " +
+            "entry_status VARCHAR(20) DEFAULT NULL COMMENT '入场状态', " +
+            "planned_entry_date DATE DEFAULT NULL COMMENT '拟到岗时间', " +
+            "actual_entry_date DATE DEFAULT NULL COMMENT '实际到岗时间', " +
+            "arrival_status VARCHAR(200) DEFAULT NULL COMMENT '到岗情况', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建用户ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建用户姓名', " +
+            "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', " +
+            "update_user_id VARCHAR(20) NOT NULL COMMENT '更新用户ID', " +
+            "update_user_name VARCHAR(50) NOT NULL COMMENT '更新用户姓名', " +
+            "UNIQUE KEY uk_entry_evaluation_id (evaluation_id)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='入场管理表'";
+        jdbcTemplate.execute(createEntryRecordSQL);
+        logger.info("表 entry_record 创建成功");
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_entry_request_id ON entry_record(source_recruitment_request_id)");
+            logger.info("索引 idx_entry_request_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_entry_request_id 已存在或创建失败: {}", e.getMessage());
+        }
+    }
+
+    private void ensureArrivalConfirmationTables() {
+        String createArrivalConfirmationSQL = "CREATE TABLE IF NOT EXISTS arrival_confirmation (" +
+            "arrival_confirmation_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '到岗确认ID', " +
+            "entry_record_id BIGINT NOT NULL COMMENT '入场记录ID', " +
+            "resume_id BIGINT NOT NULL COMMENT '简历ID', " +
+            "source_recruitment_request_id BIGINT NOT NULL COMMENT '来源用人申请ID', " +
+            "candidate_name VARCHAR(100) NOT NULL COMMENT '到岗人员', " +
+            "supplier_id BIGINT NOT NULL COMMENT '供应商ID', " +
+            "supplier_name VARCHAR(100) NOT NULL COMMENT '所属外包供应商', " +
+            "supplier_hr_user_id VARCHAR(20) NOT NULL COMMENT '供应商HR用户ID', " +
+            "supplier_hr_user_name VARCHAR(50) NOT NULL COMMENT '供应商HR姓名', " +
+            "target_org_unit_name VARCHAR(200) NOT NULL COMMENT '用人团队/部室', " +
+            "room_manager_user_id VARCHAR(20) NOT NULL COMMENT '所属室经理用户ID', " +
+            "room_manager_user_name VARCHAR(50) NOT NULL COMMENT '所属室经理姓名', " +
+            "hr_team_manager_user_id VARCHAR(20) NOT NULL COMMENT '人力资源团队经理用户ID', " +
+            "hr_team_manager_user_name VARCHAR(50) NOT NULL COMMENT '人力资源团队经理姓名', " +
+            "entry_date DATE NOT NULL COMMENT '人员进场日期', " +
+            "position_level VARCHAR(50) NOT NULL COMMENT '人员级别', " +
+            "approval_status VARCHAR(40) NOT NULL COMMENT '审批状态', " +
+            "current_approval_level INT NOT NULL DEFAULT 1 COMMENT '当前审批级别', " +
+            "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间', " +
+            "create_user_id VARCHAR(20) NOT NULL COMMENT '创建人ID', " +
+            "create_user_name VARCHAR(50) NOT NULL COMMENT '创建人姓名', " +
+            "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', " +
+            "update_user_id VARCHAR(20) NOT NULL COMMENT '更新人ID', " +
+            "update_user_name VARCHAR(50) NOT NULL COMMENT '更新人姓名'" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='到岗确认表'";
+        jdbcTemplate.execute(createArrivalConfirmationSQL);
+        logger.info("表 arrival_confirmation 创建成功");
+
+        String createArrivalConfirmationHistorySQL = "CREATE TABLE IF NOT EXISTS arrival_confirmation_approval_history (" +
+            "id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '审批历史ID', " +
+            "arrival_confirmation_id BIGINT NOT NULL COMMENT '到岗确认ID', " +
+            "approval_level INT NOT NULL COMMENT '审批级别', " +
+            "approver_id VARCHAR(20) NOT NULL COMMENT '审批人ID', " +
+            "approver_name VARCHAR(50) NOT NULL COMMENT '审批人姓名', " +
+            "approver_role VARCHAR(50) NOT NULL COMMENT '审批人角色', " +
+            "action VARCHAR(20) NOT NULL COMMENT '动作', " +
+            "comment VARCHAR(500) DEFAULT NULL COMMENT '审批意见', " +
+            "approval_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '审批时间'" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='到岗确认审批历史表'";
+        jdbcTemplate.execute(createArrivalConfirmationHistorySQL);
+        logger.info("表 arrival_confirmation_approval_history 创建成功");
+
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_arrival_confirmation_entry_record_id ON arrival_confirmation(entry_record_id)");
+            logger.info("索引 idx_arrival_confirmation_entry_record_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_arrival_confirmation_entry_record_id 已存在或创建失败: {}", e.getMessage());
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_arrival_confirmation_supplier_hr_user_id ON arrival_confirmation(supplier_hr_user_id)");
+            logger.info("索引 idx_arrival_confirmation_supplier_hr_user_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_arrival_confirmation_supplier_hr_user_id 已存在或创建失败: {}", e.getMessage());
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_arrival_confirmation_request_id ON arrival_confirmation(source_recruitment_request_id)");
+            logger.info("索引 idx_arrival_confirmation_request_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_arrival_confirmation_request_id 已存在或创建失败: {}", e.getMessage());
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX idx_arrival_confirmation_history_id ON arrival_confirmation_approval_history(arrival_confirmation_id)");
+            logger.info("索引 idx_arrival_confirmation_history_id 创建成功");
+        } catch (Exception e) {
+            logger.info("索引 idx_arrival_confirmation_history_id 已存在或创建失败: {}", e.getMessage());
+        }
+    }
+
     private void cleanupLegacyPositionPublishingArtifacts() {
         String[] legacyTables = {
             "position_publishing",
@@ -672,6 +735,158 @@ public class DatabaseInitializer implements CommandLineRunner {
             logger.info("已清理历史岗位发布菜单权限");
         } catch (Exception e) {
             logger.warn("清理历史岗位发布菜单权限失败: {}", e.getMessage());
+        }
+    }
+
+    private void cleanupLegacyOfferManagementArtifacts() {
+        try {
+            jdbcTemplate.execute("DROP TABLE IF EXISTS offer_record");
+            logger.info("已清理历史录用管理表 offer_record");
+        } catch (Exception e) {
+            logger.warn("清理历史录用管理表失败: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.update(
+                "DELETE rp FROM sys_role_permission rp INNER JOIN sys_permission p ON rp.permission_id = p.permission_id WHERE p.path = '/offer-management'"
+            );
+        } catch (Exception e) {
+            logger.warn("清理历史录用管理角色权限失败: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.update("DELETE FROM sys_permission WHERE path = '/offer-management'");
+            logger.info("已清理历史录用管理菜单权限");
+        } catch (Exception e) {
+            logger.warn("清理历史录用管理菜单权限失败: {}", e.getMessage());
+        }
+    }
+
+    private void ensureEntryManagementPermission() {
+        Long permissionId = jdbcTemplate.query(
+            "SELECT permission_id FROM sys_permission WHERE permission_code = ? LIMIT 1",
+            ps -> ps.setString(1, "ENTRY_MANAGE"),
+            rs -> rs.next() ? rs.getLong(1) : null
+        );
+
+        if (permissionId == null) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_permission (permission_name, permission_code, permission_type, parent_id, path, icon, sort_order, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "入场管理",
+                "ENTRY_MANAGE",
+                Constants.PERMISSION_TYPE_MENU,
+                0,
+                "/entry-management",
+                "CheckCircleOutlined",
+                8,
+                Constants.STATUS_ACTIVE,
+                Constants.SUPER_ADMIN_USER_ID,
+                Constants.SYSTEM_USER,
+                Constants.SUPER_ADMIN_USER_ID,
+                Constants.SYSTEM_USER
+            );
+            permissionId = jdbcTemplate.query(
+                "SELECT permission_id FROM sys_permission WHERE permission_code = ? LIMIT 1",
+                ps -> ps.setString(1, "ENTRY_MANAGE"),
+                rs -> rs.next() ? rs.getLong(1) : null
+            );
+            logger.info("入场管理菜单权限创建成功");
+        }
+
+        if (permissionId == null) {
+            return;
+        }
+
+        String[] roleNames = {"室经理", "团队经理", "外包招聘管理岗", "超级管理员"};
+        for (String roleName : roleNames) {
+            Long roleId = jdbcTemplate.query(
+                "SELECT role_id FROM sys_role WHERE role_name = ? LIMIT 1",
+                ps -> ps.setString(1, roleName),
+                rs -> rs.next() ? rs.getLong(1) : null
+            );
+            if (roleId == null) {
+                continue;
+            }
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_role_permission WHERE role_id = ? AND permission_id = ?",
+                Integer.class,
+                roleId,
+                permissionId
+            );
+            if (count == null || count == 0) {
+                jdbcTemplate.update(
+                    "INSERT INTO sys_role_permission (role_id, permission_id, create_user_id, create_user_name) VALUES (?, ?, ?, ?)",
+                    roleId,
+                    permissionId,
+                    Constants.SUPER_ADMIN_USER_ID,
+                    Constants.SYSTEM_USER
+                );
+            }
+        }
+    }
+
+    private void ensureArrivalConfirmationPermission() {
+        Long permissionId = jdbcTemplate.query(
+            "SELECT permission_id FROM sys_permission WHERE permission_code = ? LIMIT 1",
+            ps -> ps.setString(1, "ARRIVAL_CONFIRM"),
+            rs -> rs.next() ? rs.getLong(1) : null
+        );
+
+        if (permissionId == null) {
+            jdbcTemplate.update(
+                "INSERT INTO sys_permission (permission_name, permission_code, permission_type, parent_id, path, icon, sort_order, status, create_user_id, create_user_name, update_user_id, update_user_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "到岗确认",
+                "ARRIVAL_CONFIRM",
+                Constants.PERMISSION_TYPE_MENU,
+                0,
+                "/arrival-confirmation",
+                "AuditOutlined",
+                9,
+                Constants.STATUS_ACTIVE,
+                Constants.SUPER_ADMIN_USER_ID,
+                Constants.SYSTEM_USER,
+                Constants.SUPER_ADMIN_USER_ID,
+                Constants.SYSTEM_USER
+            );
+            permissionId = jdbcTemplate.query(
+                "SELECT permission_id FROM sys_permission WHERE permission_code = ? LIMIT 1",
+                ps -> ps.setString(1, "ARRIVAL_CONFIRM"),
+                rs -> rs.next() ? rs.getLong(1) : null
+            );
+            logger.info("到岗确认菜单权限创建成功");
+        }
+
+        if (permissionId == null) {
+            return;
+        }
+
+        String[] roleNames = {"外包招聘管理岗", "超级管理员", "室经理", "团队经理", "供应商HR"};
+        for (String roleName : roleNames) {
+            Long roleId = jdbcTemplate.query(
+                "SELECT role_id FROM sys_role WHERE role_name = ? LIMIT 1",
+                ps -> ps.setString(1, roleName),
+                rs -> rs.next() ? rs.getLong(1) : null
+            );
+            if (roleId == null) {
+                continue;
+            }
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_role_permission WHERE role_id = ? AND permission_id = ?",
+                Integer.class,
+                roleId,
+                permissionId
+            );
+            if (count == null || count == 0) {
+                jdbcTemplate.update(
+                    "INSERT INTO sys_role_permission (role_id, permission_id, create_user_id, create_user_name) VALUES (?, ?, ?, ?)",
+                    roleId,
+                    permissionId,
+                    Constants.SUPER_ADMIN_USER_ID,
+                    Constants.SYSTEM_USER
+                );
+            }
         }
     }
 

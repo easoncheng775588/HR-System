@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.EntryRecordMapper">
+
+    <resultMap id="EntryRecordResultMap" type="com.hr.entity.EntryRecord">
+        <id property="entryRecordId" column="entry_record_id"/>
+        <result property="evaluationId" column="evaluation_id"/>
+        <result property="resumeId" column="resume_id"/>
+        <result property="sourceRecruitmentRequestId" column="source_recruitment_request_id"/>
+        <result property="candidateName" column="candidate_name"/>
+        <result property="interviewTime" column="interview_time"/>
+        <result property="hiredDepartment" column="hired_department"/>
+        <result property="positionLevel" column="position_level"/>
+        <result property="technicalPlatform" column="technical_platform"/>
+        <result property="entryStatus" column="entry_status"/>
+        <result property="plannedEntryDate" column="planned_entry_date"/>
+        <result property="actualEntryDate" column="actual_entry_date"/>
+        <result property="arrivalStatus" column="arrival_status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.EntryRecord" useGeneratedKeys="true" keyProperty="entryRecordId">
+        INSERT INTO entry_record (
+            evaluation_id,
+            resume_id,
+            source_recruitment_request_id,
+            candidate_name,
+            interview_time,
+            hired_department,
+            position_level,
+            technical_platform,
+            entry_status,
+            planned_entry_date,
+            actual_entry_date,
+            arrival_status,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{evaluationId},
+            #{resumeId},
+            #{sourceRecruitmentRequestId},
+            #{candidateName},
+            #{interviewTime},
+            #{hiredDepartment},
+            #{positionLevel},
+            #{technicalPlatform},
+            #{entryStatus},
+            #{plannedEntryDate},
+            #{actualEntryDate},
+            #{arrivalStatus},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.EntryRecord">
+        UPDATE entry_record
+        SET entry_status = #{entryStatus},
+            planned_entry_date = #{plannedEntryDate},
+            actual_entry_date = #{actualEntryDate},
+            arrival_status = #{arrivalStatus},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE entry_record_id = #{entryRecordId}
+    </update>
+
+    <select id="selectByPrimaryKey" resultMap="EntryRecordResultMap">
+        SELECT *
+        FROM entry_record
+        WHERE entry_record_id = #{entryRecordId}
+    </select>
+
+    <select id="selectByEvaluationId" resultMap="EntryRecordResultMap">
+        SELECT *
+        FROM entry_record
+        WHERE evaluation_id = #{evaluationId}
+        LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="EntryRecordResultMap">
+        SELECT *
+        FROM entry_record
+        ORDER BY create_time DESC, entry_record_id DESC
+    </select>
+</mapper>

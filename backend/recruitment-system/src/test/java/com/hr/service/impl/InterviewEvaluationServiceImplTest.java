@@ -13,6 +13,7 @@ import com.hr.mapper.ResumeDispatchMapper;
 import com.hr.mapper.ResumeMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.EntryManagementService;
 import com.hr.service.InterviewMessageService;
 import com.hr.service.InterviewPermissionService;
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,9 @@ class InterviewEvaluationServiceImplTest {
 
     @Mock
     private WorkflowProcessLogMapper workflowProcessLogMapper;
+
+    @Mock
+    private EntryManagementService entryManagementService;
 
     @InjectMocks
     private InterviewEvaluationServiceImpl interviewEvaluationService;
@@ -194,6 +198,7 @@ class InterviewEvaluationServiceImplTest {
         assertEquals(InterviewEvaluationStatusEnum.APPROVED.name(), evaluation.getApprovalStatus());
         assertEquals(Integer.valueOf(3), evaluation.getCurrentApprovalLevel());
         verify(workflowProcessLogMapper, times(2)).insert(any());
+        verify(entryManagementService).createFromApprovedEvaluation(evaluation);
         verify(interviewMessageService).sendEvaluationCompletedMessage(
             eq("2001"), eq("3001"), eq("面试官A"), eq("基础业务开发团队 / 办公系统开发室"), eq("候选人乙"), eq("P7"), eq("2026-03-13 16:00:00")
         );
@@ -229,6 +234,7 @@ class InterviewEvaluationServiceImplTest {
 
         interviewEvaluationService.approve(92L, request);
 
+        verify(entryManagementService).createFromApprovedEvaluation(evaluation);
         verify(interviewMessageService).sendEvaluationCompletedMessage(
             eq("1008"), eq("1001"), eq("陈秀芳"), eq("办公系统开发室"), eq("候选人丙"), eq("P6"), eq("2026-03-13 16:30:00")
         );

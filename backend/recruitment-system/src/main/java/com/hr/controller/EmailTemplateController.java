@@ -123,31 +123,6 @@ public class EmailTemplateController {
         
         return result;
     }
-
-    /**
-     * 获取默认的录用邮件模板
-     * @return 响应结果
-     */
-    @GetMapping("/default/offer")
-    public Map<String, Object> getDefaultOfferTemplate() {
-        Map<String, Object> result = new HashMap<>();
-        logger.debug("获取默认的录用邮件模板请求");
-        
-        try {
-            EmailTemplate emailTemplate = emailTemplateService.getDefaultOfferTemplate();
-            result.put("returnCode", "SUC0000");
-            result.put("errorMsg", "");
-            result.put("body", emailTemplate);
-        } catch (Exception e) {
-            logger.error("获取默认的录用邮件模板失败: {}", e.getMessage());
-            result.put("returnCode", "ERR0001");
-            result.put("errorMsg", "获取默认的录用邮件模板失败: " + e.getMessage());
-            result.put("body", null);
-        }
-        
-        return result;
-    }
-
     /**
      * 更新邮件模板状态
      * @param id 邮件模板ID

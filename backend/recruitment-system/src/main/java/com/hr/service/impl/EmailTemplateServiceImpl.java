@@ -68,41 +68,4 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
         logger.debug("根据状态查询邮件模板: {}", status);
         return emailTemplateMapper.selectByStatus(status);
     }
-
-    @Override
-    public EmailTemplate getDefaultOfferTemplate() {
-        logger.debug("获取默认的录用邮件模板");
-        
-        try {
-            // 首先尝试从数据库获取
-            EmailTemplate template = emailTemplateMapper.selectByType("OFFER");
-            
-            if (template == null) {
-                // 如果数据库中没有，创建默认模板
-                logger.debug("数据库中没有录用邮件模板，创建默认模板");
-                template = createDefaultOfferTemplate();
-                save(template);
-            }
-            
-            return template;
-        } catch (Exception e) {
-            logger.error("获取默认录用邮件模板失败: {}", e.getMessage());
-            // 如果出现异常，返回一个内存中的默认模板
-            return createDefaultOfferTemplate();
-        }
-    }
-    
-    /**
-     * 创建默认的录用邮件模板
-     * @return 默认邮件模板
-     */
-    private EmailTemplate createDefaultOfferTemplate() {
-        EmailTemplate template = new EmailTemplate();
-        template.setTemplateName("录用邀约模板");
-        template.setTemplateType("OFFER");
-        template.setSubject("录用邀约");
-        template.setContent("亲爱的{name}：\n\n您好！\n\n非常高兴地通知您，经过我司的面试评估，您已通过所有面试环节，我们诚挚地邀请您加入我们的团队。\n\n【录用详情】\n岗位：{position}\n入职时间：{entryTime}\n\n我们相信您的加入将为公司带来新的活力和价值。如果您对录用条件有任何疑问，或需要进一步的信息，请随时与我们联系。\n\n期待您的回复！\n\n此致\n敬礼\n\n{companyName}\n{date}");
-        template.setStatus("ACTIVE");
-        return template;
-    }
 }

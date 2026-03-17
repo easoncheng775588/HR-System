@@ -6,7 +6,9 @@ public class WorkflowDetail {
     private String processCode;
     private RecruitmentRequest request;
     private InterviewEvaluation interviewEvaluation;
+    private ArrivalConfirmation arrivalConfirmation;
     private List<InterviewEvaluationApprovalHistory> interviewEvaluationApprovalHistory;
+    private List<ArrivalConfirmationApprovalHistory> arrivalConfirmationApprovalHistory;
     private List<ApprovalHistory> approvalHistory;
     private List<WorkflowNodeConfig> nodeConfigs;
     private List<WorkflowProcessLog> processLogs;
@@ -35,12 +37,28 @@ public class WorkflowDetail {
         this.interviewEvaluation = interviewEvaluation;
     }
 
+    public ArrivalConfirmation getArrivalConfirmation() {
+        return arrivalConfirmation;
+    }
+
+    public void setArrivalConfirmation(ArrivalConfirmation arrivalConfirmation) {
+        this.arrivalConfirmation = arrivalConfirmation;
+    }
+
     public List<InterviewEvaluationApprovalHistory> getInterviewEvaluationApprovalHistory() {
         return interviewEvaluationApprovalHistory;
     }
 
     public void setInterviewEvaluationApprovalHistory(List<InterviewEvaluationApprovalHistory> interviewEvaluationApprovalHistory) {
         this.interviewEvaluationApprovalHistory = interviewEvaluationApprovalHistory;
+    }
+
+    public List<ArrivalConfirmationApprovalHistory> getArrivalConfirmationApprovalHistory() {
+        return arrivalConfirmationApprovalHistory;
+    }
+
+    public void setArrivalConfirmationApprovalHistory(List<ArrivalConfirmationApprovalHistory> arrivalConfirmationApprovalHistory) {
+        this.arrivalConfirmationApprovalHistory = arrivalConfirmationApprovalHistory;
     }
 
     public List<ApprovalHistory> getApprovalHistory() {

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.ArrivalConfirmationApprovalHistoryMapper">
+
+    <resultMap id="ArrivalConfirmationApprovalHistoryMap" type="com.hr.entity.ArrivalConfirmationApprovalHistory">
+        <id property="id" column="id"/>
+        <result property="arrivalConfirmationId" column="arrival_confirmation_id"/>
+        <result property="approvalLevel" column="approval_level"/>
+        <result property="approverId" column="approver_id"/>
+        <result property="approverName" column="approver_name"/>
+        <result property="approverRole" column="approver_role"/>
+        <result property="action" column="action"/>
+        <result property="comment" column="comment"/>
+        <result property="approvalTime" column="approval_time"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.ArrivalConfirmationApprovalHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO arrival_confirmation_approval_history (
+            arrival_confirmation_id,
+            approval_level,
+            approver_id,
+            approver_name,
+            approver_role,
+            action,
+            comment,
+            approval_time
+        ) VALUES (
+            #{arrivalConfirmationId},
+            #{approvalLevel},
+            #{approverId},
+            #{approverName},
+            #{approverRole},
+            #{action},
+            #{comment},
+            #{approvalTime}
+        )
+    </insert>
+
+    <select id="selectByArrivalConfirmationId" resultMap="ArrivalConfirmationApprovalHistoryMap">
+        SELECT *
+        FROM arrival_confirmation_approval_history
+        WHERE arrival_confirmation_id = #{arrivalConfirmationId}
+        ORDER BY approval_time ASC, id ASC
+    </select>
+
+    <select id="selectByApproverId" resultMap="ArrivalConfirmationApprovalHistoryMap">
+        SELECT *
+        FROM arrival_confirmation_approval_history
+        WHERE approver_id = #{approverId}
+        ORDER BY approval_time DESC, id DESC
+    </select>
+</mapper>

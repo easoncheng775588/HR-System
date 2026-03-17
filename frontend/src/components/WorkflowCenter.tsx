@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
 import { approveWorkflowProcess } from '../services/interviewApi';
 import { PROCESS_CODE } from '../utils/interviewStatus';
-import { getWorkflowApprovalHistory, getWorkflowEvaluationDetail } from './workflowDetailHelpers';
+import { getWorkflowApprovalHistory, getWorkflowArrivalDetail, getWorkflowEvaluationDetail } from './workflowDetailHelpers';
 
 type TabKey = 'todo' | 'initiated' | 'processed';
 
@@ -30,8 +30,10 @@ interface WorkflowDetailBody {
   request?: Record<string, unknown>;
   evaluation?: Record<string, unknown>;
   interviewEvaluation?: Record<string, unknown>;
+  arrivalConfirmation?: Record<string, unknown>;
   approvalHistory?: Array<Record<string, unknown>>;
   interviewEvaluationApprovalHistory?: Array<Record<string, unknown>>;
+  arrivalConfirmationApprovalHistory?: Array<Record<string, unknown>>;
   nodeConfigs?: Array<Record<string, unknown>>;
   processLogs?: Array<Record<string, unknown>>;
 }
@@ -209,6 +211,7 @@ const WorkflowCenter: React.FC = () => {
 
   const request = (detail?.request || {}) as Record<string, unknown>;
   const evaluation = getWorkflowEvaluationDetail(detail || {}) as Record<string, unknown>;
+  const arrivalConfirmation = getWorkflowArrivalDetail(detail || {}) as Record<string, unknown>;
   const history = getWorkflowApprovalHistory(detail || {}) as Array<Record<string, unknown>>;
   const logs = (detail?.processLogs || []) as Array<Record<string, unknown>>;
 
@@ -262,7 +265,18 @@ const WorkflowCenter: React.FC = () => {
       >
         {detailLoading ? null : (
           <>
-            {String(currentItem?.processCode || PROCESS_CODE.RECRUITMENT_REQUEST) === PROCESS_CODE.INTERVIEW_EVALUATION ? (
+            {String(currentItem?.processCode || PROCESS_CODE.RECRUITMENT_REQUEST) === 'ARRIVAL_CONFIRMATION' ? (
+              <Descriptions title="到岗确认信息" column={1} size="small">
+                <Descriptions.Item label="流程名称">{String(currentItem?.processName || PROCESS_NAME)}</Descriptions.Item>
+                <Descriptions.Item label="到岗人员">{String(arrivalConfirmation.candidateName || '-')}</Descriptions.Item>
+                <Descriptions.Item label="所属外包供应商">{String(arrivalConfirmation.supplierName || '-')}</Descriptions.Item>
+                <Descriptions.Item label="供应商HR">{String(arrivalConfirmation.supplierHrUserName || '-')}</Descriptions.Item>
+                <Descriptions.Item label="用人团队/部室">{String(arrivalConfirmation.targetOrgUnitName || '-')}</Descriptions.Item>
+                <Descriptions.Item label="所属室经理">{String(arrivalConfirmation.roomManagerUserName || '-')}</Descriptions.Item>
+                <Descriptions.Item label="人员进场日期">{arrivalConfirmation.entryDate ? String(arrivalConfirmation.entryDate).slice(0, 10) : '-'}</Descriptions.Item>
+                <Descriptions.Item label="人员级别">{getLevelText(String(arrivalConfirmation.positionLevel || ''))}</Descriptions.Item>
+              </Descriptions>
+            ) : String(currentItem?.processCode || PROCESS_CODE.RECRUITMENT_REQUEST) === PROCESS_CODE.INTERVIEW_EVALUATION ? (
               <Descriptions title="评价信息" column={1} size="small">
                 <Descriptions.Item label="流程名称">{String(currentItem?.processName || PROCESS_NAME)}</Descriptions.Item>
                 <Descriptions.Item label="候选人">{String(evaluation.candidateName || '-')}</Descriptions.Item>

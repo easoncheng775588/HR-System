@@ -17,6 +17,7 @@ import {
   MessageOutlined,
   ApartmentOutlined,
   CheckCircleOutlined,
+  AuditOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,7 +29,7 @@ import './MainLayout.css';
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = ({ children }) => {
-  const { user, hasMenuAccess, logout } = useAuth();
+  const { user, permissions, hasMenuAccess, logout } = useAuth();
   const { messages, unreadCount, markAsRead } = useMessage();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -40,7 +41,7 @@ const MainLayout = ({ children }) => {
 
   const fetchPendingTasks = useCallback(async () => {
     try {
-      const approvalPositions = ['编制管理岗', '外包招聘管理岗', '团队经理', '分管总'];
+      const approvalPositions = ['编制管理岗', '外包招聘管理岗', '团队经理', '室经理', '供应商HR', '分管总'];
       const hasApprovalPermission = user && approvalPositions.includes(user.position);
 
       let pendingApprovalCount = 0;
@@ -108,20 +109,44 @@ const MainLayout = ({ children }) => {
       || roleText.includes('供应商HR');
   }, [user]);
 
+  const entryManagementVisible = useMemo(() => {
+    if (!user) return false;
+    const permissionCodes = new Set((permissions || []).map((item) => item.permissionCode || item.permission_code));
+    const roleText = `${user.position || ''} ${user.role || ''}`;
+    return user.userId === '1001'
+      || permissionCodes.has('ENTRY_MANAGE')
+      || roleText.includes('室经理')
+      || roleText.includes('团队经理')
+      || roleText.includes('外包招聘管理');
+  }, [permissions, user]);
+
+  const arrivalConfirmationVisible = useMemo(() => {
+    if (!user) return false;
+    const permissionCodes = new Set((permissions || []).map((item) => item.permissionCode || item.permission_code));
+    const roleText = `${user.position || ''} ${user.role || ''}`;
+    return user.userId === '1001'
+      || permissionCodes.has('ARRIVAL_CONFIRM')
+      || roleText.includes('外包招聘管理')
+      || roleText.includes('室经理')
+      || roleText.includes('团队经理')
+      || roleText.includes('供应商HR');
+  }, [permissions, user]);
+
   const allMenuItems = useMemo(() => ([
     { key: 'dashboard', icon: <HomeOutlined />, label: '欢迎页面' },
     { key: 'recruitment-request', icon: <FormOutlined />, label: '用人申请' },
     ...(demandManagementVisible ? [{ key: 'demand-management', icon: <TableOutlined />, label: '需求管理' }] : []),
     { key: 'resume-submission', icon: <FileTextOutlined />, label: '简历管理' },
     { key: 'interview-scheduling', icon: <CalendarOutlined />, label: '面试安排' },
-    { key: 'offer-management', icon: <CheckCircleOutlined />, label: '录用管理' },
+    ...(entryManagementVisible ? [{ key: 'entry-management', icon: <CheckCircleOutlined />, label: '入场管理' }] : []),
+    ...(arrivalConfirmationVisible ? [{ key: 'arrival-confirmation', icon: <AuditOutlined />, label: '到岗确认' }] : []),
     { key: 'user-management', icon: <UserOutlined />, label: '用户管理' },
     { key: 'role-management', icon: <SolutionOutlined />, label: '角色管理' },
     { key: 'supplier-management', icon: <SolutionOutlined />, label: '供应商管理' },
     { key: 'staffing-management', icon: <TableOutlined />, label: '编制管理' },
     { key: 'workflow-center', icon: <ApartmentOutlined />, label: '流程中心' },
     { key: 'message-management', icon: <MessageOutlined />, label: '消息管理' },
-  ]), [demandManagementVisible]);
+  ]), [arrivalConfirmationVisible, demandManagementVisible, entryManagementVisible]);
 
   const menuItems = useMemo(
     () => allMenuItems.filter((item) => hasMenuAccess('/' + item.key)),

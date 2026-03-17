@@ -55,33 +55,4 @@ public class EmailSender {
             return false;
         }
     }
-
-    /**
-     * 发送录用邮件
-     * @param to 收件人邮箱
-     * @param candidateName 候选人姓名
-     * @param position 录用岗位
-     * @param entryTime 入职时间
-     * @param subject 邮件主题
-     * @param contentTemplate 邮件内容模板
-     * @return 是否发送成功
-     */
-    public boolean sendOfferEmail(String to, String candidateName, String position, String entryTime, String subject, String contentTemplate) {
-        logger.debug("发送录用邮件: to={}, candidateName={}, position={}, entryTime={}", to, candidateName, position, entryTime);
-        
-        try {
-            // 替换模板中的变量
-            String content = contentTemplate
-                .replace("{name}", candidateName)
-                .replace("{position}", position)
-                .replace("{entryTime}", entryTime)
-                .replace("{companyName}", "人力资源管理系统")
-                .replace("{date}", new java.text.SimpleDateFormat("yyyy年MM月dd日").format(new java.util.Date()));
-            
-            return sendSimpleEmail(to, subject, content);
-        } catch (Exception e) {
-            logger.error("发送录用邮件失败: {}", e.getMessage());
-            return false;
-        }
-    }
 }

@@ -16,6 +16,7 @@ import com.hr.mapper.ResumeDispatchMapper;
 import com.hr.mapper.ResumeMapper;
 import com.hr.mapper.UserMapper;
 import com.hr.mapper.WorkflowProcessLogMapper;
+import com.hr.service.EntryManagementService;
 import com.hr.service.InterviewEvaluationService;
 import com.hr.service.InterviewMessageService;
 import com.hr.service.InterviewPermissionService;
@@ -62,6 +63,9 @@ public class InterviewEvaluationServiceImpl implements InterviewEvaluationServic
 
     @Autowired
     private WorkflowProcessLogMapper workflowProcessLogMapper;
+
+    @Autowired
+    private EntryManagementService entryManagementService;
 
     @Override
     @Transactional
@@ -210,6 +214,7 @@ public class InterviewEvaluationServiceImpl implements InterviewEvaluationServic
                 evaluation.setCurrentApprovalLevel(3);
                 logProcess(evaluation.getEvaluationId(), 2, "室经理审批", "APPROVE", "SUCCESS", operatorUserId, operatorName, operatorRole, approvalComment);
                 logProcess(evaluation.getEvaluationId(), 3, "流程结束", "FINISH", "SUCCESS", operatorUserId, operatorName, operatorRole, "面试评价审批完成");
+                entryManagementService.createFromApprovedEvaluation(evaluation);
 
                 String roomManagerId = operatorUserId;
                 String interviewDateText = evaluation.getInterviewDate() == null ? "-" : new SimpleDateFormat(DATE_TIME_PATTERN).format(evaluation.getInterviewDate());

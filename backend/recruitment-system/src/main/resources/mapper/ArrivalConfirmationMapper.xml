@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hr.mapper.ArrivalConfirmationMapper">
+
+    <resultMap id="ArrivalConfirmationResultMap" type="com.hr.entity.ArrivalConfirmation">
+        <id property="arrivalConfirmationId" column="arrival_confirmation_id"/>
+        <result property="entryRecordId" column="entry_record_id"/>
+        <result property="resumeId" column="resume_id"/>
+        <result property="sourceRecruitmentRequestId" column="source_recruitment_request_id"/>
+        <result property="candidateName" column="candidate_name"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="supplierHrUserId" column="supplier_hr_user_id"/>
+        <result property="supplierHrUserName" column="supplier_hr_user_name"/>
+        <result property="targetOrgUnitName" column="target_org_unit_name"/>
+        <result property="roomManagerUserId" column="room_manager_user_id"/>
+        <result property="roomManagerUserName" column="room_manager_user_name"/>
+        <result property="hrTeamManagerUserId" column="hr_team_manager_user_id"/>
+        <result property="hrTeamManagerUserName" column="hr_team_manager_user_name"/>
+        <result property="entryDate" column="entry_date"/>
+        <result property="positionLevel" column="position_level"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="currentApprovalLevel" column="current_approval_level"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUserId" column="create_user_id"/>
+        <result property="createUserName" column="create_user_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateUserId" column="update_user_id"/>
+        <result property="updateUserName" column="update_user_name"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hr.entity.ArrivalConfirmation" useGeneratedKeys="true" keyProperty="arrivalConfirmationId">
+        INSERT INTO arrival_confirmation (
+            entry_record_id,
+            resume_id,
+            source_recruitment_request_id,
+            candidate_name,
+            supplier_id,
+            supplier_name,
+            supplier_hr_user_id,
+            supplier_hr_user_name,
+            target_org_unit_name,
+            room_manager_user_id,
+            room_manager_user_name,
+            hr_team_manager_user_id,
+            hr_team_manager_user_name,
+            entry_date,
+            position_level,
+            approval_status,
+            current_approval_level,
+            create_time,
+            create_user_id,
+            create_user_name,
+            update_time,
+            update_user_id,
+            update_user_name
+        ) VALUES (
+            #{entryRecordId},
+            #{resumeId},
+            #{sourceRecruitmentRequestId},
+            #{candidateName},
+            #{supplierId},
+            #{supplierName},
+            #{supplierHrUserId},
+            #{supplierHrUserName},
+            #{targetOrgUnitName},
+            #{roomManagerUserId},
+            #{roomManagerUserName},
+            #{hrTeamManagerUserId},
+            #{hrTeamManagerUserName},
+            #{entryDate},
+            #{positionLevel},
+            #{approvalStatus},
+            #{currentApprovalLevel},
+            #{createTime},
+            #{createUserId},
+            #{createUserName},
+            #{updateTime},
+            #{updateUserId},
+            #{updateUserName}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.hr.entity.ArrivalConfirmation">
+        UPDATE arrival_confirmation
+        SET supplier_id = #{supplierId},
+            supplier_name = #{supplierName},
+            supplier_hr_user_id = #{supplierHrUserId},
+            supplier_hr_user_name = #{supplierHrUserName},
+            target_org_unit_name = #{targetOrgUnitName},
+            room_manager_user_id = #{roomManagerUserId},
+            room_manager_user_name = #{roomManagerUserName},
+            hr_team_manager_user_id = #{hrTeamManagerUserId},
+            hr_team_manager_user_name = #{hrTeamManagerUserName},
+            entry_date = #{entryDate},
+            position_level = #{positionLevel},
+            approval_status = #{approvalStatus},
+            current_approval_level = #{currentApprovalLevel},
+            update_time = #{updateTime},
+            update_user_id = #{updateUserId},
+            update_user_name = #{updateUserName}
+        WHERE arrival_confirmation_id = #{arrivalConfirmationId}
+    </update>
+
+    <delete id="deleteByPrimaryKey">
+        DELETE FROM arrival_confirmation
+        WHERE arrival_confirmation_id = #{arrivalConfirmationId}
+    </delete>
+
+    <select id="selectByPrimaryKey" resultMap="ArrivalConfirmationResultMap">
+        SELECT * FROM arrival_confirmation WHERE arrival_confirmation_id = #{arrivalConfirmationId}
+    </select>
+
+    <select id="selectLatestByEntryRecordId" resultMap="ArrivalConfirmationResultMap">
+        SELECT *
+        FROM arrival_confirmation
+        WHERE entry_record_id = #{entryRecordId}
+        ORDER BY update_time DESC, arrival_confirmation_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="ArrivalConfirmationResultMap">
+        SELECT *
+        FROM arrival_confirmation
+        ORDER BY update_time DESC, arrival_confirmation_id DESC
+    </select>
+
+    <select id="selectByCreateUserId" resultMap="ArrivalConfirmationResultMap">
+        SELECT *
+        FROM arrival_confirmation
+        WHERE create_user_id = #{createUserId}
+        ORDER BY update_time DESC, arrival_confirmation_id DESC
+    </select>
+
+    <select id="selectByApproverId" resultMap="ArrivalConfirmationResultMap">
+        SELECT DISTINCT ac.*
+        FROM arrival_confirmation ac
+        INNER JOIN arrival_confirmation_approval_history h ON h.arrival_confirmation_id = ac.arrival_confirmation_id
+        WHERE h.approver_id = #{approverId}
+        ORDER BY ac.update_time DESC, ac.arrival_confirmation_id DESC
+    </select>
+</mapper>
