@@ -118,9 +118,10 @@ public class InterviewArrangementServiceImpl implements InterviewArrangementServ
             row.setAvailableStartTime(activeDispatch.getAvailableStartTime());
             row.setAvailableEndTime(activeDispatch.getAvailableEndTime());
             row.setConfirmedInterviewTime(activeDispatch.getConfirmedInterviewTime());
+            String evaluationStatus = evaluationStatusMap.getOrDefault(resume.getResumeId(), "");
             row.setCanConfirmInterviewTime(canConfirmInterviewTime(normalizedViewerId, roles, activeDispatch));
-            row.setCanLaunchEvaluation(canLaunchEvaluation(normalizedViewerId, roles, activeDispatch));
-            row.setEvaluationStatus(evaluationStatusMap.getOrDefault(resume.getResumeId(), ""));
+            row.setCanLaunchEvaluation(evaluationStatus.isEmpty() && canLaunchEvaluation(normalizedViewerId, roles, activeDispatch));
+            row.setEvaluationStatus(evaluationStatus);
             result.add(row);
         }
         return result;

@@ -1,3 +1,5 @@
+import { canShowInterviewEvaluationLaunch } from './interviewPermissionHelpers'
+
 const roleTextOf = (user: Record<string, unknown> = {}) =>
   `${user?.position || ''} ${user?.positionName || ''} ${user?.role || ''}`.trim()
 
@@ -31,4 +33,4 @@ export const canConfirmInterviewTime = (
 export const canLaunchInterviewEvaluation = (
   _user: Record<string, unknown> = {},
   record: Record<string, unknown> = {},
-) => Boolean(record?.canLaunchEvaluation)
+) => canShowInterviewEvaluationLaunch(record)

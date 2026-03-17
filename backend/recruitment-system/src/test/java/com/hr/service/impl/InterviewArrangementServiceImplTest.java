@@ -79,10 +79,7 @@ class InterviewArrangementServiceImplTest {
         ResumeDispatch otherConfirmed = dispatch(2L, 12L, "2002", "CONFIRMED");
         when(resumeDispatchMapper.selectByResumeIds(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(mineConfirmed, otherConfirmed));
 
-        InterviewEvaluation evaluation = new InterviewEvaluation();
-        evaluation.setResumeId(1L);
-        evaluation.setApprovalStatus("PENDING_OUTSOURCING");
-        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.singletonList(evaluation));
+        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.emptyList());
 
         List<PendingInterviewResumeVO> rows = interviewArrangementService.getPendingList("2001", "面试官");
 
@@ -92,7 +89,36 @@ class InterviewArrangementServiceImplTest {
         assertEquals("P6", rows.get(0).getAppliedLevel());
         assertEquals("Java", rows.get(0).getCandidatePlatform());
         assertTrue(Boolean.TRUE.equals(rows.get(0).getCanLaunchEvaluation()));
+        assertEquals("", rows.get(0).getEvaluationStatus());
+    }
+
+    @Test
+    void getPendingListHidesLaunchEvaluationWhenEvaluationAlreadyExists() {
+        User viewer = user("2001", "面试官A", "面试官");
+        Set<String> roles = Set.of(InterviewPermissionService.ROLE_INTERVIEWER);
+        when(userMapper.getUserById("2001")).thenReturn(viewer);
+        when(interviewPermissionService.normalizeRoles(viewer, "面试官")).thenReturn(roles);
+        when(interviewPermissionService.isSuperAdmin("2001", roles)).thenReturn(false);
+        when(interviewPermissionService.hasRole(roles, InterviewPermissionService.ROLE_OUTSOURCING_MANAGER)).thenReturn(false);
+        when(interviewPermissionService.hasRole(roles, InterviewPermissionService.ROLE_INTERVIEWER)).thenReturn(true);
+
+        Resume resume = resume(5L, "候选人丁", "3001");
+        when(resumeMapper.selectAll()).thenReturn(Collections.singletonList(resume));
+
+        ResumeDispatch confirmedDispatch = dispatch(5L, 15L, "2001", "CONFIRMED");
+        confirmedDispatch.setConfirmedInterviewTime(new Date());
+        when(resumeDispatchMapper.selectByResumeIds(Collections.singletonList(5L))).thenReturn(Collections.singletonList(confirmedDispatch));
+
+        InterviewEvaluation evaluation = new InterviewEvaluation();
+        evaluation.setResumeId(5L);
+        evaluation.setApprovalStatus("PENDING_OUTSOURCING");
+        when(interviewEvaluationMapper.selectAll()).thenReturn(Collections.singletonList(evaluation));
+
+        List<PendingInterviewResumeVO> rows = interviewArrangementService.getPendingList("2001", "面试官");
+
+        assertEquals(1, rows.size());
         assertEquals("PENDING_OUTSOURCING", rows.get(0).getEvaluationStatus());
+        assertEquals(Boolean.FALSE, rows.get(0).getCanLaunchEvaluation());
     }
 
     @Test
