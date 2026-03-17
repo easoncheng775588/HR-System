@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useParam } from '../contexts/ParamContext'
 import ArrivalConfirmationFormModal from './ArrivalConfirmationFormModal'
 import { formatApprovalStatus, isOutsourcingCreator } from './arrivalConfirmationHelpers'
+import { buildEntryLevelOptions } from './interviewEvaluationHelpers'
 
 const ArrivalConfirmation = () => {
   const { user } = useAuth()
@@ -25,7 +26,7 @@ const ArrivalConfirmation = () => {
   const [form] = Form.useForm()
 
   const canCreate = useMemo(() => isOutsourcingCreator(user), [user])
-  const levelOptions = useMemo(() => getLevelOptions(), [getLevelOptions])
+  const levelOptions = useMemo(() => buildEntryLevelOptions(getLevelOptions()), [getLevelOptions])
 
   const fetchList = useCallback(async () => {
     setLoading(true)

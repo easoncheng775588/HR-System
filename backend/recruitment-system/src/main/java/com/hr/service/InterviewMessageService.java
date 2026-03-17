@@ -11,9 +11,6 @@ public interface InterviewMessageService {
 
     void sendEvaluationCompletedMessage(String interviewerUserId,
                                         String roomManagerUserId,
-                                        String interviewerName,
-                                        String interviewerDepartment,
-                                        String candidateName,
-                                        String entryLevelSuggestion,
-                                        String interviewDateText);
+                                        String supplierHrUserId,
+                                        String candidateName);
 }

@@ -217,15 +217,12 @@ public class InterviewEvaluationServiceImpl implements InterviewEvaluationServic
                 entryManagementService.createFromApprovedEvaluation(evaluation);
 
                 String roomManagerId = operatorUserId;
-                String interviewDateText = evaluation.getInterviewDate() == null ? "-" : new SimpleDateFormat(DATE_TIME_PATTERN).format(evaluation.getInterviewDate());
+                Resume relatedResume = evaluation.getResumeId() == null ? null : resumeMapper.selectByPrimaryKey(evaluation.getResumeId());
                 interviewMessageService.sendEvaluationCompletedMessage(
                     evaluation.getInterviewerId(),
                     roomManagerId,
-                    evaluation.getInterviewerName(),
-                    evaluation.getInterviewerDepartment(),
-                    evaluation.getCandidateName(),
-                    evaluation.getEntryLevelSuggestion(),
-                    interviewDateText
+                    relatedResume == null ? null : trimToNull(relatedResume.getCreateUserId()),
+                    evaluation.getCandidateName()
                 );
             } else {
                 throw new RuntimeException("当前流程状态不支持审批");

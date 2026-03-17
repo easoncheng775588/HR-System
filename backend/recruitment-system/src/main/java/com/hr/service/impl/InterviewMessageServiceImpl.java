@@ -79,17 +79,9 @@ public class InterviewMessageServiceImpl implements InterviewMessageService {
     @Override
     public void sendEvaluationCompletedMessage(String interviewerUserId,
                                                String roomManagerUserId,
-                                               String interviewerName,
-                                               String interviewerDepartment,
-                                               String candidateName,
-                                               String entryLevelSuggestion,
-                                               String interviewDateText) {
-        String content = "面试评价完成提醒。您有一个面试评价流程已经完成，请注意查看！"
-            + "面试官：" + defaultValue(interviewerName, "-")
-            + "，面试室组：" + defaultValue(interviewerDepartment, "-")
-            + "，候选人：" + defaultValue(candidateName, "-")
-            + "，面试职级：" + defaultValue(entryLevelSuggestion, "-")
-            + "，面试时间：" + defaultValue(interviewDateText, "-") + "。";
+                                               String supplierHrUserId,
+                                               String candidateName) {
+        String content = defaultValue(candidateName, "候选人") + "的面试评价已经审批完成！";
 
         Set<String> recipientIds = new LinkedHashSet<>();
         if (interviewerUserId != null && !interviewerUserId.trim().isEmpty()) {
@@ -97,6 +89,9 @@ public class InterviewMessageServiceImpl implements InterviewMessageService {
         }
         if (roomManagerUserId != null && !roomManagerUserId.trim().isEmpty()) {
             recipientIds.add(roomManagerUserId);
+        }
+        if (supplierHrUserId != null && !supplierHrUserId.trim().isEmpty()) {
+            recipientIds.add(supplierHrUserId);
         }
 
         List<User> outsourcingManagers = userMapper.getActiveUsersByRoleKeyword("外包招聘管理");

@@ -65,17 +65,16 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     public Resume saveResume(Resume resume) {
-        if (resume.getCandidateName() == null || resume.getCandidateName().trim().isEmpty()) {
-            throw new IllegalArgumentException("候选人不能为空");
-        }
-        if (resume.getRelatedRequestIds() == null || resume.getRelatedRequestIds().trim().isEmpty()) {
-            throw new IllegalArgumentException("关联需求不能为空");
-        }
-
         boolean isCreate = resume.getResumeId() == null;
         String operatorUserId = trimToNull(isCreate ? resume.getCreateUserId() : resume.getUpdateUserId());
         if (operatorUserId == null) {
             throw new RuntimeException(isCreate ? "提交人不能为空" : "更新人不能为空");
+        }
+        if (isCreate) {
+            validateRequiredCreateFields(resume);
+        } else {
+            validateRequiredField(trimToNull(resume.getCandidateName()), "候选人不能为空");
+            validateRequiredField(trimToNull(resume.getRelatedRequestIds()), "关联需求不能为空");
         }
         User operator = userMapper.getUserById(operatorUserId);
         if (operator == null) {
@@ -571,6 +570,46 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         return false;
+    }
+
+    private void validateRequiredCreateFields(Resume resume) {
+        validateRequiredField(trimToNull(resume.getRelatedRequestIds()), "关联需求不能为空");
+        validateRequiredField(trimToNull(resume.getCandidateName()), "候选人不能为空");
+        validateRequiredField(trimToNull(resume.getGender()), "性别不能为空");
+        validateRequiredField(trimToNull(resume.getBirthDate()), "出生年月日不能为空");
+        validateRequiredField(trimToNull(resume.getFirstDegree()), "第一学历不能为空");
+        validateRequiredField(trimToNull(resume.getFirstDegreeGraduateYear()), "第一学历毕业年份不能为空");
+        validateRequiredField(trimToNull(resume.getFirstDegreeSchool()), "第一学历毕业院校不能为空");
+        validateRequiredField(trimToNull(resume.getFirstDegreeMajor()), "第一学历毕业专业不能为空");
+        validateRequiredField(trimToNull(resume.getFirstDegreeFullTime()), "第一学历是否全日制不能为空");
+        validateRequiredField(trimToNull(resume.getHighestDegree()), "最高学历不能为空");
+        validateRequiredField(trimToNull(resume.getHighestDegreeMajor()), "最高学历毕业专业不能为空");
+        validateRequiredField(trimToNull(resume.getHighestDegreeGraduateYear()), "最高学历毕业年份不能为空");
+        validateRequiredField(trimToNull(resume.getHighestDegreeSchool()), "最高学历毕业院校不能为空");
+        validateRequiredField(trimToNull(resume.getHighestDegreeFullTime()), "最高学历是否全日制不能为空");
+        validateRequiredField(trimToNull(resume.getEnglishLevel()), "英语水平不能为空");
+        validateRequiredField(trimToNull(resume.getCandidatePlatform()), "候选人技术平台不能为空");
+        validateRequiredField(trimToNull(resume.getAppliedCategory()), "申请岗位不能为空");
+        validateRequiredField(trimToNull(resume.getAppliedLevel()), "申请职级不能为空");
+        validateRequiredField(trimToNull(resume.getItWorkYears()), "IT工作年限不能为空");
+        validateRequiredField(trimToNull(resume.getItInternshipYears()), "IT实习年限不能为空");
+        validateRequiredField(trimToNull(resume.getLatestCompany()), "最近服务的公司名称不能为空");
+        validateRequiredField(trimToNull(resume.getInterviewAvailableStartTime()), "可参加面试开始时间不能为空");
+        validateRequiredField(trimToNull(resume.getInterviewAvailableEndTime()), "可参加面试结束时间不能为空");
+        validateRequiredField(trimToNull(resume.getInShenzhen()), "候选人是否在深圳不能为空");
+        validateRequiredField(trimToNull(resume.getOnboardDate()), "可到岗时间不能为空");
+        validateRequiredField(trimToNull(resume.getSupplierInitialInterview()), "供应商是否已初面不能为空");
+        validateRequiredField(trimToNull(resume.getWrittenTestScore()), "笔试成绩不能为空");
+        validateRequiredField(trimToNull(resume.getSupplierInterviewComment()), "供应商初面意见不能为空");
+        validateRequiredField(trimToNull(resume.getAttachmentNames()), "附件不能为空");
+        validateRequiredField(trimToNull(resume.getAttachmentUrls()), "附件不能为空");
+        validateRequiredField(trimToNull(resume.getRemark()), "备注不能为空");
+    }
+
+    private void validateRequiredField(String value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
     }
 
     private void enrichChoiceFields(Resume resume, List<ResumeDispatch> dispatches, String viewerId, Set<String> roles) {

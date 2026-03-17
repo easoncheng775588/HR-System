@@ -63,14 +63,21 @@ class ResumeServiceImplTest {
     }
 
     @Test
-    void saveResumeSupplierCreateDefaultsStatusAndSupplier() {
+    void saveResumeRejectsCreateWhenRequiredFieldsMissing() {
         Resume resume = new Resume();
         resume.setCandidateName("候选人A");
-        resume.setRelatedRequestIds("1");
         resume.setCreateUserId("9001");
         resume.setCreateUserName("供应商HR");
         resume.setUpdateUserId("9001");
         resume.setUpdateUserName("供应商HR");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> resumeService.saveResume(resume));
+        assertEquals("关联需求不能为空", exception.getMessage());
+    }
+
+    @Test
+    void saveResumeSupplierCreateDefaultsStatusAndSupplier() {
+        Resume resume = buildCreateResume("9001");
 
         User supplierHr = user("9001", "供应商HR", "供应商HR");
         when(userMapper.getUserById("9001")).thenReturn(supplierHr);
@@ -355,5 +362,46 @@ class ResumeServiceImplTest {
         request.setAvailableStartTime("2026-03-13 10:00:00");
         request.setAvailableEndTime("2026-03-13 11:00:00");
         return request;
+    }
+
+    private Resume buildCreateResume(String userId) {
+        Resume resume = new Resume();
+        resume.setRelatedRequestIds("1");
+        resume.setRelatedRequestNames("系统研发岗需求");
+        resume.setCandidateName("候选人A");
+        resume.setGender("MALE");
+        resume.setBirthDate("1995-01-01");
+        resume.setFirstDegree("本科");
+        resume.setFirstDegreeGraduateYear("2017");
+        resume.setFirstDegreeSchool("深圳大学");
+        resume.setFirstDegreeMajor("软件工程");
+        resume.setFirstDegreeFullTime("YES");
+        resume.setHighestDegree("硕士");
+        resume.setHighestDegreeMajor("计算机技术");
+        resume.setHighestDegreeGraduateYear("2020");
+        resume.setHighestDegreeSchool("华南理工大学");
+        resume.setHighestDegreeFullTime("YES");
+        resume.setEnglishLevel("CET6");
+        resume.setCandidatePlatform("开放");
+        resume.setAppliedCategory("系统研发岗");
+        resume.setAppliedLevel("PG");
+        resume.setItWorkYears("5年");
+        resume.setItInternshipYears("1年");
+        resume.setLatestCompany("某科技公司");
+        resume.setInterviewAvailableStartTime("2026-03-20 10:00:00");
+        resume.setInterviewAvailableEndTime("2026-03-20 12:00:00");
+        resume.setInShenzhen("YES");
+        resume.setOnboardDate("2026-04-01");
+        resume.setSupplierInitialInterview("YES");
+        resume.setWrittenTestScore("90");
+        resume.setSupplierInterviewComment("初面通过");
+        resume.setAttachmentNames("resume.pdf");
+        resume.setAttachmentUrls("/uploads/resume.pdf");
+        resume.setRemark("无");
+        resume.setCreateUserId(userId);
+        resume.setCreateUserName("供应商HR");
+        resume.setUpdateUserId(userId);
+        resume.setUpdateUserName("供应商HR");
+        return resume;
     }
 }

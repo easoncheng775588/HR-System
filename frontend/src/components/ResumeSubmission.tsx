@@ -46,6 +46,10 @@ import {
   RESUME_TAB,
   SCREEN_ACTION,
 } from './resumeManagementHelpers';
+import {
+  getResumeCreateRequiredRule,
+  validateCreateResumeAttachments,
+} from './resumeFormValidation';
 
 const ATTACHMENT_SPLITTER = '||';
 const DEGREE_OPTIONS = [
@@ -106,6 +110,7 @@ const ResumeSubmission = () => {
   const categoryOptions = withFallbackOptions(getParamOptions('CATEGORY'), RECRUITMENT_CATEGORY_OPTIONS);
   const levelOptions = withFallbackOptions(getParamOptions('LEVEL'), RECRUITMENT_LEVEL_OPTIONS);
   const isSupplierHr = canCreateResume(user);
+  const isCreating = !editingRecord;
   const showStatusTabs = canShowResumeTabs(user);
   const [activeTab, setActiveTab] = useState(RESUME_TAB.ALL);
 
@@ -166,6 +171,10 @@ const ResumeSubmission = () => {
     setRequirementOptions(DEFAULT_REQUIREMENT_OPTIONS);
   };
 
+  useEffect(() => {
+    form.setFieldsValue({ attachmentFiles });
+  }, [attachmentFiles, form]);
+
   const parseAttachments = (record) => {
     const splitValues = (value) => {
       const text = String(value || '');
@@ -223,6 +232,7 @@ const ResumeSubmission = () => {
     setEditingRecord(null);
     setAttachmentFiles([]);
     form.resetFields();
+    form.setFieldsValue({ attachmentFiles: [] });
     setModalVisible(true);
   };
 
@@ -238,6 +248,7 @@ const ResumeSubmission = () => {
       form.setFieldsValue({
         ...normalizedRecord,
         relatedRequestIds: (normalizedRecord.relatedRequestIds || '').split(',').filter(Boolean),
+        attachmentFiles: parseAttachments(normalizedRecord),
         interviewAvailableTime:
           normalizedRecord.interviewAvailableStartTime && normalizedRecord.interviewAvailableEndTime
             ? [dayjs(normalizedRecord.interviewAvailableStartTime), dayjs(normalizedRecord.interviewAvailableEndTime)]
@@ -404,6 +415,10 @@ const ResumeSubmission = () => {
       const uploadingFiles = attachmentFiles.filter((file) => file.status === 'uploading');
       if (uploadingFiles.length > 0) {
         message.warning('附件正在上传，请稍后再提交');
+        return;
+      }
+      if (isCreating && !validateCreateResumeAttachments(attachmentFiles)) {
+        message.error('请上传附件');
         return;
       }
 
@@ -681,12 +696,13 @@ const ResumeSubmission = () => {
           setModalVisible(false);
           form.resetFields();
           setAttachmentFiles([]);
+          form.setFieldsValue({ attachmentFiles: [] });
         }}
         confirmLoading={submitting}
         width={isMobile ? '96%' : 980}
       >
         <Form form={form} layout="vertical">
-          <Form.Item label="关联需求" name="relatedRequestIds" rules={[{ required: true, message: '请选择关联需求' }]}>
+          <Form.Item label="关联需求" name="relatedRequestIds" rules={isCreating ? getResumeCreateRequiredRule('relatedRequestIds') : []}>
             <Select
               mode="multiple"
               allowClear
@@ -698,66 +714,78 @@ const ResumeSubmission = () => {
           </Form.Item>
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-            <Form.Item label="候选人" name="candidateName" rules={[{ required: true, message: '请输入候选人' }]}><Input /></Form.Item>
-            <Form.Item label="性别" name="gender" rules={[{ required: true, message: '请选择性别' }]}>
+            <Form.Item label="候选人" name="candidateName" rules={isCreating ? getResumeCreateRequiredRule('candidateName') : []}><Input /></Form.Item>
+            <Form.Item label="性别" name="gender" rules={isCreating ? getResumeCreateRequiredRule('gender') : []}>
               <Select options={[{ value: 'MALE', label: '男' }, { value: 'FEMALE', label: '女' }]} />
             </Form.Item>
-            <Form.Item label="出生年月日" name="birthDate"><Input placeholder="YYYY-MM-DD" /></Form.Item>
-            <Form.Item label="第一学历" name="firstDegree">
+            <Form.Item label="出生年月日" name="birthDate" rules={isCreating ? getResumeCreateRequiredRule('birthDate') : []}><Input placeholder="YYYY-MM-DD" /></Form.Item>
+            <Form.Item label="第一学历" name="firstDegree" rules={isCreating ? getResumeCreateRequiredRule('firstDegree') : []}>
               <Select options={DEGREE_OPTIONS} allowClear />
             </Form.Item>
-            <Form.Item label="第一学历毕业年份" name="firstDegreeGraduateYear"><Input /></Form.Item>
-            <Form.Item label="第一学历毕业院校" name="firstDegreeSchool"><Input /></Form.Item>
-            <Form.Item label="第一学历毕业专业" name="firstDegreeMajor"><Input /></Form.Item>
-            <Form.Item label="第一学历是否全日制" name="firstDegreeFullTime">
+            <Form.Item label="第一学历毕业年份" name="firstDegreeGraduateYear" rules={isCreating ? getResumeCreateRequiredRule('firstDegreeGraduateYear') : []}><Input /></Form.Item>
+            <Form.Item label="第一学历毕业院校" name="firstDegreeSchool" rules={isCreating ? getResumeCreateRequiredRule('firstDegreeSchool') : []}><Input /></Form.Item>
+            <Form.Item label="第一学历毕业专业" name="firstDegreeMajor" rules={isCreating ? getResumeCreateRequiredRule('firstDegreeMajor') : []}><Input /></Form.Item>
+            <Form.Item label="第一学历是否全日制" name="firstDegreeFullTime" rules={isCreating ? getResumeCreateRequiredRule('firstDegreeFullTime') : []}>
               <Select options={[{ value: 'YES', label: '是' }, { value: 'NO', label: '否' }]} />
             </Form.Item>
-            <Form.Item label="最高学历" name="highestDegree">
+            <Form.Item label="最高学历" name="highestDegree" rules={isCreating ? getResumeCreateRequiredRule('highestDegree') : []}>
               <Select options={DEGREE_OPTIONS} allowClear />
             </Form.Item>
-            <Form.Item label="最高学历毕业专业" name="highestDegreeMajor"><Input /></Form.Item>
-            <Form.Item label="最高学历毕业年份" name="highestDegreeGraduateYear"><Input /></Form.Item>
-            <Form.Item label="最高学历毕业院校" name="highestDegreeSchool"><Input /></Form.Item>
-            <Form.Item label="最高学历是否全日制" name="highestDegreeFullTime">
+            <Form.Item label="最高学历毕业专业" name="highestDegreeMajor" rules={isCreating ? getResumeCreateRequiredRule('highestDegreeMajor') : []}><Input /></Form.Item>
+            <Form.Item label="最高学历毕业年份" name="highestDegreeGraduateYear" rules={isCreating ? getResumeCreateRequiredRule('highestDegreeGraduateYear') : []}><Input /></Form.Item>
+            <Form.Item label="最高学历毕业院校" name="highestDegreeSchool" rules={isCreating ? getResumeCreateRequiredRule('highestDegreeSchool') : []}><Input /></Form.Item>
+            <Form.Item label="最高学历是否全日制" name="highestDegreeFullTime" rules={isCreating ? getResumeCreateRequiredRule('highestDegreeFullTime') : []}>
               <Select options={[{ value: 'YES', label: '是' }, { value: 'NO', label: '否' }]} />
             </Form.Item>
-            <Form.Item label="英语水平" name="englishLevel">
+            <Form.Item label="英语水平" name="englishLevel" rules={isCreating ? getResumeCreateRequiredRule('englishLevel') : []}>
               <Select options={[{ value: 'CET4', label: '四级' }, { value: 'CET6', label: '六级' }, { value: 'OTHER', label: '其他同等水平' }]} />
             </Form.Item>
-            <Form.Item label="候选人技术平台" name="candidatePlatform">
+            <Form.Item label="候选人技术平台" name="candidatePlatform" rules={isCreating ? getResumeCreateRequiredRule('candidatePlatform') : []}>
               <Select options={platformOptions} allowClear />
             </Form.Item>
-            <Form.Item label="申请岗位" name="appliedCategory">
+            <Form.Item label="申请岗位" name="appliedCategory" rules={isCreating ? getResumeCreateRequiredRule('appliedCategory') : []}>
               <Select options={categoryOptions} allowClear />
             </Form.Item>
-            <Form.Item label="申请职级" name="appliedLevel">
+            <Form.Item label="申请职级" name="appliedLevel" rules={isCreating ? getResumeCreateRequiredRule('appliedLevel') : []}>
               <Select options={levelOptions} allowClear />
             </Form.Item>
-            <Form.Item label="IT工作年限" name="itWorkYears"><Input /></Form.Item>
-            <Form.Item label="IT实习年限" name="itInternshipYears"><Input /></Form.Item>
-            <Form.Item label="最近服务的公司名称" name="latestCompany"><Input /></Form.Item>
-            <Form.Item label="候选人是否在深圳" name="inShenzhen">
+            <Form.Item label="IT工作年限" name="itWorkYears" rules={isCreating ? getResumeCreateRequiredRule('itWorkYears') : []}><Input /></Form.Item>
+            <Form.Item label="IT实习年限" name="itInternshipYears" rules={isCreating ? getResumeCreateRequiredRule('itInternshipYears') : []}><Input /></Form.Item>
+            <Form.Item label="最近服务的公司名称" name="latestCompany" rules={isCreating ? getResumeCreateRequiredRule('latestCompany') : []}><Input /></Form.Item>
+            <Form.Item label="候选人是否在深圳" name="inShenzhen" rules={isCreating ? getResumeCreateRequiredRule('inShenzhen') : []}>
               <Select options={[{ value: 'YES', label: '是' }, { value: 'NO', label: '否' }]} />
             </Form.Item>
-            <Form.Item label="可到岗时间" name="onboardDate"><DatePicker style={{ width: '100%' }} /></Form.Item>
-            <Form.Item label="供应商是否已初面" name="supplierInitialInterview">
+            <Form.Item label="可到岗时间" name="onboardDate" rules={isCreating ? getResumeCreateRequiredRule('onboardDate') : []}><DatePicker style={{ width: '100%' }} /></Form.Item>
+            <Form.Item label="供应商是否已初面" name="supplierInitialInterview" rules={isCreating ? getResumeCreateRequiredRule('supplierInitialInterview') : []}>
               <Select options={[{ value: 'YES', label: '是' }, { value: 'NO', label: '否' }]} />
             </Form.Item>
-            <Form.Item label="笔试成绩" name="writtenTestScore"><Input /></Form.Item>
+            <Form.Item label="笔试成绩" name="writtenTestScore" rules={isCreating ? getResumeCreateRequiredRule('writtenTestScore') : []}><Input /></Form.Item>
           </div>
 
-          <Form.Item label="可参加面试时间" name="interviewAvailableTime" rules={[{ required: true, message: '请选择可参加面试时间段' }]}>
+          <Form.Item label="可参加面试时间" name="interviewAvailableTime" rules={isCreating ? getResumeCreateRequiredRule('interviewAvailableTime') : []}>
             <DatePicker.RangePicker showTime style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item label="供应商初面意见" name="supplierInterviewComment"><Input.TextArea rows={3} /></Form.Item>
+          <Form.Item label="供应商初面意见" name="supplierInterviewComment" rules={isCreating ? getResumeCreateRequiredRule('supplierInterviewComment') : []}><Input.TextArea rows={3} /></Form.Item>
 
-          <Form.Item label="附件">
+          <Form.Item
+            label="附件"
+            name="attachmentFiles"
+            rules={isCreating ? [{
+              validator: async (_, value) => {
+                const doneFiles = (value || []).filter((file) => (file?.status || 'done') === 'done');
+                if (doneFiles.length > 0) {
+                  return;
+                }
+                throw new Error('请上传附件');
+              },
+            }] : []}
+          >
             <AttachmentUploader businessType="resume" value={attachmentFiles} onChange={setAttachmentFiles} />
-            <div style={{ marginTop: 8, color: '#666' }}>支持 zip、Excel、Word、PDF、PPT</div>
           </Form.Item>
+          <div style={{ marginTop: -16, marginBottom: 16, color: '#666' }}>支持 zip、Excel、Word、PDF、PPT</div>
 
-          <Form.Item label="备注" name="remark"><Input.TextArea rows={3} /></Form.Item>
+          <Form.Item label="备注" name="remark" rules={isCreating ? getResumeCreateRequiredRule('remark') : []}><Input.TextArea rows={3} /></Form.Item>
         </Form>
       </Modal>
 

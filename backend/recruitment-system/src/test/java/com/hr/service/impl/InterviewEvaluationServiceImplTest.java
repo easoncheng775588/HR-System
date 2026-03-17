@@ -166,6 +166,7 @@ class InterviewEvaluationServiceImplTest {
     void approveByRoomManagerCompletesFlowAndSendsMessage() throws Exception {
         InterviewEvaluation evaluation = new InterviewEvaluation();
         evaluation.setEvaluationId(90L);
+        evaluation.setResumeId(1L);
         evaluation.setApprovalStatus(InterviewEvaluationStatusEnum.PENDING_ROOM_MANAGER.name());
         evaluation.setCurrentApprovalLevel(2);
         evaluation.setInterviewerId("2001");
@@ -185,6 +186,10 @@ class InterviewEvaluationServiceImplTest {
         when(interviewPermissionService.hasRole(Set.of(InterviewPermissionService.ROLE_ROOM_MANAGER), InterviewPermissionService.ROLE_ROOM_MANAGER))
             .thenReturn(true);
         when(userMapper.getActiveRoomManagerByDepartmentAndRoleKeyword("办公系统开发室", "室经理")).thenReturn(roomManager);
+        Resume resume = new Resume();
+        resume.setResumeId(1L);
+        resume.setCreateUserId("1003");
+        when(resumeMapper.selectByPrimaryKey(1L)).thenReturn(resume);
 
         WorkflowApproveRequest request = new WorkflowApproveRequest();
         request.setAction("APPROVE");
@@ -200,7 +205,7 @@ class InterviewEvaluationServiceImplTest {
         verify(workflowProcessLogMapper, times(2)).insert(any());
         verify(entryManagementService).createFromApprovedEvaluation(evaluation);
         verify(interviewMessageService).sendEvaluationCompletedMessage(
-            eq("2001"), eq("3001"), eq("面试官A"), eq("基础业务开发团队 / 办公系统开发室"), eq("候选人乙"), eq("P7"), eq("2026-03-13 16:00:00")
+            eq("2001"), eq("3001"), eq("1003"), eq("候选人乙")
         );
     }
 
@@ -208,6 +213,7 @@ class InterviewEvaluationServiceImplTest {
     void approveAtRoomManagerStageUsesCurrentApproverAsNotificationRecipient() throws Exception {
         InterviewEvaluation evaluation = new InterviewEvaluation();
         evaluation.setEvaluationId(92L);
+        evaluation.setResumeId(2L);
         evaluation.setApprovalStatus(InterviewEvaluationStatusEnum.PENDING_ROOM_MANAGER.name());
         evaluation.setCurrentApprovalLevel(2);
         evaluation.setInterviewerId("1008");
@@ -224,6 +230,10 @@ class InterviewEvaluationServiceImplTest {
             .thenReturn(Set.of(InterviewPermissionService.ROLE_SUPER_ADMIN));
         when(interviewPermissionService.isSuperAdmin("1001", Set.of(InterviewPermissionService.ROLE_SUPER_ADMIN)))
             .thenReturn(true);
+        Resume resume = new Resume();
+        resume.setResumeId(2L);
+        resume.setCreateUserId("1003");
+        when(resumeMapper.selectByPrimaryKey(2L)).thenReturn(resume);
 
         WorkflowApproveRequest request = new WorkflowApproveRequest();
         request.setAction("APPROVE");
@@ -236,7 +246,7 @@ class InterviewEvaluationServiceImplTest {
 
         verify(entryManagementService).createFromApprovedEvaluation(evaluation);
         verify(interviewMessageService).sendEvaluationCompletedMessage(
-            eq("1008"), eq("1001"), eq("陈秀芳"), eq("办公系统开发室"), eq("候选人丙"), eq("P6"), eq("2026-03-13 16:30:00")
+            eq("1008"), eq("1001"), eq("1003"), eq("候选人丙")
         );
     }
 
