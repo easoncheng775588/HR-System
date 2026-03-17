@@ -31,6 +31,7 @@ import { useParam } from '../contexts/ParamContext';
 import AttachmentUploader, { AttachmentItem } from './AttachmentUploader';
 import ResumeConfirmDialog from './ResumeConfirmDialog';
 import { submitInterviewerChoice } from '../services/interviewApi';
+import { formatInterviewTimeRangeText } from '../utils/interviewTimeFormat';
 import { canAbandonInterviewChoice, canOpenResumeConfirmDialog } from '../utils/interviewPermission';
 import {
   buildOperatorPayload,
@@ -533,11 +534,7 @@ const ResumeSubmission = () => {
       title: '可面试时间',
       key: 'interviewAvailableTime',
       width: 260,
-      render: (_, record) => {
-        const start = record.interviewAvailableStartTime || '-';
-        const end = record.interviewAvailableEndTime || '-';
-        return `${start} ~ ${end}`;
-      },
+      render: (_, record) => formatInterviewTimeRangeText(record.interviewAvailableStartTime, record.interviewAvailableEndTime),
     },
     {
       title: '供应商名称',
@@ -849,7 +846,9 @@ const ResumeSubmission = () => {
             <Descriptions.Item label="IT工作年限">{viewRecord.itWorkYears || '-'}</Descriptions.Item>
             <Descriptions.Item label="IT实习年限">{viewRecord.itInternshipYears || '-'}</Descriptions.Item>
             <Descriptions.Item label="最近服务的公司名称">{viewRecord.latestCompany || '-'}</Descriptions.Item>
-            <Descriptions.Item label="可面试时间">{`${viewRecord.interviewAvailableStartTime || '-'} ~ ${viewRecord.interviewAvailableEndTime || '-'}`}</Descriptions.Item>
+            <Descriptions.Item label="可面试时间">
+              {formatInterviewTimeRangeText(viewRecord.interviewAvailableStartTime, viewRecord.interviewAvailableEndTime)}
+            </Descriptions.Item>
             <Descriptions.Item label="候选人是否在深圳">{viewRecord.inShenzhen === 'YES' ? '是' : viewRecord.inShenzhen === 'NO' ? '否' : '-'}</Descriptions.Item>
             <Descriptions.Item label="可到岗时间">{viewRecord.onboardDate || '-'}</Descriptions.Item>
             <Descriptions.Item label="供应商是否已初面">{viewRecord.supplierInitialInterview === 'YES' ? '是' : viewRecord.supplierInitialInterview === 'NO' ? '否' : '-'}</Descriptions.Item>

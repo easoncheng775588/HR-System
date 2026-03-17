@@ -41,7 +41,7 @@ const InterviewTimeConfirmDialog: React.FC<InterviewTimeConfirmDialogProps> = ({
     <Modal title="确认面试时间" open={open} onCancel={onCancel} onOk={submit} confirmLoading={submitting}>
       <Form form={form} layout="vertical">
         <Form.Item name="interviewTime" label="面试时间" rules={[{ required: true, message: '面试时间不能为空' }]}>
-          <DatePicker style={{ width: '100%' }} />
+          <DatePicker showTime style={{ width: '100%' }} />
         </Form.Item>
       </Form>
     </Modal>

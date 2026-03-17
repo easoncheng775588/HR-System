@@ -1,3 +1,5 @@
+import { formatInterviewTimeRangeText } from './interviewTimeFormat'
+
 export const INTERVIEW_METHOD = {
   ONLINE: 'ONLINE',
   OFFLINE: 'OFFLINE',
@@ -33,6 +35,5 @@ export const formatDateTimeText = (value?: string) => {
 }
 
 export const formatInterviewTimeRange = (start?: string, end?: string) => {
-  if (!start && !end) return '-'
-  return `${start || '-'} ~ ${end || '-'}`
+  return formatInterviewTimeRangeText(start, end)
 }
