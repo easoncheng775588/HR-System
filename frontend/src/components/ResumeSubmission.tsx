@@ -48,6 +48,10 @@ import {
   SCREEN_ACTION,
 } from './resumeManagementHelpers';
 import {
+  RECRUITMENT_CATEGORY_OPTIONS,
+  RECRUITMENT_PLATFORM_OPTIONS,
+} from './recruitmentRequestHelpers';
+import {
   getResumeCreateRequiredRule,
   validateCreateResumeAttachments,
 } from './resumeFormValidation';
@@ -66,8 +70,6 @@ const DEFAULT_REQUIREMENT_OPTIONS = [
   { value: 'INIT_4', label: '行政' },
   { value: 'INIT_5', label: '人力' },
 ];
-const RECRUITMENT_PLATFORM_OPTIONS = ['开放', '主机', '测试', 'T24', '其他'];
-const RECRUITMENT_CATEGORY_OPTIONS = ['系统研发岗', '产品助理', '测试', '项目助理', '其他'];
 const RECRUITMENT_LEVEL_OPTIONS = ['PT', 'PG', 'AP', 'ASA', 'SA', 'SSA', '初级行政', '中级行政', '高级行政'];
 const ENGLISH_LEVEL_LABEL_MAP = {
   CET4: '四级',

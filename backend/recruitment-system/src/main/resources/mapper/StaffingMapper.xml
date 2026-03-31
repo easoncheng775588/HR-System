@@ -5,6 +5,8 @@
     <resultMap id="StaffingResultMap" type="com.hr.entity.Staffing">
         <id property="staffingId" column="staffing_id"/>
         <result property="orgUnitName" column="org_unit_name"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
         <result property="totalHeadcount" column="total_headcount"/>
         <result property="vacancyHeadcount" column="vacancy_headcount"/>
         <result property="outsourcingHeadcount" column="outsourcing_headcount"/>
@@ -21,6 +23,13 @@
         SELECT * FROM org_staffing ORDER BY create_time DESC
     </select>
 
+    <select id="getStaffingsByResponsibleUserId" resultMap="StaffingResultMap">
+        SELECT *
+        FROM org_staffing
+        WHERE responsible_user_id = #{responsibleUserId}
+        ORDER BY create_time DESC
+    </select>
+
     <select id="getStaffingById" parameterType="Long" resultMap="StaffingResultMap">
         SELECT * FROM org_staffing WHERE staffing_id = #{staffingId}
     </select>
@@ -31,10 +40,12 @@
 
     <insert id="insertStaffing" parameterType="com.hr.entity.Staffing" useGeneratedKeys="true" keyProperty="staffingId">
         INSERT INTO org_staffing (
-            org_unit_name, total_headcount, vacancy_headcount, outsourcing_headcount, employee_headcount,
+            org_unit_name, responsible_user_id, responsible_user_name,
+            total_headcount, vacancy_headcount, outsourcing_headcount, employee_headcount,
             create_time, create_user_id, create_user_name, update_time, update_user_id, update_user_name
         ) VALUES (
-            #{orgUnitName}, #{totalHeadcount}, #{vacancyHeadcount}, #{outsourcingHeadcount}, #{employeeHeadcount},
+            #{orgUnitName}, #{responsibleUserId}, #{responsibleUserName},
+            #{totalHeadcount}, #{vacancyHeadcount}, #{outsourcingHeadcount}, #{employeeHeadcount},
             #{createTime}, #{createUserId}, #{createUserName}, #{updateTime}, #{updateUserId}, #{updateUserName}
         )
     </insert>
@@ -42,6 +53,8 @@
     <update id="updateStaffing" parameterType="com.hr.entity.Staffing">
         UPDATE org_staffing
         SET org_unit_name = #{orgUnitName},
+            responsible_user_id = #{responsibleUserId},
+            responsible_user_name = #{responsibleUserName},
             total_headcount = #{totalHeadcount},
             vacancy_headcount = #{vacancyHeadcount},
             outsourcing_headcount = #{outsourcingHeadcount},
@@ -66,4 +79,3 @@
     </select>
 
 </mapper>
-

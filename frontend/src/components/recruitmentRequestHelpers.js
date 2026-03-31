@@ -1,13 +1,26 @@
+export const RECRUITMENT_CATEGORY_OPTIONS = ['系统研发岗', '产品助理', '测试', '项目助理', '其他']
+
+export const RECRUITMENT_PLATFORM_OPTIONS = [
+  '开放',
+  '主机',
+  '测试',
+  'T24',
+  '手机',
+  '数据仓库',
+  '行政',
+  '其他（请在“备注”处说明）',
+]
+
 export const TEXTAREA_MAX_LENGTH = 500
 
 export const REQUEST_TYPE_OPTIONS = [
-  { label: '离场', value: 'LEAVE' },
-  { label: '释放不缺', value: 'RELEASE_NO_GAP' },
+  { label: '离场、释放补缺', value: 'LEAVE' },
   { label: '新增需求', value: 'NEW_DEMAND' },
 ]
 
 const SUBMIT_FIELDS = [
   'requestTitle',
+  'orgUnitName',
   'requestType',
   'technicalPlatform',
   'category',
@@ -24,8 +37,19 @@ const SUBMIT_FIELDS = [
 
 const cleanText = (value) => (typeof value === 'string' ? value.trim() : value)
 
-export const getRequestTypeLabel = (value) =>
-  REQUEST_TYPE_OPTIONS.find((item) => item.value === value)?.label || value || '-'
+export const extractOrgUnitNameFromDepartment = (departmentText = '') => {
+  if (!departmentText) return ''
+  if (!departmentText.includes('/')) return departmentText.trim()
+  const segments = departmentText.split('/')
+  return segments[segments.length - 1].trim()
+}
+
+export const getRequestTypeLabel = (value) => {
+  if (value === 'RELEASE_NO_GAP') {
+    return '离场、释放补缺'
+  }
+  return REQUEST_TYPE_OPTIONS.find((item) => item.value === value)?.label || value || '-'
+}
 
 export const getDepartmentDisplayText = (source = {}) => {
   if (source.applicationDepartment) return source.applicationDepartment
@@ -39,12 +63,40 @@ export const getDepartmentDisplayText = (source = {}) => {
 }
 
 export const getOrgUnitName = (source = {}) =>
-  source.orgUnitName || source.groupName || source.teamName || source.department || ''
+  source.orgUnitName ||
+  extractOrgUnitNameFromDepartment(source.applicationDepartment || '') ||
+  source.groupName ||
+  source.teamName ||
+  source.department ||
+  ''
+
+export const buildDepartmentDisplayByOrgUnit = (orgUnitName = '', orgUnits = []) => {
+  if (!orgUnitName) return ''
+  const currentUnit = orgUnits.find((item) => item.unitName === orgUnitName)
+  if (!currentUnit) return orgUnitName
+  if (currentUnit.unitType === 'GROUP' && currentUnit.parentUnitName) {
+    return `${currentUnit.parentUnitName} / ${currentUnit.unitName}`
+  }
+  return currentUnit.unitName
+}
+
+export const buildResponsibleDepartmentOptions = (staffings = [], orgUnits = []) =>
+  staffings
+    .filter((item) => item?.orgUnitName)
+    .map((item) => ({
+      value: item.orgUnitName,
+      label: buildDepartmentDisplayByOrgUnit(item.orgUnitName, orgUnits),
+      orgUnitName: item.orgUnitName,
+      totalRecruitmentCount: Number(item.totalHeadcount || 0),
+      vacancyCount: Number(item.vacancyHeadcount || 0),
+    }))
 
 export const normalizeRecruitmentRequestFormValues = (request = {}, currentUser = {}) => ({
   ...request,
+  orgUnitName: getOrgUnitName(request) || getOrgUnitName(currentUser) || undefined,
   applicationDepartment:
     getDepartmentDisplayText(request) || getDepartmentDisplayText(currentUser) || undefined,
+  urgentRequirement: request.urgentRequirement || 'YES',
   totalRecruitmentCount: Number(request.totalRecruitmentCount || 0),
   vacancyCount: Number(request.vacancyCount || 0),
   remark: request.remark || undefined,

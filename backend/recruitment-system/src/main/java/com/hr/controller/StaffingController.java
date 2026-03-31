@@ -33,16 +33,32 @@ public class StaffingController {
     private StaffingService staffingService;
 
     @GetMapping
-    public Map<String, Object> getAllStaffings() {
+    public Map<String, Object> getAllStaffings(@RequestParam(value = "viewerId", required = false) String viewerId,
+                                               @RequestParam(value = "viewerRole", required = false) String viewerRole) {
         Map<String, Object> result = new HashMap<>();
         try {
-            List<Staffing> list = staffingService.getAllStaffings();
+            List<Staffing> list = staffingService.getAllStaffings(viewerId, viewerRole);
             result.put("returnCode", "SUC0000");
             result.put("errorMsg", "");
             result.put("body", list);
         } catch (Exception e) {
             result.put("returnCode", "ERR0001");
             result.put("errorMsg", "Failed to get staffing list: " + e.getMessage());
+            result.put("body", null);
+        }
+        return result;
+    }
+
+    @GetMapping("/responsible-options")
+    public Map<String, Object> getResponsibleStaffings(@RequestParam("userId") String userId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            result.put("returnCode", "SUC0000");
+            result.put("errorMsg", "");
+            result.put("body", staffingService.getResponsibleStaffings(userId));
+        } catch (Exception e) {
+            result.put("returnCode", "ERR0001");
+            result.put("errorMsg", "Failed to get responsible staffing list: " + e.getMessage());
             result.put("body", null);
         }
         return result;

@@ -5,6 +5,8 @@ import java.util.Date;
 public class Staffing {
     private Long staffingId;
     private String orgUnitName;
+    private String responsibleUserId;
+    private String responsibleUserName;
     private Integer totalHeadcount;
     private Integer vacancyHeadcount;
     private Integer outsourcingHeadcount;
@@ -30,6 +32,22 @@ public class Staffing {
 
     public void setOrgUnitName(String orgUnitName) {
         this.orgUnitName = orgUnitName;
+    }
+
+    public String getResponsibleUserId() {
+        return responsibleUserId;
+    }
+
+    public void setResponsibleUserId(String responsibleUserId) {
+        this.responsibleUserId = responsibleUserId;
+    }
+
+    public String getResponsibleUserName() {
+        return responsibleUserName;
+    }
+
+    public void setResponsibleUserName(String responsibleUserName) {
+        this.responsibleUserName = responsibleUserName;
     }
 
     public Integer getTotalHeadcount() {
@@ -112,4 +130,3 @@ public class Staffing {
         this.updateUserName = updateUserName;
     }
 }
-

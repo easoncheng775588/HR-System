@@ -7,6 +7,13 @@
         <result column="total_recruitment_count" property="totalRecruitmentCount" />
         <result column="vacancy_count" property="vacancyCount" />
         <result column="team" property="team" />
+        <result column="application_department" property="applicationDepartment" />
+        <result column="org_unit_name" property="orgUnitName" />
+        <result column="request_type" property="requestType" />
+        <result column="remark" property="remark" />
+        <result column="submitter_role_type" property="submitterRoleType" />
+        <result column="final_approver_user_id" property="finalApproverUserId" />
+        <result column="final_approver_user_name" property="finalApproverUserName" />
         <result column="technical_platform" property="technicalPlatform" />
         <result column="category" property="category" />
         <result column="supplement_count" property="supplementCount" />
@@ -18,7 +25,6 @@
         <result column="interviewer_id" property="interviewerId" />
         <result column="interviewer_name" property="interviewerName" />
         <result column="approval_status" property="approvalStatus" />
-        <result column="position_publish_status" property="positionPublishStatus" />
         <result column="approval_user_id" property="approvalUserId" />
         <result column="approval_user_name" property="approvalUserName" />
         <result column="approval_time" property="approvalTime" />
@@ -39,6 +45,7 @@
         <result column="approval_level3_user_name" property="approvalLevel3UserName" />
         <result column="approval_level3_time" property="approvalLevel3Time" />
         <result column="approval_level3_comment" property="approvalLevel3Comment" />
+        <result column="status" property="status" />
         <result column="create_time" property="createTime" />
         <result column="create_user_id" property="createUserId" />
         <result column="create_user_name" property="createUserName" />
@@ -53,6 +60,13 @@
             total_recruitment_count,
             vacancy_count,
             team,
+            application_department,
+            org_unit_name,
+            request_type,
+            remark,
+            submitter_role_type,
+            final_approver_user_id,
+            final_approver_user_name,
             technical_platform,
             category,
             supplement_count,
@@ -64,11 +78,11 @@
             interviewer_id,
             interviewer_name,
             approval_status,
-            position_publish_status,
             current_approval_level,
             approval_level1_status,
             approval_level2_status,
             approval_level3_status,
+            status,
             create_user_id,
             create_user_name,
             update_user_id,
@@ -78,6 +92,13 @@
             #{totalRecruitmentCount},
             #{vacancyCount},
             #{team},
+            #{applicationDepartment},
+            #{orgUnitName},
+            #{requestType},
+            #{remark},
+            #{submitterRoleType},
+            #{finalApproverUserId},
+            #{finalApproverUserName},
             #{technicalPlatform},
             #{category},
             #{supplementCount},
@@ -89,11 +110,11 @@
             #{interviewerId},
             #{interviewerName},
             #{approvalStatus},
-            #{positionPublishStatus},
             #{currentApprovalLevel},
             #{approvalLevel1Status},
             #{approvalLevel2Status},
             #{approvalLevel3Status},
+            #{status},
             #{createUserId},
             #{createUserName},
             #{updateUserId},
@@ -107,6 +128,13 @@
             total_recruitment_count = #{totalRecruitmentCount},
             vacancy_count = #{vacancyCount},
             team = #{team},
+            application_department = #{applicationDepartment},
+            org_unit_name = #{orgUnitName},
+            request_type = #{requestType},
+            remark = #{remark},
+            submitter_role_type = #{submitterRoleType},
+            final_approver_user_id = #{finalApproverUserId},
+            final_approver_user_name = #{finalApproverUserName},
             technical_platform = #{technicalPlatform},
             category = #{category},
             supplement_count = #{supplementCount},
@@ -118,7 +146,6 @@
             interviewer_id = #{interviewerId},
             interviewer_name = #{interviewerName},
             approval_status = #{approvalStatus},
-            position_publish_status = #{positionPublishStatus},
             current_approval_level = #{currentApprovalLevel},
             approval_level1_status = #{approvalLevel1Status},
             approval_level1_user_id = #{approvalLevel1UserId},
@@ -132,6 +159,7 @@
             approval_level3_user_id = #{approvalLevel3UserId},
             approval_level3_user_name = #{approvalLevel3UserName},
             approval_level3_comment = #{approvalLevel3Comment},
+            status = #{status},
             update_user_id = #{updateUserId},
             update_user_name = #{updateUserName},
             update_time = #{updateTime}
@@ -152,7 +180,8 @@
             approval_user_id = #{approvalUserId},
             approval_user_name = #{approvalUserName},
             approval_time = NOW(),
-            approval_comment = #{approvalComment}
+            approval_comment = #{approvalComment},
+            status = #{status}
         WHERE recruitment_request_id = #{recruitmentRequestId}
     </update>
 
@@ -174,7 +203,8 @@
             approval_level3_user_id = #{approvalLevel3UserId},
             approval_level3_user_name = #{approvalLevel3UserName},
             approval_level3_time = #{approvalLevel3Time},
-            approval_level3_comment = #{approvalLevel3Comment}
+            approval_level3_comment = #{approvalLevel3Comment},
+            status = #{status}
         WHERE recruitment_request_id = #{recruitmentRequestId}
     </update>
 

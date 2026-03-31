@@ -49,6 +49,8 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
         String createStaffingSql = "CREATE TABLE IF NOT EXISTS org_staffing ("
             + "staffing_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Staffing ID', "
             + "org_unit_name VARCHAR(100) NOT NULL UNIQUE COMMENT 'Team or Group Name', "
+            + "responsible_user_id VARCHAR(20) COMMENT 'Responsible User ID', "
+            + "responsible_user_name VARCHAR(50) COMMENT 'Responsible User Name', "
             + "total_headcount INT NOT NULL DEFAULT 0 COMMENT 'Total Headcount', "
             + "vacancy_headcount INT NOT NULL DEFAULT 0 COMMENT 'Vacancy Headcount', "
             + "outsourcing_headcount INT NOT NULL DEFAULT 0 COMMENT 'Outsourcing Headcount', "
@@ -63,6 +65,8 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
 
         jdbcTemplate.execute(createOrgUnitSql);
         jdbcTemplate.execute(createStaffingSql);
+        addColumnIfMissing("org_staffing", "responsible_user_id", "VARCHAR(20) COMMENT 'Responsible User ID'");
+        addColumnIfMissing("org_staffing", "responsible_user_name", "VARCHAR(50) COMMENT 'Responsible User Name'");
     }
 
     private void seedOrgUnits() {
@@ -122,6 +126,20 @@ public class OrgStaffingDatabaseInitializer implements CommandLineRunner {
             );
         } catch (Exception e) {
             logger.warn("Seed org unit failed for {}: {}", unitName, e.getMessage());
+        }
+    }
+
+    private void addColumnIfMissing(String tableName, String columnName, String definition) {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM information_schema.COLUMNS " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+            Integer.class,
+            tableName,
+            columnName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+            logger.info("表 {} 新增字段 {}", tableName, columnName);
         }
     }
 }

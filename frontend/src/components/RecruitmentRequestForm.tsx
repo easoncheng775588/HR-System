@@ -1,13 +1,17 @@
 ﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, Form, Input, InputNumber, Radio, Select, Space, Spin, message } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import { handleLoadError, handleSaveDraftError, handleSubmitError } from '../utils/errorHandler';
 import { useAuth } from '../contexts/AuthContext';
+import RecruitmentLevelHint from './RecruitmentLevelHint';
 import {
+  buildResponsibleDepartmentOptions,
   buildRecruitmentRequestPayload,
   getOrgUnitName,
   normalizeRecruitmentRequestFormValues,
+  RECRUITMENT_CATEGORY_OPTIONS,
+  RECRUITMENT_PLATFORM_OPTIONS,
   REQUEST_TYPE_OPTIONS,
   TEXTAREA_MAX_LENGTH,
 } from './recruitmentRequestHelpers';
@@ -18,8 +22,14 @@ type InterviewerOption = {
   label: string;
 };
 
-const CATEGORY_OPTIONS = ['系统研发岗', '产品助理', '测试', '项目助理', '其他'];
-const PLATFORM_OPTIONS = ['开放', '主机', '测试', 'T24', '其他'];
+type DepartmentOption = {
+  value: string;
+  label: string;
+  orgUnitName: string;
+  totalRecruitmentCount: number;
+  vacancyCount: number;
+};
+
 const RecruitmentRequestForm = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -30,9 +40,16 @@ const RecruitmentRequestForm = () => {
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [interviewerOptions, setInterviewerOptions] = useState<InterviewerOption[]>([]);
+  const [departmentOptions, setDepartmentOptions] = useState<DepartmentOption[]>([]);
   const interviewerSearchTimer = useRef<number | null>(null);
 
   const userOrgUnitName = getOrgUnitName(user || {});
+  const fieldColSpan = { xs: 24, sm: 12, xl: 6 };
+  const skillRequirementHint = `其他基本要求：
+1、统招全日制本科及以上学历；
+2、两年以上相关工作经验；
+3、英语四级及以上水平，读写良好；
+4、工作态度好，责任心强，纪律性强，有团队精神，服从工作安排`
 
   const fetchStaffingByOrgUnit = useCallback(async (orgUnitName: string) => {
     if (!orgUnitName) {
@@ -55,6 +72,57 @@ const RecruitmentRequestForm = () => {
       form.setFieldsValue({ totalRecruitmentCount: 0, vacancyCount: 0 });
     }
   }, [form]);
+
+  const applyDepartmentSelection = useCallback((selectedOrgUnitName?: string) => {
+    const option = departmentOptions.find((item) => item.value === selectedOrgUnitName);
+    if (!option) {
+      form.setFieldsValue({
+        orgUnitName: selectedOrgUnitName,
+        applicationDepartment: selectedOrgUnitName,
+        totalRecruitmentCount: 0,
+        vacancyCount: 0,
+      });
+      if (selectedOrgUnitName) {
+        fetchStaffingByOrgUnit(selectedOrgUnitName);
+      }
+      return;
+    }
+
+    form.setFieldsValue({
+      orgUnitName: option.orgUnitName,
+      applicationDepartment: option.label,
+      totalRecruitmentCount: option.totalRecruitmentCount,
+      vacancyCount: option.vacancyCount,
+    });
+  }, [departmentOptions, fetchStaffingByOrgUnit, form]);
+
+  const loadResponsibleDepartments = useCallback(async () => {
+    if (!user?.userId) {
+      setDepartmentOptions([]);
+      return;
+    }
+
+    try {
+      const [staffingResponse, orgUnitResponse] = await Promise.all([
+        api.get('/api/staffings/responsible-options', { params: { userId: user.userId } }),
+        api.get('/api/org-units/active'),
+      ]);
+
+      if (staffingResponse.data?.returnCode !== 'SUC0000') {
+        message.error(staffingResponse.data?.errorMsg || '获取负责室组失败');
+        setDepartmentOptions([]);
+        return;
+      }
+
+      const options = buildResponsibleDepartmentOptions(
+        staffingResponse.data?.body || [],
+        orgUnitResponse.data?.body || [],
+      );
+      setDepartmentOptions(options);
+    } catch (_error) {
+      setDepartmentOptions([]);
+    }
+  }, [user?.userId]);
 
   const loadRequestData = useCallback(async (requestId: string) => {
     setLoading(true);
@@ -99,11 +167,38 @@ const RecruitmentRequestForm = () => {
   }, [id, loadRequestData, form, user]);
 
   useEffect(() => {
+    loadResponsibleDepartments();
+  }, [loadResponsibleDepartments]);
+
+  useEffect(() => {
+    if (!departmentOptions.length) {
+      return;
+    }
+
+    const currentOrgUnitName = String(form.getFieldValue('orgUnitName') || '');
+    if (currentOrgUnitName) {
+      applyDepartmentSelection(currentOrgUnitName);
+      return;
+    }
+
     if (id) {
       return;
     }
+
+    const defaultOption =
+      departmentOptions.find((item) => item.value === userOrgUnitName) ||
+      departmentOptions[0];
+    if (defaultOption) {
+      applyDepartmentSelection(defaultOption.value);
+    }
+  }, [applyDepartmentSelection, departmentOptions, form, id, userOrgUnitName]);
+
+  useEffect(() => {
+    if (id || departmentOptions.length) {
+      return;
+    }
     fetchStaffingByOrgUnit(userOrgUnitName);
-  }, [fetchStaffingByOrgUnit, id, userOrgUnitName]);
+  }, [departmentOptions.length, fetchStaffingByOrgUnit, id, userOrgUnitName]);
 
   const loadInterviewers = useCallback(async (keyword: string) => {
     try {
@@ -140,6 +235,10 @@ const RecruitmentRequestForm = () => {
     const labelText = currentOption?.label || '';
     const name = labelText.includes('(') ? labelText.split('(')[0].trim() : labelText;
     form.setFieldsValue({ interviewerName: name });
+  };
+
+  const handleDepartmentChange = (selectedOrgUnitName: string) => {
+    applyDepartmentSelection(selectedOrgUnitName);
   };
 
   useEffect(() => () => {
@@ -206,124 +305,145 @@ const RecruitmentRequestForm = () => {
 
   return (
     <div className="app-page">
-      <Card title={isEditMode ? '编辑用人申请' : '发起用人申请'} className="form-card">
+      <Card title={isEditMode ? '编辑用人申请' : '发起用人申请'} className="form-card recruitment-request-form-card">
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="requestTitle" label="申请标题" rules={[{ required: true, message: '请输入申请标题' }]}>
-            <Input placeholder="请输入申请标题" />
-          </Form.Item>
+          <Row gutter={[16, 0]}>
+            <Col span={24}>
+              <Form.Item name="requestTitle" label="申请标题" rules={[{ required: true, message: '请输入申请标题' }]}>
+                <Input placeholder="请输入申请标题" />
+              </Form.Item>
+            </Col>
 
-          <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item name="applicationDepartment" label="申请部门" style={{ minWidth: 220, flex: 1 }}>
-              <Input disabled placeholder="自动带出当前用户部门" />
-            </Form.Item>
-            <Form.Item name="totalRecruitmentCount" label="总编制数" rules={[{ required: true, message: '总编制数缺失' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Input type="number" placeholder="从编制管理自动带出" disabled />
-            </Form.Item>
-            <Form.Item name="vacancyCount" label="空缺编制数" rules={[{ required: true, message: '空缺编制数缺失' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Input type="number" placeholder="从编制管理自动带出" disabled />
-            </Form.Item>
-          </Space>
+            <Col {...fieldColSpan}>
+              <Form.Item
+                name="orgUnitName"
+                label="申请部门"
+                rules={[{ required: true, message: '请选择申请部门' }]}
+              >
+                <Select
+                  showSearch
+                  placeholder="请选择申请部门"
+                  optionFilterProp="label"
+                  options={departmentOptions}
+                  onChange={handleDepartmentChange}
+                />
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="totalRecruitmentCount" label="总编制数" rules={[{ required: true, message: '总编制数缺失' }]}>
+                <Input type="number" placeholder="从编制管理自动带出" disabled />
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="vacancyCount" label="空缺编制数" rules={[{ required: true, message: '空缺编制数缺失' }]}>
+                <Input type="number" placeholder="从编制管理自动带出" disabled />
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="requestType" label="所属类型" rules={[{ required: true, message: '请选择所属类型' }]}>
+                <Select placeholder="请选择所属类型" options={REQUEST_TYPE_OPTIONS} />
+              </Form.Item>
+            </Col>
 
-          <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item name="requestType" label="所属类型" rules={[{ required: true, message: '请选择所属类型' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Select placeholder="请选择所属类型" options={REQUEST_TYPE_OPTIONS} />
-            </Form.Item>
-            <Form.Item name="category" label="所属分类" rules={[{ required: true, message: '请选择所属分类' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Select placeholder="请选择所属分类">
-                {CATEGORY_OPTIONS.map((item) => (
-                  <Select.Option key={item} value={item}>
-                    {item}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="technicalPlatform" label="技术平台" rules={[{ required: true, message: '请选择技术平台' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Select placeholder="请选择技术平台">
-                {PLATFORM_OPTIONS.map((item) => (
-                  <Select.Option key={item} value={item}>
-                    {item}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Space>
-
-          <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item
-              name="supplementCount"
-              label="补充人数"
-              rules={[
-                { required: true, message: '请输入补充人数' },
-                {
-                  validator: async (_, value) => {
-                    if (value === undefined || value === null || value === '') {
-                      return;
-                    }
-                    if (Number(value) > 0) {
-                      return;
-                    }
-                    throw new Error('补充人数必须大于 0');
+            <Col {...fieldColSpan}>
+              <Form.Item name="category" label="所属分类" rules={[{ required: true, message: '请选择所属分类' }]}>
+                <Select placeholder="请选择所属分类">
+                  {RECRUITMENT_CATEGORY_OPTIONS.map((item) => (
+                    <Select.Option key={item} value={item}>
+                      {item}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="technicalPlatform" label="技术平台" rules={[{ required: true, message: '请选择技术平台' }]}>
+                <Select placeholder="请选择技术平台">
+                  {RECRUITMENT_PLATFORM_OPTIONS.map((item) => (
+                    <Select.Option key={item} value={item}>
+                      {item}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item
+                name="supplementCount"
+                label="补充人数"
+                rules={[
+                  { required: true, message: '请输入补充人数' },
+                  {
+                    validator: async (_, value) => {
+                      if (value === undefined || value === null || value === '') {
+                        return;
+                      }
+                      if (Number(value) > 0) {
+                        return;
+                      }
+                      throw new Error('补充人数必须大于 0');
+                    },
                   },
-                },
-              ]}
-              style={{ minWidth: 220, flex: 1 }}
-            >
-              <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入补充人数" />
-            </Form.Item>
-            <Form.Item name="urgentRequirement" label="是否满足编制要求" rules={[{ required: true, message: '请选择是否满足编制要求' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Radio.Group>
-                <Radio value="YES">是</Radio>
-                <Radio value="NO">否</Radio>
-              </Radio.Group>
-            </Form.Item>
-          </Space>
-
-          <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item name="proposedLevel" label="建议级别" rules={[{ required: true, message: '请选择建议级别' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Select placeholder="请选择建议级别">
-                {RECRUITMENT_LEVEL_OPTIONS.map((item) => (
-                  <Select.Option key={item} value={item}>
-                    {item}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="experienceYears" label="相关经验年限要求" rules={[{ required: true, message: '请选择相关经验年限要求' }]} style={{ minWidth: 220, flex: 1 }}>
-              <Select placeholder="请选择相关经验年限要求">
-                <Select.Option value="0-1年">0-1年</Select.Option>
-                <Select.Option value="1-3年">1-3年</Select.Option>
-                <Select.Option value="3-5年">3-5年</Select.Option>
-                <Select.Option value="5年以上">5年以上</Select.Option>
-              </Select>
-            </Form.Item>
-          </Space>
-
-          <Space style={{ width: '100%' }} size={12} wrap>
-            <Form.Item
-              name="interviewerId"
-              label="面试官"
-              rules={[{ required: true, message: '请选择面试官' }]}
-              style={{ minWidth: 220, flex: 1 }}
-            >
-              <Select
-                showSearch
-                placeholder="请输入用户名搜索"
-                filterOption={false}
-                onSearch={handleInterviewerSearch}
-                onFocus={() => loadInterviewers('')}
-                onChange={handleInterviewerChange}
-                options={interviewerOptions}
-              />
-            </Form.Item>
-          </Space>
+                ]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入补充人数" />
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="proposedLevel" label={<RecruitmentLevelHint />} rules={[{ required: true, message: '请选择建议级别' }]}>
+                <Select placeholder="请选择建议级别">
+                  {RECRUITMENT_LEVEL_OPTIONS.map((item) => (
+                    <Select.Option key={item} value={item}>
+                      {item}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item name="experienceYears" label="相关经验年限要求" rules={[{ required: true, message: '请选择相关经验年限要求' }]}>
+                <Select placeholder="请选择相关经验年限要求">
+                  <Select.Option value="0-1年">0-1年</Select.Option>
+                  <Select.Option value="1-3年">1-3年</Select.Option>
+                  <Select.Option value="3-5年">3-5年</Select.Option>
+                  <Select.Option value="5年以上">5年以上</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col {...fieldColSpan}>
+              <Form.Item
+                name="interviewerId"
+                label="面试官"
+                rules={[{ required: true, message: '请选择面试官' }]}
+              >
+                <Select
+                  showSearch
+                  placeholder="请输入用户名搜索"
+                  filterOption={false}
+                  onSearch={handleInterviewerSearch}
+                  onFocus={() => loadInterviewers('')}
+                  onChange={handleInterviewerChange}
+                  options={interviewerOptions}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item name="interviewerName" hidden>
             <Input />
           </Form.Item>
 
+          <Form.Item name="urgentRequirement" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item name="applicationDepartment" hidden>
+            <Input />
+          </Form.Item>
+
           <Form.Item
             name="skillRequirement"
-            label="任职要求"
+            label={<RecruitmentLevelHint label="任职要求" content={skillRequirementHint} />}
             rules={[
               { required: true, message: '请填写任职要求' },
               { max: TEXTAREA_MAX_LENGTH, message: `任职要求不能超过 ${TEXTAREA_MAX_LENGTH} 个字符` },

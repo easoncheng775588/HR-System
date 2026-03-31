@@ -10,6 +10,7 @@ import {
   getDepartmentDisplayText,
   getRequestTypeLabel,
 } from './recruitmentRequestHelpers';
+import RecruitmentLevelHint from './RecruitmentLevelHint';
 
 const RecruitmentRequestList = () => {
   const { getLevelText, getPlatformText } = useParam();
@@ -20,6 +21,11 @@ const RecruitmentRequestList = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
+  const skillRequirementHint = `其他基本要求：
+1、统招全日制本科及以上学历；
+2、两年以上相关工作经验；
+3、英语四级及以上水平，读写良好；
+4、工作态度好，责任心强，纪律性强，有团队精神，服从工作安排`
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -104,7 +110,7 @@ const RecruitmentRequestList = () => {
       responsive: ['md', 'lg', 'xl', 'xxl'],
     },
     {
-      title: '建议级别',
+      title: <RecruitmentLevelHint />,
       dataIndex: 'proposedLevel',
       key: 'proposedLevel',
       width: 120,
@@ -184,20 +190,24 @@ const RecruitmentRequestList = () => {
         closeIcon={<CloseOutlined />}
       >
         {selectedRecord && (
-          <Descriptions column={1} size={isMobile ? 'small' : 'default'}>
-            <Descriptions.Item label="申请标题">{selectedRecord.requestTitle}</Descriptions.Item>
-            <Descriptions.Item label="申请部门">{getDepartmentDisplayText(selectedRecord) || '-'}</Descriptions.Item>
-            <Descriptions.Item label="所属类型">{getRequestTypeLabel(selectedRecord.requestType)}</Descriptions.Item>
-            <Descriptions.Item label="技术平台">{getPlatformText(selectedRecord.technicalPlatform)}</Descriptions.Item>
-            <Descriptions.Item label="补充人数">{selectedRecord.supplementCount}</Descriptions.Item>
-            <Descriptions.Item label="建议级别">{getLevelText(selectedRecord.proposedLevel)}</Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {selectedRecord.createTime ? new Date(selectedRecord.createTime).toLocaleString('zh-CN') : '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="任职要求">{selectedRecord.skillRequirement || '-'}</Descriptions.Item>
-            <Descriptions.Item label="岗位职责">{selectedRecord.positionResponsibility || '-'}</Descriptions.Item>
-            <Descriptions.Item label="备注">{selectedRecord.remark || '-'}</Descriptions.Item>
-          </Descriptions>
+          <>
+            <Descriptions column={1} size={isMobile ? 'small' : 'default'}>
+              <Descriptions.Item label="申请标题">{selectedRecord.requestTitle}</Descriptions.Item>
+              <Descriptions.Item label="申请部门">{getDepartmentDisplayText(selectedRecord) || '-'}</Descriptions.Item>
+              <Descriptions.Item label="所属类型">{getRequestTypeLabel(selectedRecord.requestType)}</Descriptions.Item>
+              <Descriptions.Item label="技术平台">{getPlatformText(selectedRecord.technicalPlatform)}</Descriptions.Item>
+              <Descriptions.Item label="补充人数">{selectedRecord.supplementCount}</Descriptions.Item>
+              <Descriptions.Item label={<RecruitmentLevelHint />}>{getLevelText(selectedRecord.proposedLevel)}</Descriptions.Item>
+              <Descriptions.Item label="创建时间">
+                {selectedRecord.createTime ? new Date(selectedRecord.createTime).toLocaleString('zh-CN') : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label={<RecruitmentLevelHint label="任职要求" content={skillRequirementHint} />}>
+                {selectedRecord.skillRequirement || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="岗位职责">{selectedRecord.positionResponsibility || '-'}</Descriptions.Item>
+              <Descriptions.Item label="备注">{selectedRecord.remark || '-'}</Descriptions.Item>
+            </Descriptions>
+          </>
         )}
       </Drawer>
 

@@ -2,9 +2,13 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  buildDepartmentDisplayByOrgUnit,
+  RECRUITMENT_PLATFORM_OPTIONS,
   TEXTAREA_MAX_LENGTH,
+  buildResponsibleDepartmentOptions,
   buildRecruitmentRequestPayload,
   buildRecruitmentRequestViewerParams,
+  extractOrgUnitNameFromDepartment,
   formatWorkflowNodeLabel,
   getDepartmentDisplayText,
   getRequestTypeLabel,
@@ -13,10 +17,23 @@ import {
 } from '../src/components/recruitmentRequestHelpers.js'
 
 test('request type labels match frozen contract', () => {
-  assert.equal(getRequestTypeLabel('LEAVE'), '离场')
-  assert.equal(getRequestTypeLabel('RELEASE_NO_GAP'), '释放不缺')
+  assert.equal(getRequestTypeLabel('LEAVE'), '离场、释放补缺')
+  assert.equal(getRequestTypeLabel('RELEASE_NO_GAP'), '离场、释放补缺')
   assert.equal(getRequestTypeLabel('NEW_DEMAND'), '新增需求')
   assert.equal(getRequestTypeLabel('UNKNOWN_TYPE'), 'UNKNOWN_TYPE')
+})
+
+test('recruitment platform fallback options stay aligned with request form', () => {
+  assert.deepEqual(RECRUITMENT_PLATFORM_OPTIONS, [
+    '开放',
+    '主机',
+    '测试',
+    'T24',
+    '手机',
+    '数据仓库',
+    '行政',
+    '其他（请在“备注”处说明）',
+  ])
 })
 
 test('department display prefers applicationDepartment and falls back to team/group info', () => {
@@ -38,6 +55,7 @@ test('form values normalize readonly display fields for create and edit flows', 
   )
 
   assert.equal(normalized.applicationDepartment, '零售业务开发团队 / 零售平台开发室')
+  assert.equal(normalized.orgUnitName, '零售平台开发室')
   assert.equal(normalized.totalRecruitmentCount, 0)
   assert.equal(normalized.vacancyCount, 2)
   assert.equal(normalized.remark, undefined)
@@ -46,6 +64,7 @@ test('form values normalize readonly display fields for create and edit flows', 
 test('submit payload excludes readonly fields and trims optional remark', () => {
   const payload = buildRecruitmentRequestPayload({
     requestTitle: '  零售平台开发室补员申请  ',
+    orgUnitName: '办公系统开发室',
     requestType: 'LEAVE',
     applicationDepartment: '零售业务开发团队 / 零售平台开发室',
     totalRecruitmentCount: 8,
@@ -56,10 +75,37 @@ test('submit payload excludes readonly fields and trims optional remark', () => 
 
   assert.deepEqual(payload, {
     requestTitle: '零售平台开发室补员申请',
+    orgUnitName: '办公系统开发室',
     requestType: 'LEAVE',
     remark: '离场补位',
     interviewerId: '1008',
   })
+})
+
+test('department option helpers keep dropdown value and display separate', () => {
+  assert.equal(extractOrgUnitNameFromDepartment('基础业务开发团队 / 办公系统开发室'), '办公系统开发室')
+  assert.equal(
+    buildDepartmentDisplayByOrgUnit('办公系统开发室', [
+      { unitName: '办公系统开发室', unitType: 'GROUP', parentUnitName: '基础业务开发团队' },
+    ]),
+    '基础业务开发团队 / 办公系统开发室',
+  )
+
+  assert.deepEqual(
+    buildResponsibleDepartmentOptions(
+      [{ orgUnitName: '办公系统开发室', totalHeadcount: 12, vacancyHeadcount: 3 }],
+      [{ unitName: '办公系统开发室', unitType: 'GROUP', parentUnitName: '基础业务开发团队' }],
+    ),
+    [
+      {
+        value: '办公系统开发室',
+        label: '基础业务开发团队 / 办公系统开发室',
+        orgUnitName: '办公系统开发室',
+        totalRecruitmentCount: 12,
+        vacancyCount: 3,
+      },
+    ],
+  )
 })
 
 test('viewer params always include viewerId required by list contract', () => {

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Form, InputNumber, message, Modal, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Form, Input, InputNumber, message, Modal, Popconfirm, Select, Space, Table, Tag, Upload } from 'antd';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface OrgUnitItem {
   unitId: number;
@@ -14,6 +15,8 @@ interface OrgUnitItem {
 interface StaffingItem {
   staffingId: number;
   orgUnitName: string;
+  responsibleUserId?: string;
+  responsibleUserName?: string;
   totalHeadcount: number;
   vacancyHeadcount: number;
   outsourcingHeadcount: number;
@@ -29,6 +32,11 @@ interface SubmitError {
   message?: string;
 }
 
+interface UserOption {
+  value: string;
+  label: string;
+}
+
 const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'object' && error && 'message' in error) {
     return String((error as { message?: string }).message || '未知错误');
@@ -37,19 +45,28 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 const StaffingManagement: React.FC = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [importVisible, setImportVisible] = useState(false);
   const [data, setData] = useState<StaffingItem[]>([]);
   const [orgUnits, setOrgUnits] = useState<OrgUnitItem[]>([]);
+  const [responsibleOptions, setResponsibleOptions] = useState<UserOption[]>([]);
   const [editing, setEditing] = useState<StaffingItem | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const responsibleSearchTimer = useRef<number | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchOrgUnits();
     fetchStaffings();
+  }, [user?.userId]);
+
+  useEffect(() => () => {
+    if (responsibleSearchTimer.current) {
+      window.clearTimeout(responsibleSearchTimer.current);
+    }
   }, []);
 
   const fetchOrgUnits = async () => {
@@ -68,7 +85,12 @@ const StaffingManagement: React.FC = () => {
   const fetchStaffings = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/staffings');
+      const response = await api.get('/api/staffings', {
+        params: {
+          viewerId: String(user?.userId || ''),
+          viewerRole: String(user?.position || user?.positionName || user?.role || ''),
+        },
+      });
       if (response.data?.returnCode === 'SUC0000') {
         setData(response.data.body || []);
       } else {
@@ -81,6 +103,40 @@ const StaffingManagement: React.FC = () => {
     }
   };
 
+  const loadResponsibleUsers = async (keyword = '') => {
+    try {
+      const response = await api.get('/api/users/search', { params: { keyword } });
+      if (response.data?.returnCode !== 'SUC0000') {
+        setResponsibleOptions([]);
+        return;
+      }
+      const options = (response.data.body || [])
+        .map((item: { userId?: string; realName?: string; username?: string }) => ({
+          value: String(item.userId || ''),
+          label: `${item.realName || item.username || item.userId || ''} (${item.userId || '-'})`,
+        }))
+        .filter((item: UserOption) => item.value);
+      setResponsibleOptions(options);
+    } catch (_error) {
+      setResponsibleOptions([]);
+    }
+  };
+
+  const handleResponsibleSearch = (keyword: string) => {
+    if (responsibleSearchTimer.current) {
+      window.clearTimeout(responsibleSearchTimer.current);
+    }
+    responsibleSearchTimer.current = window.setTimeout(() => {
+      loadResponsibleUsers(keyword);
+    }, 250);
+  };
+
+  const handleResponsibleChange = (_value: string, option: unknown) => {
+    const label = String((option as { label?: string })?.label || '');
+    const responsibleUserName = label.includes('(') ? label.split('(')[0].trim() : label;
+    form.setFieldsValue({ responsibleUserName });
+  };
+
   const openCreateModal = () => {
     setEditing(null);
     form.resetFields();
@@ -90,12 +146,23 @@ const StaffingManagement: React.FC = () => {
       outsourcingHeadcount: 0,
       employeeHeadcount: 0,
     });
+    loadResponsibleUsers('');
     setModalVisible(true);
   };
 
   const openEditModal = (record: StaffingItem) => {
     setEditing(record);
     form.setFieldsValue(record);
+    if (record.responsibleUserId && record.responsibleUserName) {
+      setResponsibleOptions((prev) => {
+        const exists = prev.some((item) => item.value === record.responsibleUserId);
+        if (exists) return prev;
+        return [
+          { value: record.responsibleUserId || '', label: `${record.responsibleUserName} (${record.responsibleUserId})` },
+          ...prev,
+        ];
+      });
+    }
     setModalVisible(true);
   };
 
@@ -118,6 +185,8 @@ const StaffingManagement: React.FC = () => {
       const values = await form.validateFields();
       const payload = {
         orgUnitName: values.orgUnitName,
+        responsibleUserId: values.responsibleUserId,
+        responsibleUserName: values.responsibleUserName,
         totalHeadcount: Number(values.totalHeadcount || 0),
         vacancyHeadcount: Number(values.vacancyHeadcount || 0),
         outsourcingHeadcount: Number(values.outsourcingHeadcount || 0),
@@ -209,6 +278,13 @@ const StaffingManagement: React.FC = () => {
 
   const columns = [
     { title: '团队/室组名称', dataIndex: 'orgUnitName', key: 'orgUnitName', width: 220 },
+    {
+      title: '负责人',
+      dataIndex: 'responsibleUserName',
+      key: 'responsibleUserName',
+      width: 140,
+      render: (value: string) => value || '-',
+    },
     { title: '总编制数', dataIndex: 'totalHeadcount', key: 'totalHeadcount', width: 100 },
     { title: '空缺编制数', dataIndex: 'vacancyHeadcount', key: 'vacancyHeadcount', width: 110 },
     { title: '外包编制数', dataIndex: 'outsourcingHeadcount', key: 'outsourcingHeadcount', width: 110 },
@@ -274,6 +350,9 @@ const StaffingManagement: React.FC = () => {
     value: u.unitName,
     label: u.unitName,
   }));
+  const selectedOrgUnitName = Form.useWatch('orgUnitName', form);
+  const selectedOrgUnit = orgUnits.find((item) => item.unitName === selectedOrgUnitName);
+  const responsibleRequired = selectedOrgUnit?.unitType === 'GROUP';
   const hasData = data.length > 0;
   const tableColumns = hasData ? columns : columns.map(({ width, fixed, ...rest }) => rest);
 
@@ -323,6 +402,27 @@ const StaffingManagement: React.FC = () => {
         <Form form={form} layout="vertical">
           <Form.Item label="团队/室组名称" name="orgUnitName" rules={[{ required: true, message: '请选择团队/室组名称' }]}>
             <Select showSearch placeholder="请选择团队/室组名称" options={orgUnitOptions} optionFilterProp="label" />
+          </Form.Item>
+          <Form.Item
+            label="负责人"
+            name="responsibleUserId"
+            rules={responsibleRequired ? [{ required: true, message: '请选择室组负责人' }] : []}
+            extra={responsibleRequired ? '室组编制必须配置负责人' : '团队编制可不填'}
+          >
+            <Select
+              showSearch
+              placeholder="请输入负责人姓名搜索"
+              filterOption={false}
+              optionFilterProp="label"
+              onSearch={handleResponsibleSearch}
+              onFocus={() => loadResponsibleUsers('')}
+              onChange={handleResponsibleChange}
+              options={responsibleOptions}
+              allowClear
+            />
+          </Form.Item>
+          <Form.Item name="responsibleUserName" hidden>
+            <Input />
           </Form.Item>
           <Form.Item label="总编制数" name="totalHeadcount" rules={[{ required: true, message: '请输入总编制数' }]}>
             <InputNumber min={0} style={{ width: '100%' }} />

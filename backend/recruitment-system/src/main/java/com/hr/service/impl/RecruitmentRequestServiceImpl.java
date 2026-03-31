@@ -602,8 +602,8 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             throw new RuntimeException("仅室经理或直属团队经理可提交用人申请");
         }
 
-        String applicationDepartment = resolveApplicationDepartment(submitter);
-        String orgUnitName = resolveOrgUnitName(submitter, roleType);
+        String orgUnitName = resolveSelectedOrgUnitName(request, submitter, strictSubmission);
+        String applicationDepartment = resolveSelectedApplicationDepartment(orgUnitName, submitter, roleType, strictSubmission);
         if (strictSubmission && (applicationDepartment == null || orgUnitName == null)) {
             throw new RuntimeException("当前用户未配置有效部门信息");
         }
@@ -626,9 +626,9 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         }
 
         if (ROOM_MANAGER_TYPE.equals(roleType) && strictSubmission) {
-            String teamName = submitter.getTeamName();
+            String teamName = resolveTeamNameByDepartment(orgUnitName);
             if (teamName == null || teamName.trim().isEmpty()) {
-                teamName = resolveTeamNameByDepartment(orgUnitName);
+                teamName = submitter.getTeamName();
             }
             User teamManager = findTeamManager(teamName);
             if (teamManager == null) {
@@ -756,6 +756,28 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         return submitter.getTeamName();
     }
 
+    private String resolveSelectedApplicationDepartment(String orgUnitName, User submitter, String roleType, boolean strictSubmission) {
+        if (orgUnitName != null && !orgUnitName.trim().isEmpty()) {
+            RecruitmentRequest displayRequest = new RecruitmentRequest();
+            displayRequest.setOrgUnitName(orgUnitName);
+            String displayDepartment = buildDisplayDepartment(displayRequest);
+            if (displayDepartment != null && !displayDepartment.trim().isEmpty()) {
+                return displayDepartment;
+            }
+        }
+
+        String fallbackDepartment = resolveApplicationDepartment(submitter);
+        if (strictSubmission && (fallbackDepartment == null || fallbackDepartment.trim().isEmpty())) {
+            String fallbackOrgUnit = resolveOrgUnitName(submitter, roleType);
+            if (fallbackOrgUnit != null && !fallbackOrgUnit.trim().isEmpty()) {
+                RecruitmentRequest displayRequest = new RecruitmentRequest();
+                displayRequest.setOrgUnitName(fallbackOrgUnit);
+                return buildDisplayDepartment(displayRequest);
+            }
+        }
+        return fallbackDepartment;
+    }
+
     private String resolveOrgUnitName(User submitter, String roleType) {
         if (ROOM_MANAGER_TYPE.equals(roleType) && submitter.getGroupName() != null && !submitter.getGroupName().trim().isEmpty()) {
             return submitter.getGroupName();
@@ -767,6 +789,67 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
             return submitter.getGroupName();
         }
         return submitter.getDepartment();
+    }
+
+    private String resolveSelectedOrgUnitName(RecruitmentRequest request, User submitter, boolean strictSubmission) {
+        String selectedOrgUnitName = normalizeOrgUnitName(request == null ? null : request.getOrgUnitName());
+        if (selectedOrgUnitName != null && !selectedOrgUnitName.trim().isEmpty()) {
+            validateResponsibleOrgUnitSelection(submitter, selectedOrgUnitName);
+            return selectedOrgUnitName;
+        }
+
+        String fallbackOrgUnit = resolveOrgUnitName(submitter, resolveSubmitterRoleType(submitter));
+        if (fallbackOrgUnit != null && !fallbackOrgUnit.trim().isEmpty()) {
+            List<Staffing> responsibleStaffings = staffingMapper.getStaffingsByResponsibleUserId(submitter.getUserId());
+            if (containsResponsibleOrgUnit(responsibleStaffings, fallbackOrgUnit) || !strictSubmission) {
+                return fallbackOrgUnit;
+            }
+        }
+
+        List<Staffing> responsibleStaffings = staffingMapper.getStaffingsByResponsibleUserId(submitter.getUserId());
+        if (!responsibleStaffings.isEmpty()) {
+            return responsibleStaffings.get(0).getOrgUnitName();
+        }
+        return fallbackOrgUnit;
+    }
+
+    private void validateResponsibleOrgUnitSelection(User submitter, String orgUnitName) {
+        if (submitter == null || orgUnitName == null || orgUnitName.trim().isEmpty()) {
+            return;
+        }
+
+        List<Staffing> responsibleStaffings = staffingMapper.getStaffingsByResponsibleUserId(submitter.getUserId());
+        if (!containsResponsibleOrgUnit(responsibleStaffings, orgUnitName)) {
+            throw new RuntimeException("申请部门不在当前用户负责室组范围内");
+        }
+    }
+
+    private boolean containsResponsibleOrgUnit(List<Staffing> responsibleStaffings, String orgUnitName) {
+        String normalizedOrgUnitName = normalizeOrgUnitName(orgUnitName);
+        if (normalizedOrgUnitName == null || normalizedOrgUnitName.trim().isEmpty()) {
+            return false;
+        }
+        for (Staffing staffing : responsibleStaffings) {
+            if (staffing == null) {
+                continue;
+            }
+            if (normalizedOrgUnitName.equals(normalizeOrgUnitName(staffing.getOrgUnitName()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeOrgUnitName(String orgUnitName) {
+        if (orgUnitName == null) {
+            return null;
+        }
+        String value = orgUnitName.trim();
+        if (value.contains("/")) {
+            String[] segments = value.split("/");
+            return segments[segments.length - 1].trim();
+        }
+        return value;
     }
 
     private boolean isDirectTeam(String teamName) {

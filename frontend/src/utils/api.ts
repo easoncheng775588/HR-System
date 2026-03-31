@@ -1,5 +1,8 @@
 import axios from 'axios'
 
+const buildAuthHeader = (token: string): string =>
+  token.startsWith('Bearer ') ? token : `Bearer ${token}`
+
 export const CACHE_CONFIG = {
   DEFAULT_EXPIRY: 30 * 60 * 1000,
   CLEANUP_INTERVAL: 60 * 60 * 1000,
@@ -126,7 +129,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.Authorization = buildAuthHeader(token)
     }
 
     const cfg = config as typeof config & { retryCount?: number }

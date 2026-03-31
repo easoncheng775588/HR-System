@@ -80,8 +80,13 @@ h6 {
   margin-bottom: 16px;
 }
 
+.recruitment-request-form-card {
+  width: min(100%, 1200px);
+  margin: 0 auto 16px;
+}
+
 .form-card .ant-card-body {
-  padding: 16px;
+  padding: 16px 40px 16px 40px;
 }
 
 .form-card-title {
@@ -133,4 +138,3 @@ h6 {
     -webkit-overflow-scrolling: touch;
   }
 }
-

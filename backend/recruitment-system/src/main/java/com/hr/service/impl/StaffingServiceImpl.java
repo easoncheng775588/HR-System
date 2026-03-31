@@ -1,8 +1,11 @@
 package com.hr.service.impl;
 
+import com.hr.entity.OrgUnit;
 import com.hr.entity.Staffing;
+import com.hr.entity.User;
 import com.hr.mapper.OrgUnitMapper;
 import com.hr.mapper.StaffingMapper;
+import com.hr.mapper.UserMapper;
 import com.hr.service.StaffingService;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -22,11 +25,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class StaffingServiceImpl implements StaffingService {
+
+    private static final String ROLE_ROOM_MANAGER = "室经理";
+    private static final String ROLE_DIRECT_TEAM_MANAGER = "直属团队经理";
+    private static final String ROLE_TEAM_MANAGER = "团队经理";
+    private static final String ROLE_STAFFING_MANAGER = "编制管理岗";
+    private static final String ROLE_SUPER_ADMIN = "超级管理员";
+    private static final String SYSTEM_USER_ID = "1001";
+    private static final String SYSTEM_USER_NAME = "SYSTEM";
 
     private static final List<String> TEMPLATE_HEADERS = Arrays.asList(
         "团队/室组名称", "总编制数", "空缺编制数", "外包编制数", "员工编制数"
@@ -38,9 +51,54 @@ public class StaffingServiceImpl implements StaffingService {
     @Autowired
     private OrgUnitMapper orgUnitMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
-    public List<Staffing> getAllStaffings() {
-        return staffingMapper.getAllStaffings();
+    public List<Staffing> getAllStaffings(String viewerId, String viewerRole) {
+        List<Staffing> allStaffings = staffingMapper.getAllStaffings();
+        if (viewerId == null || viewerId.trim().isEmpty()) {
+            return allStaffings;
+        }
+
+        User viewer = userMapper.getUserById(viewerId);
+        Set<String> roles = resolveNormalizedRoles(viewer, viewerRole);
+        if (roles.contains(ROLE_SUPER_ADMIN) || roles.contains(ROLE_STAFFING_MANAGER)) {
+            return allStaffings;
+        }
+
+        if (roles.contains(ROLE_TEAM_MANAGER) || roles.contains(ROLE_DIRECT_TEAM_MANAGER)) {
+            String viewerTeam = resolveViewerTeamName(viewer);
+            if (viewerTeam == null || viewerTeam.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            List<Staffing> visible = new ArrayList<>();
+            for (Staffing staffing : allStaffings) {
+                if (staffing == null) {
+                    continue;
+                }
+                String staffingTeam = resolveTeamNameByOrgUnit(staffing.getOrgUnitName());
+                if (viewerTeam.equals(staffingTeam)) {
+                    visible.add(staffing);
+                }
+            }
+            return visible;
+        }
+
+        return getResponsibleStaffings(viewerId);
+    }
+
+    @Override
+    public List<Staffing> getResponsibleStaffings(String userId) {
+        List<Staffing> staffings = staffingMapper.getStaffingsByResponsibleUserId(userId);
+        List<Staffing> visible = new ArrayList<>();
+        for (Staffing staffing : staffings) {
+            OrgUnit orgUnit = resolveOrgUnit(staffing == null ? null : staffing.getOrgUnitName());
+            if (orgUnit != null && "GROUP".equals(orgUnit.getUnitType())) {
+                visible.add(staffing);
+            }
+        }
+        return visible;
     }
 
     @Override
@@ -246,10 +304,16 @@ public class StaffingServiceImpl implements StaffingService {
             throw new RuntimeException("团队/室组名称不能为空");
         }
 
-        Integer orgUnitExists = orgUnitMapper.countByUnitName(staffing.getOrgUnitName());
-        if (orgUnitExists == null || orgUnitExists == 0) {
+        OrgUnit orgUnit = resolveOrgUnit(staffing.getOrgUnitName());
+        if (orgUnit == null) {
             throw new RuntimeException("团队/室组不存在");
         }
+        if ("GROUP".equals(orgUnit.getUnitType())
+            && (staffing.getResponsibleUserId() == null || staffing.getResponsibleUserId().trim().isEmpty())) {
+            throw new RuntimeException("室组负责人不能为空");
+        }
+
+        hydrateResponsibleUser(staffing);
 
         if (staffing.getTotalHeadcount() == null || staffing.getVacancyHeadcount() == null
             || staffing.getOutsourcingHeadcount() == null || staffing.getEmployeeHeadcount() == null) {
@@ -269,6 +333,21 @@ public class StaffingServiceImpl implements StaffingService {
         }
     }
 
+    private void hydrateResponsibleUser(Staffing staffing) {
+        if (staffing.getResponsibleUserId() == null || staffing.getResponsibleUserId().trim().isEmpty()) {
+            staffing.setResponsibleUserId(null);
+            staffing.setResponsibleUserName(null);
+            return;
+        }
+
+        User user = userMapper.getUserById(staffing.getResponsibleUserId().trim());
+        if (user == null || !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new RuntimeException("负责人不存在或已停用");
+        }
+        staffing.setResponsibleUserId(user.getUserId());
+        staffing.setResponsibleUserName(user.getRealName());
+    }
+
     private void validateHeadcount(Staffing staffing) {
         int sum = staffing.getVacancyHeadcount() + staffing.getOutsourcingHeadcount() + staffing.getEmployeeHeadcount();
         if (sum > staffing.getTotalHeadcount()) {
@@ -281,10 +360,10 @@ public class StaffingServiceImpl implements StaffingService {
         staffing.setCreateTime(now);
         staffing.setUpdateTime(now);
         if (staffing.getCreateUserId() == null || staffing.getCreateUserId().trim().isEmpty()) {
-            staffing.setCreateUserId("1001");
+            staffing.setCreateUserId(SYSTEM_USER_ID);
         }
         if (staffing.getCreateUserName() == null || staffing.getCreateUserName().trim().isEmpty()) {
-            staffing.setCreateUserName("SYSTEM");
+            staffing.setCreateUserName(SYSTEM_USER_NAME);
         }
         staffing.setUpdateUserId(staffing.getCreateUserId());
         staffing.setUpdateUserName(staffing.getCreateUserName());
@@ -293,10 +372,100 @@ public class StaffingServiceImpl implements StaffingService {
     private void fillAuditForUpdate(Staffing staffing) {
         staffing.setUpdateTime(new Date());
         if (staffing.getUpdateUserId() == null || staffing.getUpdateUserId().trim().isEmpty()) {
-            staffing.setUpdateUserId("1001");
+            staffing.setUpdateUserId(SYSTEM_USER_ID);
         }
         if (staffing.getUpdateUserName() == null || staffing.getUpdateUserName().trim().isEmpty()) {
-            staffing.setUpdateUserName("SYSTEM");
+            staffing.setUpdateUserName(SYSTEM_USER_NAME);
         }
+    }
+
+    private Set<String> resolveNormalizedRoles(User user, String viewerRole) {
+        Set<String> roles = new LinkedHashSet<>();
+        if (user != null) {
+            if (SYSTEM_USER_ID.equals(user.getUserId())) {
+                roles.add(ROLE_SUPER_ADMIN);
+            }
+            for (String roleName : userMapper.getRoleNamesByUserId(user.getUserId())) {
+                roles.add(normalizeRoleName(roleName));
+            }
+            roles.add(normalizeRoleName(user.getPosition()));
+        }
+        if (viewerRole != null && !viewerRole.trim().isEmpty()) {
+            roles.add(normalizeRoleName(viewerRole));
+        }
+        roles.remove("");
+        return roles;
+    }
+
+    private String normalizeRoleName(String roleName) {
+        if (roleName == null) {
+            return "";
+        }
+        String value = roleName.trim();
+        if (value.contains("超级管理员") || value.contains("系统管理员") || value.contains("管理员")) {
+            return ROLE_SUPER_ADMIN;
+        }
+        if (value.contains("编制管理")) {
+            return ROLE_STAFFING_MANAGER;
+        }
+        if (value.contains("直属团队经理")) {
+            return ROLE_DIRECT_TEAM_MANAGER;
+        }
+        if (value.contains("团队经理")) {
+            return ROLE_TEAM_MANAGER;
+        }
+        if (value.contains("室经理")) {
+            return ROLE_ROOM_MANAGER;
+        }
+        return value;
+    }
+
+    private String resolveViewerTeamName(User viewer) {
+        if (viewer == null) {
+            return null;
+        }
+        if (viewer.getTeamName() != null && !viewer.getTeamName().trim().isEmpty()) {
+            return viewer.getTeamName();
+        }
+        if (viewer.getGroupName() != null && !viewer.getGroupName().trim().isEmpty()) {
+            return resolveTeamNameByOrgUnit(viewer.getGroupName());
+        }
+        if (viewer.getDepartment() != null && !viewer.getDepartment().trim().isEmpty()) {
+            return resolveTeamNameByOrgUnit(extractOrgUnitName(viewer.getDepartment()));
+        }
+        return null;
+    }
+
+    private String resolveTeamNameByOrgUnit(String orgUnitName) {
+        OrgUnit orgUnit = resolveOrgUnit(orgUnitName);
+        if (orgUnit == null) {
+            return null;
+        }
+        if ("GROUP".equals(orgUnit.getUnitType())) {
+            return orgUnit.getParentUnitName();
+        }
+        if ("TEAM".equals(orgUnit.getUnitType())) {
+            return orgUnit.getUnitName();
+        }
+        return orgUnit.getParentUnitName();
+    }
+
+    private OrgUnit resolveOrgUnit(String orgUnitName) {
+        if (orgUnitName == null || orgUnitName.trim().isEmpty()) {
+            return null;
+        }
+        return orgUnitMapper.getByUnitName(extractOrgUnitName(orgUnitName));
+    }
+
+    private String extractOrgUnitName(String departmentText) {
+        if (departmentText == null) {
+            return null;
+        }
+        String value = departmentText.trim();
+        if (value.contains("/")) {
+            String[] segments = value.split("/");
+            return segments[segments.length - 1].trim();
+        }
+        return value;
     }
 }

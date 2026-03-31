@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState } from 'react';
+﻿import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import api from '../utils/api';
 import type { ApiLikeError } from '../utils/errorHandler';
 
@@ -15,37 +15,45 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      if (token) {
-        if (!token.startsWith('Bearer ') && token.split('.').length !== 3) {
+      if (!token) {
+        setUser(null);
+        setPermissions([]);
+        return;
+      }
+
+      const response = await api.get('/api/auth/user');
+      if (response.data && response.data.returnCode === 'SUC0000') {
+        setUser(response.data.body.user);
+        setPermissions(response.data.body.permissions || []);
+      } else {
+        if (response.data?.returnCode === 'ERR0007' || response.data?.returnCode === 'ERR0006') {
           localStorage.removeItem('token');
-          setUser(null);
-          setPermissions([]);
-          return;
         }
-        
-        const response = await api.get('/api/auth/user');
-        if (response.data && response.data.returnCode === 'SUC0000') {
-          setUser(response.data.body.user);
-          setPermissions(response.data.body.permissions || []);
-        }
+        setUser(null);
+        setPermissions([]);
       }
     } catch (error) {
       const apiError = error as ApiLikeError;
       console.error('Auth check failed:', error);
       if (apiError.response?.status === 401) {
         localStorage.removeItem('token');
-        setUser(null);
-        setPermissions([]);
       }
+      setUser(null);
+      setPermissions([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const hasPermission = (permissionCode) => {
     if (!user) return false;
@@ -106,4 +114,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

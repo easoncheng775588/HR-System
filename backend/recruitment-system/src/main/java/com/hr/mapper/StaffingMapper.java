@@ -11,6 +11,8 @@ public interface StaffingMapper {
 
     List<Staffing> getAllStaffings();
 
+    List<Staffing> getStaffingsByResponsibleUserId(@Param("responsibleUserId") String responsibleUserId);
+
     Staffing getStaffingById(@Param("staffingId") Long staffingId);
 
     Staffing getStaffingByOrgUnitName(@Param("orgUnitName") String orgUnitName);
@@ -23,4 +25,3 @@ public interface StaffingMapper {
 
     Integer countByOrgUnitName(@Param("orgUnitName") String orgUnitName, @Param("excludeStaffingId") Long excludeStaffingId);
 }
-

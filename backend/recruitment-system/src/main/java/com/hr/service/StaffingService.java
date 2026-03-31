@@ -8,7 +8,9 @@ import java.util.Map;
 
 public interface StaffingService {
 
-    List<Staffing> getAllStaffings();
+    List<Staffing> getAllStaffings(String viewerId, String viewerRole);
+
+    List<Staffing> getResponsibleStaffings(String userId);
 
     Staffing getStaffingById(Long staffingId);
 

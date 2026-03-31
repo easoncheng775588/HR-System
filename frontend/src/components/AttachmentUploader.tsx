@@ -30,6 +30,9 @@ const normalizeFileUrl = (rawUrl: string) => {
   return `/api/uploads/${text}`
 }
 
+const buildAuthHeader = (token: string): string =>
+  token.startsWith('Bearer ') ? token : `Bearer ${token}`
+
 const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   value = [],
   onChange,
@@ -59,7 +62,7 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       const token = localStorage.getItem('token')
       const response = await fetch('http://localhost:8080/api/upload', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: token ? { Authorization: buildAuthHeader(token) } : undefined,
         body: formData,
       })
       const result = await response.json()

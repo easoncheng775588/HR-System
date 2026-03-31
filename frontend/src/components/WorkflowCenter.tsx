@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useParam } from '../contexts/ParamContext';
 import { approveWorkflowProcess } from '../services/interviewApi';
 import { PROCESS_CODE } from '../utils/interviewStatus';
+import RecruitmentLevelHint from './RecruitmentLevelHint';
 import { getWorkflowApprovalHistory, getWorkflowArrivalDetail, getWorkflowEvaluationDetail } from './workflowDetailHelpers';
 
 type TabKey = 'todo' | 'initiated' | 'processed';
@@ -51,6 +52,11 @@ const statusTag = (status?: string) => {
 const WorkflowCenter: React.FC = () => {
   const { user } = useAuth();
   const { getLevelText, getPlatformText } = useParam();
+  const skillRequirementHint = `其他基本要求：
+1、统招全日制本科及以上学历；
+2、两年以上相关工作经验；
+3、英语四级及以上水平，读写良好；
+4、工作态度好，责任心强，纪律性强，有团队精神，服从工作安排`
 
   const [activeTab, setActiveTab] = useState<TabKey>('todo');
   const [loading, setLoading] = useState(false);
@@ -288,17 +294,21 @@ const WorkflowCenter: React.FC = () => {
                 <Descriptions.Item label="面试日期">{formatTime(String(evaluation.interviewDate || ''))}</Descriptions.Item>
               </Descriptions>
             ) : (
-              <Descriptions title="申请信息" column={1} size="small">
-                <Descriptions.Item label="流程名称">{String(currentItem?.processName || PROCESS_NAME)}</Descriptions.Item>
-                <Descriptions.Item label="岗位标题">{String(request.requestTitle || '-')}</Descriptions.Item>
-                <Descriptions.Item label="申请部门">{String(request.applicationDepartment || request.team || '-')}</Descriptions.Item>
-                <Descriptions.Item label="技术平台">{getPlatformText(String(request.technicalPlatform || ''))}</Descriptions.Item>
-                <Descriptions.Item label="建议级别">{getLevelText(String(request.proposedLevel || ''))}</Descriptions.Item>
-                <Descriptions.Item label="补充人数">{String(request.supplementCount || '-')}</Descriptions.Item>
-                <Descriptions.Item label="相关经验年限要求">{String(request.experienceYears || '-')}</Descriptions.Item>
-                <Descriptions.Item label="任职要求">{String(request.skillRequirement || '-')}</Descriptions.Item>
-                <Descriptions.Item label="岗位职责">{String(request.positionResponsibility || '-')}</Descriptions.Item>
-              </Descriptions>
+              <>
+                <Descriptions title="申请信息" column={1} size="small">
+                  <Descriptions.Item label="流程名称">{String(currentItem?.processName || PROCESS_NAME)}</Descriptions.Item>
+                  <Descriptions.Item label="岗位标题">{String(request.requestTitle || '-')}</Descriptions.Item>
+                  <Descriptions.Item label="申请部门">{String(request.applicationDepartment || request.team || '-')}</Descriptions.Item>
+                  <Descriptions.Item label="技术平台">{getPlatformText(String(request.technicalPlatform || ''))}</Descriptions.Item>
+                  <Descriptions.Item label={<RecruitmentLevelHint />}>{getLevelText(String(request.proposedLevel || ''))}</Descriptions.Item>
+                  <Descriptions.Item label="补充人数">{String(request.supplementCount || '-')}</Descriptions.Item>
+                  <Descriptions.Item label="相关经验年限要求">{String(request.experienceYears || '-')}</Descriptions.Item>
+                  <Descriptions.Item label={<RecruitmentLevelHint label="任职要求" content={skillRequirementHint} />}>
+                    {String(request.skillRequirement || '-')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="岗位职责">{String(request.positionResponsibility || '-')}</Descriptions.Item>
+                </Descriptions>
+              </>
             )}
 
             <div style={{ marginTop: 16 }}>

@@ -114,6 +114,7 @@ class RecruitmentRequestServiceImplTest {
         when(userMapper.getUserById("2001")).thenReturn(submitter);
         when(userMapper.getRoleNamesByUserId("2001")).thenReturn(Collections.singletonList("室经理"));
         when(staffingMapper.getStaffingByOrgUnitName("零售平台开发室")).thenReturn(staffing);
+        when(orgUnitMapper.getByUnitName("零售平台开发室")).thenReturn(orgUnit("零售平台开发室", "GROUP", "零售业务开发团队"));
         when(userMapper.getActiveTeamManagerByDepartment("零售业务开发团队")).thenReturn(teamManager);
 
         when(recruitmentRequestMapper.insert(any(RecruitmentRequest.class))).thenAnswer(invocation -> {
@@ -179,6 +180,7 @@ class RecruitmentRequestServiceImplTest {
         when(userMapper.getUserById("2001")).thenReturn(submitter);
         when(userMapper.getRoleNamesByUserId("2001")).thenReturn(Collections.singletonList("室经理"));
         when(staffingMapper.getStaffingByOrgUnitName("零售平台开发室")).thenReturn(staffing);
+        when(orgUnitMapper.getByUnitName("零售平台开发室")).thenReturn(orgUnit("零售平台开发室", "GROUP", "零售业务开发团队"));
         when(userMapper.getActiveTeamManagerByDepartment("零售业务开发团队")).thenReturn(null);
         when(userMapper.getActiveUsersByRoleName("团队经理")).thenReturn(Collections.singletonList(fallbackManager));
         when(recruitmentRequestMapper.insert(any(RecruitmentRequest.class))).thenAnswer(invocation -> {
@@ -231,6 +233,52 @@ class RecruitmentRequestServiceImplTest {
         assertEquals("DIRECT_TEAM_MANAGER", requestCaptor.getValue().getSubmitterRoleType());
         assertEquals("人力资源团队", requestCaptor.getValue().getApplicationDepartment());
         assertEquals("6001", requestCaptor.getValue().getFinalApproverUserId());
+    }
+
+    @Test
+    void submitRequestUsesSelectedResponsibleOrgUnitWhenUserHasMultipleResponsibleRooms() {
+        RecruitmentRequest request = new RecruitmentRequest();
+        request.setRequestTitle("跨室组补员");
+        request.setRequestType("NEW_DEMAND");
+        request.setTechnicalPlatform("开放");
+        request.setCategory("系统研发岗");
+        request.setSupplementCount(1);
+        request.setUrgentRequirement("NO");
+        request.setProposedLevel("PG");
+        request.setExperienceYears("3-5年");
+        request.setSkillRequirement("Spring Boot");
+        request.setPositionResponsibility("负责后端开发");
+        request.setCreateUserId("2001");
+        request.setCreateUserName("王室经理");
+        request.setOrgUnitName("办公系统开发室");
+
+        User submitter = activeUser("2001", "王室经理", "室经理", "零售平台开发室", "零售业务开发团队", "零售平台开发室");
+        Staffing selectedStaffing = staffing("办公系统开发室", 12, 3);
+        selectedStaffing.setResponsibleUserId("2001");
+        Staffing otherStaffing = staffing("零售平台开发室", 8, 2);
+        otherStaffing.setResponsibleUserId("2001");
+        User teamManager = activeUser("2100", "韦武", "团队经理", "基础业务开发团队", "基础业务开发团队", null);
+
+        when(userMapper.getUserById("2001")).thenReturn(submitter);
+        when(userMapper.getRoleNamesByUserId("2001")).thenReturn(Collections.singletonList("室经理"));
+        when(staffingMapper.getStaffingsByResponsibleUserId("2001")).thenReturn(Arrays.asList(selectedStaffing, otherStaffing));
+        when(staffingMapper.getStaffingByOrgUnitName("办公系统开发室")).thenReturn(selectedStaffing);
+        when(orgUnitMapper.getByUnitName("办公系统开发室")).thenReturn(orgUnit("办公系统开发室", "GROUP", "基础业务开发团队"));
+        when(userMapper.getActiveTeamManagerByDepartment("基础业务开发团队")).thenReturn(teamManager);
+        when(recruitmentRequestMapper.insert(any(RecruitmentRequest.class))).thenAnswer(invocation -> {
+            RecruitmentRequest inserted = invocation.getArgument(0);
+            inserted.setRecruitmentRequestId(21L);
+            return 1;
+        });
+
+        recruitmentRequestService.submitRequest(request);
+
+        verify(recruitmentRequestMapper).insert(requestCaptor.capture());
+        assertEquals("办公系统开发室", requestCaptor.getValue().getOrgUnitName());
+        assertEquals("基础业务开发团队 / 办公系统开发室", requestCaptor.getValue().getApplicationDepartment());
+        assertEquals(Integer.valueOf(12), requestCaptor.getValue().getTotalRecruitmentCount());
+        assertEquals(Integer.valueOf(3), requestCaptor.getValue().getVacancyCount());
+        assertEquals("2100", requestCaptor.getValue().getFinalApproverUserId());
     }
 
     @Test
